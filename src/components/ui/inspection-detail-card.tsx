@@ -2,26 +2,26 @@ import React, { useState } from 'react';
 import { Calendar, Trash2, Image as ImageIcon } from 'lucide-react';
 import { InputField } from './input-field';
 
-export type TyreDetailState = {
+export type InspectionDetailState = {
   status: 'pass' | 'fail' | 'weak' | 'na' | null;
   year: string;
   comments: string;
   image: { url: string; progress?: number } | null;
 };
 
-interface TyreDetailCardProps {
+interface InspectionDetailCardProps {
   title: string;
-  data: TyreDetailState;
-  onChange: (data: Partial<TyreDetailState>) => void;
+  data: InspectionDetailState;
+  onChange: (data: Partial<InspectionDetailState>) => void;
   onImageClick: () => void;
 }
 
-export const TyreDetailCard = ({ 
+export const InspectionDetailCard = ({ 
   title, 
   data,
   onChange,
   onImageClick
-}: TyreDetailCardProps) => {
+}: InspectionDetailCardProps) => {
   return (
     <div className="bg-white rounded-[24px] border border-[#E5E7EB] p-5 flex flex-col md:flex-row gap-6 shadow-sm">
       <div className="flex-1 flex flex-col gap-4">

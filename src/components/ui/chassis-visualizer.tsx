@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { ThumbsUp, ThumbsDown, Frown, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TyreDetailCard, TyreDetailState } from './tyre-detail-card';
+import { InspectionDetailCard, InspectionDetailState } from './inspection-detail-card';
 
-export type TyreState = 'pass' | 'fail' | 'weak' | 'na';
+export type InspectionState = 'pass' | 'fail' | 'weak' | 'na';
 
-const getColor = (state: TyreState) => {
+const getColor = (state: InspectionState) => {
   switch (state) {
     case 'pass': return '#7FD159';
     case 'fail': return '#FE8E4B';
@@ -14,7 +14,7 @@ const getColor = (state: TyreState) => {
   }
 };
 
-const ActionPopup = ({ onSelect, onClose }: { onSelect: (s: TyreState) => void, onClose: () => void }) => (
+const ActionPopup = ({ onSelect, onClose }: { onSelect: (s: InspectionState) => void, onClose: () => void }) => (
   <motion.div 
     initial={{ opacity: 0, y: 10, scale: 0.9 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -28,7 +28,7 @@ const ActionPopup = ({ onSelect, onClose }: { onSelect: (s: TyreState) => void, 
   </motion.div>
 );
 
-const TyreButton = ({ id, label, top, left, state, activePopup, setActivePopup, setTyreState }: any) => {
+const VisualizerButton = ({ id, label, top, left, state, activePopup, setActivePopup, setItemState }: any) => {
   const isActive = activePopup === id;
   const color = getColor(state);
 
@@ -47,7 +47,7 @@ const TyreButton = ({ id, label, top, left, state, activePopup, setActivePopup, 
         </button>
         <AnimatePresence>
           {isActive && (
-            <ActionPopup onSelect={(s) => setTyreState(id, s)} onClose={() => setActivePopup(null)} />
+            <ActionPopup onSelect={(s) => setItemState(id, s)} onClose={() => setActivePopup(null)} />
           )}
         </AnimatePresence>
       </div>
@@ -55,7 +55,7 @@ const TyreButton = ({ id, label, top, left, state, activePopup, setActivePopup, 
   );
 };
 
-export const TyreVisualizer = ({ tyres, setTyreStatus }: any) => {
+export const ChassisVisualizer = ({ items, setItemStatus }: any) => {
   const [activePopup, setActivePopup] = useState<string | null>(null);
 
   return (
@@ -77,11 +77,11 @@ export const TyreVisualizer = ({ tyres, setTyreStatus }: any) => {
         <img src="/assets/chasis.png" alt="Vehicle Chassis" className="w-[80%] h-auto object-contain opacity-80 pointer-events-none" />
 
         {/* Adjusting the top/left percentages based on a typical isometric chassis view */}
-        <TyreButton id="FL" label="FL" top="33%" left="56%" state={tyres.FL.status} activePopup={activePopup} setActivePopup={setActivePopup} setTyreState={setTyreStatus} />
-        <TyreButton id="FR" label="FR" top="48%" left="72%" state={tyres.FR.status} activePopup={activePopup} setActivePopup={setActivePopup} setTyreState={setTyreStatus} />
-        <TyreButton id="RL" label="RL" top="61%" left="28%" state={tyres.RL.status} activePopup={activePopup} setActivePopup={setActivePopup} setTyreState={setTyreStatus} />
-        <TyreButton id="ST" label="ST" top="73%" left="35%" state={tyres.ST.status} activePopup={activePopup} setActivePopup={setActivePopup} setTyreState={setTyreStatus} />
-        <TyreButton id="RR" label="RR" top="77%" left="45%" state={tyres.RR.status} activePopup={activePopup} setActivePopup={setActivePopup} setTyreState={setTyreStatus} />
+        <VisualizerButton id="FL" label="FL" top="33%" left="56%" state={items.FL.status} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
+        <VisualizerButton id="FR" label="FR" top="48%" left="72%" state={items.FR.status} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
+        <VisualizerButton id="RL" label="RL" top="61%" left="28%" state={items.RL.status} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
+        <VisualizerButton id="ST" label="ST" top="73%" left="35%" state={items.ST.status} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
+        <VisualizerButton id="RR" label="RR" top="77%" left="45%" state={items.RR.status} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
       </div>
     </div>
   );

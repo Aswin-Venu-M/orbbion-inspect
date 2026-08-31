@@ -15,8 +15,8 @@ import { InputField } from '@/components/ui/input-field';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
-import { TyreVisualizer, TyreState } from '@/components/ui/tyre-visualizer';
-import { TyreDetailCard, TyreDetailState } from '@/components/ui/tyre-detail-card';
+import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
+import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
 
 export default function HomeDashboard() {
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
@@ -26,25 +26,68 @@ export default function HomeDashboard() {
   const [mediaFiles, setMediaFiles] = useState<{ id: string; url: string; name: string; progress: number; status: 'uploading' | 'completed' }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [tyres, setTyres] = useState<Record<string, TyreDetailState>>({
+  const [tyres, setTyres] = useState<Record<string, InspectionDetailState>>({
     RR: { status: 'pass', year: '', comments: '', image: null },
     RL: { status: 'pass', year: '', comments: '', image: null },
     FR: { status: 'pass', year: '', comments: '', image: null },
     FL: { status: 'pass', year: '', comments: '', image: null },
     ST: { status: 'pass', year: '', comments: '', image: null },
   });
-  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
 
-  const updateTyreData = (id: string, data: Partial<TyreDetailState>) => {
+  const [rims, setRims] = useState<Record<string, InspectionDetailState>>({
+    RR: { status: 'pass', year: '', comments: '', image: null },
+    RL: { status: 'pass', year: '', comments: '', image: null },
+    FR: { status: 'pass', year: '', comments: '', image: null },
+    FL: { status: 'pass', year: '', comments: '', image: null },
+    ST: { status: 'pass', year: '', comments: '', image: null },
+  });
+
+  const [brakes, setBrakes] = useState<Record<string, InspectionDetailState>>({
+    RR: { status: 'pass', year: '', comments: '', image: null },
+    RL: { status: 'pass', year: '', comments: '', image: null },
+    FR: { status: 'pass', year: '', comments: '', image: null },
+    FL: { status: 'pass', year: '', comments: '', image: null },
+    ST: { status: 'pass', year: '', comments: '', image: null },
+  });
+
+  const [uploadTarget, setUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake', id: string } | null>(null);
+
+  const updateTyreData = (id: string, data: Partial<InspectionDetailState>) => {
     setTyres(prev => ({ ...prev, [id]: { ...prev[id], ...data } }));
   };
 
-  const setTyreStatus = (id: string, status: TyreState) => {
+  const setTyreStatus = (id: string, status: InspectionState) => {
     updateTyreData(id, { status });
   };
 
   const handleTyreImageClick = (id: string) => {
-    setUploadTarget(id);
+    setUploadTarget({ type: 'tyre', id });
+    fileInputRef.current?.click();
+  };
+
+  const updateRimData = (id: string, data: Partial<InspectionDetailState>) => {
+    setRims(prev => ({ ...prev, [id]: { ...prev[id], ...data } }));
+  };
+
+  const setRimStatus = (id: string, status: InspectionState) => {
+    updateRimData(id, { status });
+  };
+
+  const handleRimImageClick = (id: string) => {
+    setUploadTarget({ type: 'rim', id });
+    fileInputRef.current?.click();
+  };
+
+  const updateBrakeData = (id: string, data: Partial<InspectionDetailState>) => {
+    setBrakes(prev => ({ ...prev, [id]: { ...prev[id], ...data } }));
+  };
+
+  const setBrakeStatus = (id: string, status: InspectionState) => {
+    updateBrakeData(id, { status });
+  };
+
+  const handleBrakeImageClick = (id: string) => {
+    setUploadTarget({ type: 'brake', id });
     fileInputRef.current?.click();
   };
 
@@ -66,11 +109,16 @@ export default function HomeDashboard() {
     if (!files) return;
     
     if (uploadTarget) {
-      // Handling upload for a specific tyre card
       const file = Array.from(files)[0];
       if (file && file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
-        updateTyreData(uploadTarget, { image: { url, progress: 100 } });
+        if (uploadTarget.type === 'tyre') {
+          updateTyreData(uploadTarget.id, { image: { url, progress: 100 } });
+        } else if (uploadTarget.type === 'rim') {
+          updateRimData(uploadTarget.id, { image: { url, progress: 100 } });
+        } else if (uploadTarget.type === 'brake') {
+          updateBrakeData(uploadTarget.id, { image: { url, progress: 100 } });
+        }
         setUploadTarget(null);
       }
       return;
@@ -501,16 +549,44 @@ export default function HomeDashboard() {
               
               {/* Tyres Section */}
               <ReusableSection title="Tyres" className="pb-8">
-                <TyreVisualizer tyres={tyres} setTyreStatus={setTyreStatus} />
+                <ChassisVisualizer items={tyres} setItemStatus={setTyreStatus} />
               </ReusableSection>
 
               {/* Tyre Details Section */}
               <div className="flex flex-col gap-4">
-                <TyreDetailCard title="Rear Right (RR)" data={tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
-                <TyreDetailCard title="Rear Left (RL)" data={tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
-                <TyreDetailCard title="Front Right (FR)" data={tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
-                <TyreDetailCard title="Front Left (FL)" data={tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
-                <TyreDetailCard title="Spare tyre (ST)" data={tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
+                <InspectionDetailCard title="Rear Right (RR)" data={tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
+                <InspectionDetailCard title="Rear Left (RL)" data={tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
+                <InspectionDetailCard title="Front Right (FR)" data={tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
+                <InspectionDetailCard title="Front Left (FL)" data={tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
+                <InspectionDetailCard title="Spare tyre (ST)" data={tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
+              </div>
+
+              {/* Rims Section */}
+              <ReusableSection title="Rims" className="pb-8 mt-8">
+                <ChassisVisualizer items={rims} setItemStatus={setRimStatus} />
+              </ReusableSection>
+
+              {/* Rim Details Section */}
+              <div className="flex flex-col gap-4">
+                <InspectionDetailCard title="Rear Right (RR)" data={rims.RR} onChange={(d) => updateRimData('RR', d)} onImageClick={() => handleRimImageClick('RR')} />
+                <InspectionDetailCard title="Rear Left (RL)" data={rims.RL} onChange={(d) => updateRimData('RL', d)} onImageClick={() => handleRimImageClick('RL')} />
+                <InspectionDetailCard title="Front Right (FR)" data={rims.FR} onChange={(d) => updateRimData('FR', d)} onImageClick={() => handleRimImageClick('FR')} />
+                <InspectionDetailCard title="Front Left (FL)" data={rims.FL} onChange={(d) => updateRimData('FL', d)} onImageClick={() => handleRimImageClick('FL')} />
+                <InspectionDetailCard title="Spare tyre (ST)" data={rims.ST} onChange={(d) => updateRimData('ST', d)} onImageClick={() => handleRimImageClick('ST')} />
+              </div>
+
+              {/* Brakes Section */}
+              <ReusableSection title="Brakes" className="pb-8 mt-8">
+                <ChassisVisualizer items={brakes} setItemStatus={setBrakeStatus} />
+              </ReusableSection>
+
+              {/* Brake Details Section */}
+              <div className="flex flex-col gap-4">
+                <InspectionDetailCard title="Rear Right (RR)" data={brakes.RR} onChange={(d) => updateBrakeData('RR', d)} onImageClick={() => handleBrakeImageClick('RR')} />
+                <InspectionDetailCard title="Rear Left (RL)" data={brakes.RL} onChange={(d) => updateBrakeData('RL', d)} onImageClick={() => handleBrakeImageClick('RL')} />
+                <InspectionDetailCard title="Front Right (FR)" data={brakes.FR} onChange={(d) => updateBrakeData('FR', d)} onImageClick={() => handleBrakeImageClick('FR')} />
+                <InspectionDetailCard title="Front Left (FL)" data={brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
+                <InspectionDetailCard title="Spare tyre (ST)" data={brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
               </div>
               
             </div>
