@@ -145,10 +145,10 @@ export default function HomeDashboard() {
   };
 
   return (
-    <div className={`h-screen bg-[#F8F9FB] bg-dot-pattern flex p-5 pl-[110px] gap-6 overflow-hidden ${familjen.className}`}>
+    <div className={`h-screen bg-[#F8F9FB] bg-dot-pattern flex p-4 md:p-5 pl-4 md:pl-[110px] gap-6 overflow-y-auto xl:overflow-hidden ${familjen.className}`}>
       
       {/* 1. Icon Rail (Fixed) */}
-      <nav className="fixed left-0 top-0 h-screen w-[90px] flex flex-col justify-between items-center px-6 py-10 z-50 bg-white shadow-sm border-r border-slate-100">
+      <nav className="hidden md:flex fixed left-0 top-0 h-screen w-[90px] flex-col justify-between items-center px-6 py-10 z-50 bg-white shadow-sm border-r border-slate-100">
         
         {/* Top Group: Search + Home */}
         <div className="flex flex-col justify-start items-center gap-4">
@@ -192,7 +192,7 @@ export default function HomeDashboard() {
       <div className="flex-1 flex flex-col gap-6 overflow-hidden">
         
         {/* Top Header */}
-        <header className="relative w-full h-[72px] bg-white rounded-[24px] shadow-sm border border-slate-100 shrink-0 flex items-center justify-between px-6 z-10">
+        <header className="relative w-full min-h-[72px] h-auto bg-white rounded-[24px] shadow-sm border border-slate-100 shrink-0 flex flex-wrap xl:flex-nowrap items-center justify-between px-4 sm:px-6 py-4 xl:py-0 gap-4 xl:gap-0 z-10">
           
           {/* Left Section */}
           <div className="flex items-center gap-6">
@@ -212,7 +212,7 @@ export default function HomeDashboard() {
           </div>
 
           {/* Tools */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <div className="flex xl:absolute xl:left-1/2 xl:-translate-x-1/2 items-center justify-center gap-2 sm:gap-3 order-last xl:order-none w-full xl:w-auto mt-2 xl:mt-0">
             {/* Edit/View Toggle */}
               <div className="p-1 bg-[#F3F4F9] rounded-2xl outline outline-1 outline-offset-[-1px] outline-[#CFD2DF] inline-flex justify-start items-center gap-1 shadow-sm">
                 {/* Edit Tab */}
@@ -279,31 +279,31 @@ export default function HomeDashboard() {
             </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-100 shadow-sm shrink-0 hidden sm:block">
               <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
             </div>
-            <button className="h-10 px-6 bg-[#F4F5F8] rounded-[14px] text-[13px] font-semibold text-[#310b4d] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-sm">
+            <button className="h-10 px-3 sm:px-6 bg-[#F4F5F8] rounded-[14px] text-[12px] sm:text-[13px] font-semibold text-[#310b4d] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-sm whitespace-nowrap">
               Cancel Report
             </button>
-            <button className="h-10 px-6 bg-[#310b4d] rounded-[14px] text-[13px] font-semibold text-white flex items-center gap-2 hover:bg-[#1f0730] transition-colors shadow-sm">
+            <button className="h-10 px-3 sm:px-6 bg-[#310b4d] rounded-[14px] text-[12px] sm:text-[13px] font-semibold text-white flex items-center gap-2 hover:bg-[#1f0730] transition-colors shadow-sm whitespace-nowrap">
               Publish <FileText size={14} />
             </button>
           </div>
         </header>
 
         {/* 3 Columns Layout */}
-        <div className="flex-1 flex gap-6 overflow-hidden">
+        <div className="flex-1 flex flex-col xl:flex-row gap-6 overflow-y-auto xl:overflow-hidden pb-4 xl:pb-0">
           
           {/* 2. Media Drawer (Floating Card) */}
           <motion.div 
             initial={false}
             animate={{ 
-              width: isGalleryOpen ? 310 : 0, 
+              width: isGalleryOpen ? "100%" : 0, 
               marginRight: isGalleryOpen ? 0 : -24 // Compensates for the gap-6 (24px) in the flex container
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="h-full shrink-0 overflow-hidden"
+            className="xl:max-w-[310px] h-[400px] xl:h-full shrink-0 overflow-hidden"
           >
             <motion.aside 
               animate={{ 
@@ -311,7 +311,7 @@ export default function HomeDashboard() {
                 opacity: isGalleryOpen ? 1 : 0
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-6 z-10 border border-slate-100 h-full"
+              className="w-full bg-white rounded-[32px] shadow-sm flex flex-col p-6 z-10 border border-slate-100 h-full"
             >
               
               <div className="flex justify-between items-center mb-4">
@@ -444,14 +444,14 @@ export default function HomeDashboard() {
           </motion.div>
 
           {/* 3. Main Content Canvas */}
-          <main className="flex-1 flex flex-col overflow-hidden min-w-[600px]">
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-3 pb-10 space-y-7">
+          <main className="flex-1 flex flex-col overflow-visible xl:overflow-hidden min-w-0 xl:min-w-[500px]">
+            <div className="flex-1 overflow-visible xl:overflow-y-auto custom-scrollbar xl:pr-3 xl:pb-10 space-y-7">
               
               {/* Inspection Details Section */}
               <section>
                 <SectionHeader title="Inspection Details" />
                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100">
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <InputField label="Date" required rightIcon={<Calendar size={18} />} placeholder="DD-MM-YYYY" />
                     <InputField label="Time" required rightIcon={<Clock size={18} />} placeholder="HH-MM" />
                     <SelectField label="Inspection Type" required placeholder="Select Inspection" />
@@ -464,7 +464,7 @@ export default function HomeDashboard() {
               <section>
                 <SectionHeader title="Vehicle Summary" />
                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100">
-                  <div className="grid grid-cols-3 gap-x-5 gap-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-6">
                     <InputField label="Make" placeholder="Enter Make" />
                     <InputField label="Model" placeholder="Enter Model" />
                     <InputField label="Model Year" placeholder="YYYY" rightIcon={<Calendar size={18} />} />
@@ -505,18 +505,18 @@ export default function HomeDashboard() {
               {/* Report Overview Section */}
               <section>
                 <SectionHeader title="Report Overview" />
-                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex items-center justify-between">
-                  <div className="w-1/3 flex flex-col gap-5">
+                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-0">
+                  <div className="w-full sm:w-1/3 flex flex-col gap-5">
                     <InputField label="Pass" placeholder="Enter Pass Value" rightText="% / Miles" />
                     <InputField label="Fail" placeholder="Enter Fail Value" rightText="% / Miles" />
                   </div>
-                  <div className="w-1/3 flex justify-center">
+                  <div className="w-full sm:w-1/3 flex justify-center">
                     {/* Simple CSS pie chart for the overview */}
                     <div className="w-[120px] h-[120px] rounded-full shadow-sm" style={{
                       background: 'conic-gradient(#5BC335 0% 50%, #1A7011 50% 100%)'
                     }}></div>
                   </div>
-                  <div className="w-1/3"></div>
+                  <div className="w-full sm:w-1/3"></div>
                 </div>
               </section>
               
@@ -524,7 +524,7 @@ export default function HomeDashboard() {
               <section>
                 <SectionHeader title="Tyres" />
                 <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100">
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                     <SelectField label="Front Left Tyre Condition" placeholder="Select Condition" />
                     <SelectField label="Front Right Tyre Condition" placeholder="Select Condition" />
                     <SelectField label="Rear Left Tyre Condition" placeholder="Select Condition" />
@@ -536,49 +536,46 @@ export default function HomeDashboard() {
             </div>
           </main>
 
-          {/* 4. Right Sidebar (Floating Card) */}
-          <aside className="w-[320px] bg-white rounded-[32px] shadow-sm p-6 z-10 border border-slate-100 flex flex-col h-full overflow-y-auto custom-scrollbar shrink-0">
-            <div className="flex flex-col gap-6 flex-1">
-              {/* Add Client Details */}
-              <div>
-                <h3 className="text-[15px] font-bold text-[#1E1035] mb-1 tracking-tight">Add Client Details</h3>
-                <p className="text-slate-400 text-[10px] mb-5 leading-relaxed">Client's contact information to associate them with this report</p>
+          {/* 4. Right Sidebar Container */}
+          <aside className="w-full xl:w-[320px] flex flex-col gap-6 h-auto xl:h-full overflow-visible xl:overflow-y-auto custom-scrollbar shrink-0 z-10">
+            
+            {/* Box 1: Add Client Details */}
+            <div className="bg-white rounded-[32px] shadow-sm p-6 border border-slate-100 flex flex-col shrink-0">
+              <h3 className="text-[15px] font-bold text-[#1E1035] mb-1 tracking-tight">Add Client Details</h3>
+              <p className="text-slate-400 text-[10px] mb-5 leading-relaxed">Client's contact information to associate them with this report</p>
+              
+              <div className="space-y-4">
+                <InputField label="Client Name" placeholder="Enter Client Name" icon={<User size={16} />} />
                 
-                <div className="space-y-4">
-                  <InputField label="Client Name" placeholder="Enter Client Name" icon={<User size={16} />} />
-                  
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1E1035]">WhatsApp Number</label>
-                    <div className="flex items-center gap-2">
-                      <div className="w-[100px] h-[46px] bg-[#F4F5F8] rounded-[14px] flex items-center justify-center gap-1.5 px-3 text-[13px] font-medium text-slate-500 shadow-sm border border-slate-100">
-                        <span className="w-4 h-4 bg-slate-300 rounded-full flex items-center justify-center text-white"><Cloud size={10}/></span>
-                        +971 <ChevronDown size={14} strokeWidth={3} />
-                      </div>
-                      <input type="text" placeholder="XXX-XXX-XXX" className="flex-1 min-w-0 h-[46px] bg-[#F4F5F8] text-[13px] text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20" />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#1E1035]">WhatsApp Number</label>
+                  <div className="flex items-center gap-2">
+                    <div className="w-[100px] h-[46px] bg-[#F4F5F8] rounded-[14px] flex items-center justify-center gap-1.5 px-3 text-[13px] font-medium text-slate-500 shadow-sm border border-slate-100">
+                      <span className="w-4 h-4 bg-slate-300 rounded-full flex items-center justify-center text-white"><Cloud size={10}/></span>
+                      +971 <ChevronDown size={14} strokeWidth={3} />
                     </div>
+                    <input type="text" placeholder="XXX-XXX-XXX" className="flex-1 min-w-0 h-[46px] bg-[#F4F5F8] text-[13px] text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20" />
                   </div>
-                  
-                  <InputField label="Email Address" placeholder="Enter Email" icon={<AtSign size={16} />} />
-                  <InputField label="Vehicle Details" placeholder="Vehicle Details" icon={<FileCheck size={16} />} />
-                  <SelectField label="Location" placeholder="Select Location" icon={<MapPin size={16} />} />
                 </div>
-              </div>
-              
-              <div className="w-full h-px border-t border-dashed border-slate-200 my-1"></div>
-              
-              {/* Our Team */}
-              <div>
-                <h3 className="text-[15px] font-bold text-[#1E1035] mb-1 tracking-tight">Our Team</h3>
-                <p className="text-slate-400 text-[10px] mb-5 leading-relaxed">Details related to our team to the report</p>
                 
-                <div className="space-y-4">
-                  <SelectField label="Inspector" placeholder="Select Inspector" icon={<User size={16} />} />
-                </div>
+                <InputField label="Email Address" placeholder="Enter Email" icon={<AtSign size={16} />} />
+                <InputField label="Vehicle Details" placeholder="Vehicle Details" icon={<FileCheck size={16} />} />
+                <SelectField label="Location" placeholder="Select Location" icon={<MapPin size={16} />} />
+              </div>
+            </div>
+            
+            {/* Box 2: Our Team */}
+            <div className="bg-white rounded-[32px] shadow-sm p-6 border border-slate-100 flex flex-col shrink-0">
+              <h3 className="text-[15px] font-bold text-[#1E1035] mb-1 tracking-tight">Our Team</h3>
+              <p className="text-slate-400 text-[10px] mb-5 leading-relaxed">Details related to our team to the report</p>
+              
+              <div className="space-y-4">
+                <SelectField label="Inspector" placeholder="Select Inspector" icon={<User size={16} />} />
               </div>
             </div>
             
             {/* Footer / Support Link */}
-            <div className="mt-auto flex items-end justify-between pt-8">
+            <div className="mt-auto flex items-end justify-between px-2 pb-2 shrink-0">
               <div className="flex flex-col">
                 <span className="text-[11px] font-bold text-[#1E1035]">Support@orbbion.com</span>
                 <span className="text-[10px] font-medium text-slate-400">v.2.0</span>
