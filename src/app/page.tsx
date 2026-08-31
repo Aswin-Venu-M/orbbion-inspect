@@ -15,6 +15,8 @@ import { InputField } from '@/components/ui/input-field';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
+import { TyreVisualizer, TyreState } from '@/components/ui/tyre-visualizer';
+import { TyreDetailCard, TyreDetailState } from '@/components/ui/tyre-detail-card';
 
 export default function HomeDashboard() {
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
@@ -23,6 +25,28 @@ export default function HomeDashboard() {
 
   const [mediaFiles, setMediaFiles] = useState<{ id: string; url: string; name: string; progress: number; status: 'uploading' | 'completed' }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [tyres, setTyres] = useState<Record<string, TyreDetailState>>({
+    RR: { status: 'pass', year: '', comments: '', image: null },
+    RL: { status: 'pass', year: '', comments: '', image: null },
+    FR: { status: 'pass', year: '', comments: '', image: null },
+    FL: { status: 'pass', year: '', comments: '', image: null },
+    ST: { status: 'pass', year: '', comments: '', image: null },
+  });
+  const [uploadTarget, setUploadTarget] = useState<string | null>(null);
+
+  const updateTyreData = (id: string, data: Partial<TyreDetailState>) => {
+    setTyres(prev => ({ ...prev, [id]: { ...prev[id], ...data } }));
+  };
+
+  const setTyreStatus = (id: string, status: TyreState) => {
+    updateTyreData(id, { status });
+  };
+
+  const handleTyreImageClick = (id: string) => {
+    setUploadTarget(id);
+    fileInputRef.current?.click();
+  };
 
   const simulateUpload = (id: string) => {
     let currentProgress = 0;
@@ -40,6 +64,18 @@ export default function HomeDashboard() {
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
+    
+    if (uploadTarget) {
+      // Handling upload for a specific tyre card
+      const file = Array.from(files)[0];
+      if (file && file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        updateTyreData(uploadTarget, { image: { url, progress: 100 } });
+        setUploadTarget(null);
+      }
+      return;
+    }
+
     const newFiles = Array.from(files).filter(file => file.type.startsWith('image/')).map(file => ({
       id: Math.random().toString(36).substring(7),
       url: URL.createObjectURL(file),
@@ -464,14 +500,18 @@ export default function HomeDashboard() {
               </ReusableSection>
               
               {/* Tyres Section */}
-              <ReusableSection title="Tyres">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-                  <SelectField label="Front Left Tyre Condition" placeholder="Select Condition" />
-                  <SelectField label="Front Right Tyre Condition" placeholder="Select Condition" />
-                  <SelectField label="Rear Left Tyre Condition" placeholder="Select Condition" />
-                  <SelectField label="Rear Right Tyre Condition" placeholder="Select Condition" />
-                </div>
+              <ReusableSection title="Tyres" className="pb-8">
+                <TyreVisualizer tyres={tyres} setTyreStatus={setTyreStatus} />
               </ReusableSection>
+
+              {/* Tyre Details Section */}
+              <div className="flex flex-col gap-4">
+                <TyreDetailCard title="Rear Right (RR)" data={tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
+                <TyreDetailCard title="Rear Left (RL)" data={tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
+                <TyreDetailCard title="Front Right (FR)" data={tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
+                <TyreDetailCard title="Front Left (FL)" data={tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
+                <TyreDetailCard title="Spare tyre (ST)" data={tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
+              </div>
               
             </div>
           </main>
