@@ -362,8 +362,14 @@ export default function HomeDashboard() {
                 )}
               </div>
 
-              <div 
-                className={`flex-1 flex flex-col relative rounded-[24px] border-2 transition-all ${isDragging ? 'border-dashed border-[#1E1035] bg-slate-50 scale-[0.98]' : 'border-transparent'} overflow-hidden`}
+              <motion.div 
+                animate={{
+                  scale: isDragging ? 0.98 : 1,
+                  backgroundColor: isDragging ? "#F8FAFC" : "transparent",
+                  borderColor: isDragging ? "#1E1035" : "transparent"
+                }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className={`flex-1 flex flex-col relative rounded-[24px] border-2 border-dashed overflow-hidden`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -394,17 +400,34 @@ export default function HomeDashboard() {
                       transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 30 }}
                       className="text-center z-20"
                     >
-                      <h2 className="text-[#1E1035] text-[26px] font-bold mb-2 tracking-tight">
+                      <motion.h2 
+                        key={isDragging ? "dragging" : "empty"}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        className="text-[#1E1035] text-[26px] font-bold mb-2 tracking-tight"
+                      >
                         {isDragging ? "Drop it here!" : "It's empty in here."}
-                      </h2>
-                      <p className="text-[#A0A4AB] text-[13px] leading-relaxed mb-5 px-4">
+                      </motion.h2>
+                      <motion.p 
+                        key={isDragging ? "dragging-desc" : "empty-desc"}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05, type: "spring", stiffness: 400, damping: 25 }}
+                        className="text-[#A0A4AB] text-[13px] leading-relaxed mb-5 px-4"
+                      >
                         {isDragging ? "Release to add files to your album." : "Add some media to bring this album to life."}
-                      </p>
+                      </motion.p>
                       <motion.button 
                         onClick={() => fileInputRef.current?.click()}
+                        animate={{
+                          opacity: isDragging ? 0 : 1,
+                          scale: isDragging ? 0.8 : 1,
+                          y: isDragging ? 10 : 0
+                        }}
                         whileHover={{ scale: 1.04, boxShadow: "0px 8px 16px rgba(30, 16, 53, 0.15)" }}
                         whileTap={{ scale: 0.96 }}
-                        className={`bg-[#1E1035] text-white px-7 py-3.5 rounded-2xl flex items-center gap-2 text-sm font-semibold hover:bg-[#281446] transition-all shadow-sm mx-auto ${isDragging ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'}`}
+                        className={`bg-[#1E1035] text-white px-7 py-3.5 rounded-2xl flex items-center gap-2 text-sm font-semibold hover:bg-[#281446] transition-colors shadow-sm mx-auto ${isDragging ? 'pointer-events-none' : ''}`}
                       >
                         Add Media <Plus size={16} strokeWidth={3} />
                       </motion.button>
@@ -413,12 +436,18 @@ export default function HomeDashboard() {
                 ) : (
                   <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6 -mr-2">
                     <div className="grid grid-cols-2 gap-3">
-                      {mediaFiles.map((media) => (
+                      {mediaFiles.map((media, index) => (
                         <motion.div 
                           layout
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 400, 
+                            damping: 25,
+                            delay: media.status === 'uploading' ? (index % 5) * 0.1 : 0 
+                          }}
                           key={media.id} 
                           className="relative group rounded-2xl overflow-hidden aspect-square border border-slate-100 shadow-sm bg-slate-100"
                         >
@@ -475,7 +504,7 @@ export default function HomeDashboard() {
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             </div>
           </div>
 
