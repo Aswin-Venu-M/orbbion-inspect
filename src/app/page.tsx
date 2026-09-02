@@ -520,7 +520,7 @@ export default function HomeDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <InputField label="Date" required rightIcon={<Calendar size={18} />} placeholder="DD-MM-YYYY" />
                   <InputField label="Time" required rightIcon={<Clock size={18} />} placeholder="HH-MM" />
-                  <SelectField label="Inspection Type" required placeholder="Select Inspection" />
+                  <SelectField label="Inspection Type" required placeholder="Select Inspection Type" />
                   <InputField label="VIN Number" required placeholder="Enter VIN Number" />
                 </div>
               </ReusableSection>
@@ -540,15 +540,15 @@ export default function HomeDashboard() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1E1035]">Spare Type</label>
                     <div className="flex items-center gap-2">
-                      <button className="flex-1 bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] text-sm font-semibold py-3 rounded-[14px] shadow-sm">
+                      <button className="flex-1 bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] text-sm font-semibold h-[46px] rounded-[14px] shadow-sm">
                         Available
                       </button>
-                      <button className="flex-1 bg-[#F4F5F8] text-[#A0A4AB] text-sm font-semibold py-3 rounded-[14px]">
-                        Not Available
+                      <button className="flex-1 bg-[#F4F5F8] text-[#A0A4AB] text-sm font-semibold h-[46px] rounded-[14px]">
+                        Not-Available
                       </button>
                     </div>
                   </div>
-                  <InputField label="Number of Keys" placeholder="Enter Number" rightIcon={
+                  <InputField label="Number of Keys" placeholder="Enter Number of Keys" rightIcon={
                     <div className="flex flex-col items-center justify-center text-slate-400">
                       <ChevronDown size={14} className="-rotate-180 -mb-1" strokeWidth={3} />
                       <ChevronDown size={14} className="-mt-1" strokeWidth={3} />
@@ -559,8 +559,8 @@ export default function HomeDashboard() {
                   <InputField label="External Colour" placeholder="Enter External Colour" />
                   <InputField label="Fuel Type" placeholder="Enter Fuel Type" />
                   
-                  <InputField label="Odometer Reading" placeholder="Enter Reading" rightText="KM / Miles" />
-                  <InputField label="Tampered Odometer Reading" placeholder="Enter Reading" rightText="KM / Miles" />
+                  <InputField label="Odometer Reading" placeholder="Enter Odometer Reading" rightText={<><span className="font-bold text-[#1E1035]">KM</span> / Miles</>} />
+                  <InputField label="Tampered Odometer Reading" placeholder="Enter Odometer Reading" rightText={<><span className="font-bold text-[#1E1035]">KM</span> / Miles</>} />
                 </div>
               </ReusableSection>
 
