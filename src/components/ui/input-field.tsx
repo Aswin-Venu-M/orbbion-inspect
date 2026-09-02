@@ -1,6 +1,18 @@
 import React from 'react';
 
-export const InputField = ({ label, required, placeholder, icon, rightIcon, rightText, type = "text", value, defaultValue, onChange, className }: any) => (
+export const InputField = ({ label, required, placeholder, icon, rightIcon, rightText, type = "text", value, defaultValue, onChange, className }: {
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  icon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  rightText?: React.ReactNode;
+  type?: string;
+  value?: string | number;
+  defaultValue?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  className?: string;
+}) => (
   <div className={`flex flex-col gap-1.5 ${className || ""}`}>
     <label className="text-xs font-semibold text-[#1E1035]">
       {label}{required && <span className="text-red-500 ml-0.5">*</span>}

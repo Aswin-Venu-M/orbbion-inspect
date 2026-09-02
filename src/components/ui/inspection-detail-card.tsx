@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Calendar, Trash2, Image as ImageIcon } from 'lucide-react';
+/* eslint-disable @next/next/no-img-element */
+import React from 'react';
+import { Calendar, Trash2 } from 'lucide-react';
 import { InputField } from './input-field';
 
 export type InspectionDetailState = {
@@ -58,13 +59,13 @@ export const InspectionDetailCard = ({
             placeholder="YYYY" 
             rightIcon={<Calendar size={18} />} 
             value={data.year}
-            onChange={(e: any) => onChange({ year: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ year: e.target.value })}
           />
           <InputField 
             label="Comments" 
             placeholder="Enter comments" 
             value={data.comments}
-            onChange={(e: any) => onChange({ comments: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ comments: e.target.value })}
           />
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+/* eslint-disable @next/next/no-img-element */
+import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Frown, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InspectionDetailCard, InspectionDetailState } from './inspection-detail-card';
@@ -28,7 +29,7 @@ const ActionPopup = ({ onSelect, onClose }: { onSelect: (s: InspectionState) => 
   </motion.div>
 );
 
-const VisualizerButton = ({ id, label, top, left, state, activePopup, setActivePopup, setItemState }: any) => {
+const VisualizerButton = ({ id, label, top, left, state, activePopup, setActivePopup, setItemState }: { id: string, label: string, top: string, left: string, state: InspectionState, activePopup: string | null, setActivePopup: (s: string | null) => void, setItemState: (id: string, s: InspectionState) => void }) => {
   const isActive = activePopup === id;
   const color = getColor(state);
 
@@ -55,7 +56,7 @@ const VisualizerButton = ({ id, label, top, left, state, activePopup, setActiveP
   );
 };
 
-export const ChassisVisualizer = ({ items, setItemStatus }: any) => {
+export const ChassisVisualizer = ({ items, setItemStatus }: { items: Record<string, InspectionDetailState>, setItemStatus: (id: string, s: InspectionState) => void }) => {
   const [activePopup, setActivePopup] = useState<string | null>(null);
 
   return (

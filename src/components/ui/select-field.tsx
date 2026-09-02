@@ -1,7 +1,12 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
-export const SelectField = ({ label, required, placeholder, icon }: any) => (
+export const SelectField = ({ label, required, placeholder, icon }: {
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  icon?: React.ReactNode;
+}) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-xs font-semibold text-[#1E1035]">
       {label}{required && <span className="text-red-500 ml-0.5">*</span>}

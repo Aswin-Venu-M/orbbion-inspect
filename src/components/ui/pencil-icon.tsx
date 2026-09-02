@@ -77,7 +77,7 @@ const PencilIcon = forwardRef<PencilIconHandle, PencilIconProps>(
    (e?: React.MouseEvent<HTMLDivElement>) => {
     if (!isAnimated || reduced) return;
     if (!isControlled.current) start();
-    else onMouseEnter?.(e as any);
+    else onMouseEnter?.(e as unknown as React.MouseEvent<HTMLDivElement>);
    },
    [isAnimated, reduced, start, onMouseEnter],
   );

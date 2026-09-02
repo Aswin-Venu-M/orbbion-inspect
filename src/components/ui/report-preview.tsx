@@ -1,10 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { Phone, Mail } from 'lucide-react';
-import { ChassisVisualizer, InspectionState } from './chassis-visualizer';
+import { ChassisVisualizer } from './chassis-visualizer';
+
+import { InspectionDetailState } from './inspection-detail-card';
 
 interface ReportPreviewProps {
-  tyres: Record<string, any>;
-  rims: Record<string, any>;
+  tyres: Record<string, InspectionDetailState>;
+  rims: Record<string, InspectionDetailState>;
 }
 
 export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
@@ -25,10 +28,10 @@ export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#E5E7EB] p-4 md:p-8 flex flex-col items-center gap-8 pb-24">
+    <div className="w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-4 md:p-8 flex flex-col items-center gap-8 pb-24 relative">
       
       {/* PAGE 1: Cover Page */}
-      <div className="w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0">
+      <div id="preview-page-1" className="w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0">
         {/* Background Image Area */}
         <div className="absolute top-0 left-0 w-full h-[65%]">
           {/* We use a placeholder car image for the cover background */}
@@ -91,7 +94,7 @@ export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
       </div>
 
       {/* PAGE 2: Vehicle Summary */}
-      <div className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
+      <div id="preview-page-2" className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -233,7 +236,7 @@ export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
       </div>
 
       {/* PAGE 3: Tyres Section */}
-      <div className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
+      <div id="preview-page-3" className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -331,7 +334,7 @@ export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
       </div>
 
       {/* PAGE 4: Rims Section */}
-      <div className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
+      <div id="preview-page-4" className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-8">

@@ -1,13 +1,14 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { Familjen_Grotesk } from 'next/font/google';
 const familjen = Familjen_Grotesk({ subsets: ['latin'] });
 import React, { useState, useRef } from 'react';
 import { motion } from "motion/react";
 import {
-  Calendar, Clock, ChevronDown, User, MapPin, RotateCcw, RotateCw, 
+  Calendar, Clock, ChevronDown, ChevronUp, User, MapPin, RotateCcw, RotateCw, 
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Map, Info,
-  AtSign, CarFront, Trash2
+  AtSign, CarFront, Trash2, ZoomIn, ZoomOut
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
@@ -23,6 +24,41 @@ export default function HomeDashboard() {
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
   const [isGalleryOpen, setIsGalleryOpen] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [previewPage, setPreviewPage] = useState(1);
+  const totalPreviewPages = 4;
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 20, 200));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 20, 50));
+
+  const handlePrevPage = () => {
+    setPreviewPage(prev => {
+      const newPage = Math.max(prev - 1, 1);
+      document.getElementById(`preview-page-${newPage}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return newPage;
+    });
+  };
+
+  const handleNextPage = () => {
+    setPreviewPage(prev => {
+      const newPage = Math.min(prev + 1, totalPreviewPages);
+      document.getElementById(`preview-page-${newPage}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return newPage;
+    });
+  };
+
+  const handlePreviewScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const zoomFactor = zoomLevel / 100;
+    const zoomedPageHeight = 1163 * zoomFactor;
+    const calculatedPage = Math.floor((target.scrollTop + (zoomedPageHeight / 2)) / zoomedPageHeight) + 1;
+    if (calculatedPage !== previewPage && calculatedPage >= 1 && calculatedPage <= totalPreviewPages) {
+      setPreviewPage(calculatedPage);
+    }
+  };
+
 
   const [mediaFiles, setMediaFiles] = useState<{ id: string; url: string; name: string; progress: number; status: 'uploading' | 'completed' }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -675,9 +711,50 @@ export default function HomeDashboard() {
           </aside>
           </>
         ) : (
-          <div className="flex-1 w-full h-full overflow-hidden rounded-[24px]">
-            <ReportPreview tyres={tyres} rims={rims} />
-          </div>
+          <>
+            <div 
+              ref={previewScrollRef}
+              onScroll={handlePreviewScroll}
+              className="flex-1 flex justify-center w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] xl:px-4 pb-10 xl:pb-0"
+            >
+              <div style={{ zoom: zoomLevel / 100, width: '100%', display: 'flex', justifyContent: 'center', transition: 'zoom 0.2s ease-in-out' }}>
+                <ReportPreview tyres={tyres} rims={rims} />
+              </div>
+            </div>
+
+            {/* Right Sidebar for Preview Actions */}
+            <aside className="hidden xl:flex w-[320px] flex-col justify-between items-end h-full shrink-0 z-10 relative">
+              <div className="flex flex-col items-center bg-white rounded-[24px] shadow-sm border border-slate-100 p-4 w-[84px] gap-6 absolute top-1/2 -translate-y-1/2 right-4">
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <button onClick={handlePrevPage} className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] transition-colors"><ChevronUp size={24} strokeWidth={2.5} /></button>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[14px] font-bold text-[#1E1035] leading-none">{String(previewPage).padStart(2, '0')}</span>
+                    <div className="w-5 h-px bg-slate-200 my-1"></div>
+                    <span className="text-[14px] font-bold text-[#A0A4AB] leading-none">{String(totalPreviewPages).padStart(2, '0')}</span>
+                  </div>
+                  <button onClick={handleNextPage} className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] transition-colors"><ChevronDown size={24} strokeWidth={2.5} /></button>
+                </div>
+                
+                <div className="w-[52px] h-px bg-slate-200"></div>
+                
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <button onClick={handleZoomIn} className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] transition-colors"><ZoomIn size={22} strokeWidth={2} /></button>
+                  <button onClick={handleZoomOut} className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] transition-colors"><ZoomOut size={22} strokeWidth={2} /></button>
+                </div>
+              </div>
+
+              {/* Footer / Support Link */}
+              <div className="mt-auto flex items-end justify-between px-2 pb-2 w-full">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-bold text-[#1E1035]">Support@orbbion.com</span>
+                  <span className="text-[10px] font-medium text-slate-400">v.2.0</span>
+                </div>
+                <div className="w-8 h-8 bg-[#1E1035] rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-white font-serif italic text-sm font-bold">O</span>
+                </div>
+              </div>
+            </aside>
+          </>
         )}
       </div>
     </div>

@@ -82,7 +82,7 @@ const EyeIcon = forwardRef<EyeIconHandle, EyeIconProps>(
      eyeControls.start("blink");
      pupilControls.start("scan");
     } else {
-     onMouseEnter?.(e as any);
+     onMouseEnter?.(e as unknown as React.MouseEvent<HTMLDivElement>);
     }
    },
    [eyeControls, pupilControls, onMouseEnter, reduced, isAnimated],
@@ -94,7 +94,7 @@ const EyeIcon = forwardRef<EyeIconHandle, EyeIconProps>(
      eyeControls.start("open");
      pupilControls.start("center");
     } else {
-     onMouseLeave?.(e as any);
+     onMouseLeave?.(e as unknown as React.MouseEvent<HTMLDivElement>);
     }
    },
    [eyeControls, pupilControls, onMouseLeave],
