@@ -53,6 +53,27 @@ select {
 
 
 .bg-dot-pattern {
+  position: relative;
   background-image: radial-gradient(#E2E4EB 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+.bg-dot-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Flashlight glow using the brand's dark color or purple */
+  background: radial-gradient(
+    circle 80px at var(--mouse-x, -100px) var(--mouse-y, -100px),
+    #1E1035 0%,
+    transparent 100%
+  );
+  /* The exact same dot pattern for the mask */
+  mask-image: radial-gradient(#000 1px, transparent 1px);
+  -webkit-mask-image: radial-gradient(#000 1px, transparent 1px);
+  mask-size: 20px 20px;
+  -webkit-mask-size: 20px 20px;
+  pointer-events: none;
+  opacity: 0.6; /* Slight transparency for elegance */
+  z-index: 0;
 }

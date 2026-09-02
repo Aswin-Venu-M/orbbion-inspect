@@ -139,7 +139,14 @@ export default function HomeDashboard() {
       } else {
         setMediaFiles(prev => prev.map(m => m.id === id ? { ...m, progress: currentProgress } : m));
       }
-    }, 400); // Update every 400ms for a visible staggered upload effect
+    }, 500);
+  };
+
+  const handleAppMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
+    target.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+    target.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
   };
 
   const handleFiles = (files: FileList | null) => {
@@ -204,7 +211,10 @@ export default function HomeDashboard() {
   };
 
   return (
-    <div className={`h-screen bg-[#F8F9FB] bg-dot-pattern flex p-3 md:p-4 pl-3 md:pl-[106px] gap-4 overflow-hidden ${familjen.className}`}>
+    <div 
+      className={`h-screen bg-[#F8F9FB] bg-dot-pattern flex p-3 md:p-4 pl-3 md:pl-[106px] gap-4 overflow-hidden ${familjen.className}`}
+      onMouseMove={handleAppMouseMove}
+    >
       
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[76px] bg-white border-t border-slate-100 flex items-center justify-around px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-2">
