@@ -28,7 +28,7 @@ export function ReportPreview({ tyres, rims }: ReportPreviewProps) {
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-4 md:p-8 flex flex-col items-center gap-8 pb-24 relative">
+    <div className="w-full p-4 md:p-8 flex flex-col items-center gap-8 pb-24 relative">
       
       {/* PAGE 1: Cover Page */}
       <div id="preview-page-1" className="w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0">
