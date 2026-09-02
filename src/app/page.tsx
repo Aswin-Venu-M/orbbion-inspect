@@ -385,7 +385,7 @@ export default function HomeDashboard() {
         </header>
 
         {/* 3 Columns Layout or Preview */}
-        <div className="flex-1 flex flex-col xl:flex-row gap-4 overflow-y-auto xl:overflow-hidden pb-[90px] md:pb-4 xl:pb-0 custom-scrollbar">
+        <div className="flex-1 flex flex-col xl:flex-row gap-4 overflow-y-auto xl:overflow-hidden pb-[90px] md:pb-4 xl:pb-0 custom-scrollbar relative">
           
           {activeTab === 'edit' ? (
             <>
@@ -727,14 +727,14 @@ export default function HomeDashboard() {
               onScroll={handlePreviewScroll}
               className="flex-1 flex justify-center w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] xl:px-4 pb-10 xl:pb-0"
             >
-              <div style={{ zoom: zoomLevel / 100, width: '100%', display: 'flex', justifyContent: 'center', transition: 'zoom 0.2s ease-in-out' }}>
+              <div style={{ zoom: zoomLevel / 100, transition: 'zoom 0.2s ease-in-out' }} className="w-full max-w-[900px] flex justify-center">
                 <ReportPreview tyres={tyres} rims={rims} />
               </div>
             </div>
 
             {/* Right Sidebar for Preview Actions */}
-            <aside className="hidden xl:flex w-[320px] flex-col justify-between items-end h-full shrink-0 z-10 relative">
-              <div className="flex flex-col items-center bg-white rounded-[24px] shadow-sm border border-slate-100 p-4 w-[84px] gap-6 absolute top-1/2 -translate-y-1/2 right-4">
+            <aside className="hidden xl:block absolute inset-0 pointer-events-none z-10">
+              <div className="flex flex-col items-center bg-white rounded-[24px] shadow-sm border border-slate-100 p-4 w-[84px] gap-6 absolute top-1/2 -translate-y-1/2 right-4 pointer-events-auto">
                 <div className="flex flex-col items-center gap-3 w-full">
                   <button onClick={handlePrevPage} className="w-[42px] h-[42px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] transition-colors"><ChevronUp size={24} strokeWidth={2.5} /></button>
                   <div className="flex flex-col items-center gap-1">
@@ -754,14 +754,19 @@ export default function HomeDashboard() {
               </div>
 
               {/* Footer / Support Link */}
-              <div className="mt-auto flex items-end justify-between px-2 pb-2 w-full">
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-[#1E1035]">Support@orbbion.com</span>
-                  <span className="text-[10px] font-medium text-slate-400">v.2.0</span>
+              <div className="absolute bottom-6 right-6 flex items-center gap-4 pointer-events-auto">
+                <div className="flex flex-col items-start">
+                  <span className="text-[13px] font-bold text-[#0B205D]">Support@orbbion.com</span>
+                  <span className="text-[11px] font-semibold text-[#8F9BB3]">v.2.0</span>
                 </div>
-                <div className="w-8 h-8 bg-[#1E1035] rounded-xl flex items-center justify-center shadow-sm">
-                  <span className="text-white font-serif italic text-sm font-bold">O</span>
-                </div>
+                <button className="w-[42px] h-[42px] bg-[#180321] rounded-[14px] flex items-center justify-center shadow-md hover:bg-[#2A063B] transition-colors cursor-pointer">
+                  <span 
+                    className="text-white font-serif italic font-bold text-[20px] pr-[2px]" 
+                    style={{ textShadow: '-1px 0px 0px #FF453A, 1px 0px 0px #0A84FF' }}
+                  >
+                    O
+                  </span>
+                </button>
               </div>
             </aside>
           </>
