@@ -194,44 +194,44 @@ export default function HomeDashboard() {
       </nav>
 
       {/* 1. Icon Rail (Fixed Desktop) */}
-      <nav className="hidden md:flex fixed left-0 top-0 h-screen w-[90px] flex-col justify-between items-center px-4 py-6 z-50 bg-white shadow-sm border-r border-slate-100">
+      <nav className="hidden md:flex fixed left-0 top-0 h-screen w-[90px] flex-col justify-between items-center px-4 py-6 z-50 bg-white border-r border-slate-100">
         
-        {/* Top Group: Search + Home */}
-        <div className="flex flex-col justify-start items-center gap-4">
+        {/* Top Group: Search + Home + Gallery */}
+        <div className="flex flex-col justify-start items-center w-full">
           {/* Brand/App Icon (Search) */}
-          <button className="w-10 h-10 bg-[#008751] rounded-[10.41px] flex items-center justify-center shadow-sm relative hover:bg-[#007043] transition-colors">
+          <button className="w-[46px] h-[46px] bg-[#008751] rounded-[14px] flex items-center justify-center shadow-sm relative hover:bg-[#007043] transition-colors shrink-0">
             <Search size={22} strokeWidth={2.5} className="text-white transform -scale-x-100" />
             <CarFront size={11} strokeWidth={2.5} className="text-white absolute mt-[2px] ml-[2px]" />
           </button>
           
-          {/* Home */}
-          <button className="w-full flex flex-col justify-start items-center gap-1 group">
-            <div className="w-10 h-10 bg-[#F3F4F9] rounded-[10px] outline outline-1 outline-offset-[-1px] outline-[#CFD2DF] inline-flex justify-center items-center shadow-sm group-hover:bg-[#EAEAF2] transition-colors relative">
-              <Home size={24} fill="currentColor" strokeWidth={0} className="text-[#180321] opacity-60" />
-              <div className="absolute bottom-[8px] w-[8px] h-[10px] bg-[#F3F4F9] group-hover:bg-[#EAEAF2] transition-colors rounded-t-sm"></div>
-            </div>
-            <span className="text-center text-[#180321] opacity-80 text-xs font-normal">Home</span>
-          </button>
+          <div className="flex flex-col gap-6 w-full mt-8">
+            {/* Home */}
+            <button className="w-full flex flex-col justify-start items-center gap-1.5 group">
+              <div className="w-[46px] h-[46px] bg-[#F8F9FB] rounded-[14px] border border-[#E2E4EB] inline-flex justify-center items-center shadow-sm group-hover:bg-[#F3F4F6] transition-colors relative">
+                <Home size={22} fill="currentColor" strokeWidth={0} className="text-[#645A6C]" />
+              </div>
+              <span className="text-center text-[#463B4D] text-[11px] font-semibold">Home</span>
+            </button>
+
+            {/* Gallery */}
+            <button 
+              onClick={() => setIsGalleryOpen(!isGalleryOpen)}
+              className="w-full flex flex-col justify-start items-center gap-1.5 group cursor-pointer"
+            >
+              <div className={`w-[46px] h-[46px] bg-[#F8F9FB] rounded-[14px] border border-[#E2E4EB] inline-flex justify-center items-center shadow-sm transition-colors ${isGalleryOpen ? 'bg-[#F3F4F6] ring-2 ring-fuchsia-950/10' : 'group-hover:bg-[#F3F4F6]'}`}>
+                <div className="w-[26px] h-[26px] bg-[#180321] rounded-[8px] flex items-center justify-center overflow-hidden">
+                  <ImageIcon size={15} strokeWidth={2.5} className="text-white mt-1" />
+                </div>
+              </div>
+              <span className="text-center text-[#463B4D] text-[11px] font-semibold">Gallery</span>
+            </button>
+          </div>
         </div>
 
-        {/* Middle Group: Gallery */}
-        <button 
-          onClick={() => setIsGalleryOpen(!isGalleryOpen)}
-          className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
-        >
-          <div className="w-10 h-10 bg-gradient-to-tr from-black to-fuchsia-950 rounded-[40px] outline outline-1 outline-offset-[-1px] outline-slate-300 inline-flex justify-center items-center shadow-sm group-hover:opacity-90 transition-opacity">
-            <ImageIcon size={22} strokeWidth={2.5} className="text-white" />
-          </div>
-          <span className="text-center text-[#180321] text-xs font-normal">Gallery</span>
-        </button>
-
         {/* Bottom Group: Help */}
-        <button className="w-[34px] h-[34px] relative opacity-50 hover:opacity-100 transition-opacity flex items-center justify-center mb-2">
-          <div className="w-full h-full rounded-full bg-gradient-to-tr from-black to-fuchsia-950 flex items-center justify-center text-white text-[13px] font-bold shadow-sm">
-            ?
-          </div>
+        <button className="w-9 h-9 rounded-full bg-[#9CA3AF] hover:bg-[#85808B] transition-colors flex items-center justify-center text-white text-[15px] font-bold shadow-sm mb-2">
+          ?
         </button>
-
       </nav>
 
       {/* Main Workspace Area containing header + 3 columns */}
