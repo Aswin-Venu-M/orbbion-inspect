@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import React from 'react';
-import { Calendar, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Trash2, ImageOff } from 'lucide-react';
 import { InputField } from './input-field';
 
 export type InspectionDetailState = {
@@ -23,6 +23,25 @@ export const InspectionDetailCard = ({
   onChange,
   onImageClick
 }: InspectionDetailCardProps) => {
+  const [localComments, setLocalComments] = useState(data.comments);
+  const [imgError, setImgError] = useState(false);
+
+  // Sync local comments with props if it changes externally
+  useEffect(() => {
+    setLocalComments(data.comments);
+  }, [data.comments]);
+
+  // Reset img error if image changes
+  useEffect(() => {
+    setImgError(false);
+  }, [data.image?.url]);
+
+  const handleCommentBlur = () => {
+    if (localComments !== data.comments) {
+      onChange({ comments: localComments });
+    }
+  };
+
   return (
     <div className="bg-white rounded-[24px] border border-[#E5E7EB] p-5 flex flex-col md:flex-row gap-6 shadow-sm">
       <div className="flex-1 flex flex-col gap-4">
@@ -57,6 +76,9 @@ export const InspectionDetailCard = ({
           <InputField 
             label="Manufacturing Year" 
             placeholder="YYYY" 
+            type="number"
+            min="1900"
+            max={new Date().getFullYear()}
             rightIcon={<Calendar size={18} />} 
             value={data.year}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ year: e.target.value })}
@@ -64,8 +86,9 @@ export const InspectionDetailCard = ({
           <InputField 
             label="Comments" 
             placeholder="Enter comments" 
-            value={data.comments}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ comments: e.target.value })}
+            value={localComments}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalComments(e.target.value)}
+            onBlur={handleCommentBlur}
           />
         </div>
       </div>
@@ -77,7 +100,19 @@ export const InspectionDetailCard = ({
       >
         {data.image ? (
           <>
-            <img src={data.image.url} alt={title} className="w-full h-full object-cover" />
+            {imgError ? (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2 bg-slate-50">
+                <ImageOff size={24} />
+                <span className="text-xs font-medium">Image failed to load</span>
+              </div>
+            ) : (
+              <img 
+                src={data.image.url} 
+                alt={title} 
+                className="w-full h-full object-cover" 
+                onError={() => setImgError(true)}
+              />
+            )}
             
             {data.image.progress !== undefined && data.image.progress < 100 && (
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
