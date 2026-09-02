@@ -17,7 +17,7 @@ export const InputField = ({ label, required, placeholder, icon, rightIcon, righ
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full h-[46px] bg-[#F4F5F8] text-sm text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all ${
+        className={`w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] text-sm text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all ${
           icon ? "pl-11" : ""
         } ${rightIcon || rightText ? "pr-12" : ""}`}
       />
