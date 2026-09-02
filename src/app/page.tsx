@@ -371,15 +371,16 @@ export default function HomeDashboard() {
             </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-100 shadow-sm shrink-0 hidden sm:block">
-              <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="w-full h-full object-cover" />
+          <div className="flex items-center gap-[8px]">
+            <div className="hidden sm:flex border-2 border-[#92a2f6] p-[2px] rounded-full shrink-0 size-[42px] items-center justify-center">
+              <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="size-full object-cover rounded-full" />
             </div>
-            <button className="h-10 px-3 sm:px-5 bg-[#F4F5F8] rounded-[14px] text-[12px] sm:text-[13px] font-semibold text-[#310b4d] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-sm whitespace-nowrap">
-              Cancel <span className="hidden sm:inline">Report</span>
+            <button className="bg-[#f1f2f6] border border-[#cfd2e0] flex items-center justify-center px-4 sm:px-[32px] py-3 sm:py-[16px] rounded-[16px] text-[#3e045a] hover:bg-[#e4e5e9] transition-colors whitespace-nowrap">
+              <span className="font-medium text-[12px]">Cancel <span className="hidden sm:inline">Report</span></span>
             </button>
-            <button className="h-10 px-3 sm:px-5 bg-[#310b4d] rounded-[14px] text-[12px] sm:text-[13px] font-semibold text-white flex items-center gap-2 hover:bg-[#1f0730] transition-colors shadow-sm whitespace-nowrap">
-              Publish <FileText size={14} className="hidden sm:block" />
+            <button className="bg-[#3e045a] border border-[#cfd2e0] flex items-center justify-center gap-[8px] px-4 sm:px-[32px] py-3 sm:py-[16px] rounded-[16px] text-white hover:bg-[#2c0340] transition-colors whitespace-nowrap">
+              <span className="font-medium text-[12px]">Publish</span>
+              <FileText size={16} className="hidden sm:block" />
             </button>
           </div>
         </header>
