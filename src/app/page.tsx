@@ -17,6 +17,7 @@ import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
 import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
+import { ReportPreview } from '@/components/ui/report-preview';
 
 export default function HomeDashboard() {
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
@@ -337,11 +338,13 @@ export default function HomeDashboard() {
           </div>
         </header>
 
-        {/* 3 Columns Layout */}
+        {/* 3 Columns Layout or Preview */}
         <div className="flex-1 flex flex-col xl:flex-row gap-4 overflow-y-auto xl:overflow-hidden pb-[90px] md:pb-4 xl:pb-0 custom-scrollbar">
           
-          {/* 2. Media Drawer (Floating Card) */}
-          <div 
+          {activeTab === 'edit' ? (
+            <>
+              {/* 2. Media Drawer (Floating Card) */}
+              <div 
             className={`shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
               isGalleryOpen 
                 ? 'max-h-[600px] xl:max-h-none w-full xl:max-w-[310px] opacity-100' 
@@ -659,8 +662,13 @@ export default function HomeDashboard() {
                 <span className="text-white font-serif italic text-sm font-bold">O</span>
               </div>
             </div>
-          </aside>
-
+            </aside>
+            </>
+          ) : (
+            <div className="flex-1 w-full h-full overflow-hidden rounded-[24px]">
+              <ReportPreview tyres={tyres} rims={rims} />
+            </div>
+          )}
         </div>
       </div>
     </div>
