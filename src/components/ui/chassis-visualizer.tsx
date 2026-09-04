@@ -15,7 +15,7 @@ const getColor = (state: InspectionState) => {
   }
 };
 
-const ActionPopup = ({ onSelect, onClose, popupRef }: { onSelect: (s: InspectionState) => void, onClose: () => void, popupRef: React.RefObject<HTMLDivElement | null> }) => {
+const ActionPopup = ({ onSelect, onClose, popupRef }: { onSelect: (s: InspectionState) => void, onClose: () => void, popupRef?: React.RefObject<HTMLDivElement | null> | null }) => {
   // Add escape key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

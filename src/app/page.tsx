@@ -20,6 +20,7 @@ import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visu
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
 import { ReportPreview } from '@/components/ui/report-preview';
 import { InteriorExteriorSection } from '@/components/interior-exterior/interior-exterior-section';
+import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 export default function HomeDashboard() {
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
@@ -668,6 +669,9 @@ export default function HomeDashboard() {
                 <InspectionDetailCard title="Front Left (FL)" data={brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
                 <InspectionDetailCard title="Spare tyre (ST)" data={brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
               </div>
+
+              {/* Body Section */}
+              <BodySection />
 
               {/* Interior & Exterior Section */}
               <InteriorExteriorSection />
