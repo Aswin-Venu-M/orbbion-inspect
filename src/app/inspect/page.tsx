@@ -11,7 +11,7 @@ import {
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   CarFront, Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
-  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard
+  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
@@ -19,6 +19,13 @@ import { InputField } from '@/components/ui/input-field';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
+import { 
+  SectionTitlesCard, 
+  SectionId, 
+  DEFAULT_SECTION_ORDER, 
+  INSPECTION_SECTIONS_MAP 
+} from '@/components/ui/section-titles-card';
+import { InspectorSidebarTabs, SidebarTabId } from '@/components/ui/inspector-sidebar-tabs';
 import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
 import { ReportPreview } from '@/components/ui/report-preview';
@@ -57,9 +64,28 @@ export default function HomeDashboard() {
 
   // Tab & Gallery State
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('sections');
   const [isGalleryOpen, setIsGalleryOpen] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
+
+  // Section Order Interchangeable State
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('orbbion_section_order');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length === DEFAULT_SECTION_ORDER.length) {
+            return parsed;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return DEFAULT_SECTION_ORDER;
+  });
 
   // Preview Navigation & Zoom
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -82,6 +108,18 @@ export default function HomeDashboard() {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 3500);
   }, []);
+
+  const handleSectionOrderChange = useCallback((newOrder: SectionId[]) => {
+    setSectionOrder(newOrder);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('orbbion_section_order', JSON.stringify(newOrder));
+      } catch {
+        // ignore
+      }
+    }
+    showToast('Section order updated', 'success');
+  }, [showToast]);
 
   // Separate file inputs to prevent upload race conditions
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
@@ -467,6 +505,419 @@ export default function HomeDashboard() {
     s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const renderInspectionSection = (sectionId: SectionId) => {
+    switch (sectionId) {
+      case 'section-inspection-details':
+        return (
+          <div id="section-inspection-details" className="scroll-mt-6">
+            <ReusableSection title="Inspection Details">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <InputField 
+                  label="Date" 
+                  required 
+                  rightIcon={<Calendar size={18} />} 
+                  placeholder="DD-MM-YYYY"
+                  value={report.inspectionDetails.date}
+                  onChange={(e) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, date: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Time" 
+                  required 
+                  rightIcon={<Clock size={18} />} 
+                  placeholder="HH:MM" 
+                  value={report.inspectionDetails.time}
+                  onChange={(e) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, time: e.target.value }
+                  })}
+                />
+                <SelectField 
+                  label="Inspection Type" 
+                  required 
+                  placeholder="Select Inspection Type"
+                  options={inspectionTypeOptions}
+                  value={report.inspectionDetails.inspectionType}
+                  onChange={(e) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, inspectionType: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="VIN Number" 
+                  required 
+                  placeholder="Enter 17-digit VIN" 
+                  maxLength={17}
+                  value={report.inspectionDetails.vinNumber}
+                  onChange={(e) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, vinNumber: e.target.value.toUpperCase() }
+                  })}
+                />
+              </div>
+            </ReusableSection>
+          </div>
+        );
+
+      case 'section-vehicle-summary':
+        return (
+          <div id="section-vehicle-summary" className="scroll-mt-6">
+            <ReusableSection title="Vehicle Summary">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+                <InputField 
+                  label="Make" 
+                  placeholder="Enter Make (e.g. Toyota)" 
+                  value={report.vehicleSummary.make}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, make: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Model" 
+                  placeholder="Enter Model (e.g. Tundra)" 
+                  value={report.vehicleSummary.model}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, model: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Model Year" 
+                  placeholder="YYYY" 
+                  type="number"
+                  min="1900"
+                  max={new Date().getFullYear() + 1}
+                  rightIcon={<Calendar size={18} />} 
+                  value={report.vehicleSummary.year}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, year: e.target.value }
+                  })}
+                />
+                
+                <InputField 
+                  label="Regional Specs" 
+                  placeholder="GCC, American, Euro..." 
+                  rightIcon={<MapPin size={18} />} 
+                  value={report.vehicleSummary.regionalSpecs}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, regionalSpecs: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Transmission" 
+                  placeholder="Automatic, Manual..." 
+                  value={report.vehicleSummary.transmission}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, transmission: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Engine Size" 
+                  placeholder="3.5L V6, 2.0L Turbo..." 
+                  value={report.vehicleSummary.engineSize}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, engineSize: e.target.value }
+                  })}
+                />
+                
+                <SelectField 
+                  label="Odometer Status" 
+                  placeholder="Select Odometer Status" 
+                  options={odometerStatusOptions}
+                  value={report.vehicleSummary.odometerStatus}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, odometerStatus: e.target.value }
+                  })}
+                />
+
+                {/* Spare Type Toggle */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-[#1E1035]">Spare Type</label>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => updateReport({
+                        vehicleSummary: { ...report.vehicleSummary, spareType: 'available' }
+                      })}
+                      className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
+                        report.vehicleSummary.spareType === 'available'
+                          ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
+                          : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
+                      }`}
+                    >
+                      Available
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => updateReport({
+                        vehicleSummary: { ...report.vehicleSummary, spareType: 'not-available' }
+                      })}
+                      className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
+                        report.vehicleSummary.spareType === 'not-available'
+                          ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
+                          : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
+                      }`}
+                    >
+                      Not-Available
+                    </button>
+                  </div>
+                </div>
+
+                {/* Number of Keys with Stepper */}
+                <InputField 
+                  label="Number of Keys" 
+                  placeholder="Number of Keys" 
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={report.vehicleSummary.numberOfKeys}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, numberOfKeys: Number(e.target.value) || 0 }
+                  })}
+                  rightIcon={
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5">
+                        <ChevronUp size={12} strokeWidth={3} />
+                      </button>
+                      <button type="button" onClick={decrementKeys} className="hover:text-[#1E1035] p-0.5">
+                        <ChevronDown size={12} strokeWidth={3} />
+                      </button>
+                    </div>
+                  } 
+                />
+
+                <InputField 
+                  label="Vehicle Type" 
+                  placeholder="SUV, Truck, Sedan, Coupe..." 
+                  value={report.vehicleSummary.vehicleType}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, vehicleType: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="External Colour" 
+                  placeholder="Grey, White, Black..." 
+                  value={report.vehicleSummary.externalColour}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, externalColour: e.target.value }
+                  })}
+                />
+                <InputField 
+                  label="Fuel Type" 
+                  placeholder="Petrol, Diesel, Hybrid, EV..." 
+                  value={report.vehicleSummary.fuelType}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, fuelType: e.target.value }
+                  })}
+                />
+                
+                <InputField 
+                  label="Odometer Reading" 
+                  placeholder="Current mileage" 
+                  value={report.vehicleSummary.odometerReading}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, odometerReading: e.target.value }
+                  })}
+                  rightText={
+                    <button 
+                      type="button" 
+                      onClick={toggleOdometerUnit}
+                      className="font-bold hover:underline cursor-pointer flex items-center gap-1"
+                      title="Toggle between KM and Miles"
+                    >
+                      <span className={report.vehicleSummary.odometerUnit === 'KM' ? 'text-[#9723FF]' : 'text-slate-400'}>KM</span>
+                      <span>/</span>
+                      <span className={report.vehicleSummary.odometerUnit === 'Miles' ? 'text-[#9723FF]' : 'text-slate-400'}>Miles</span>
+                    </button>
+                  } 
+                />
+                <InputField 
+                  label="Tampered Odometer Reading" 
+                  placeholder="Reported tampered reading" 
+                  value={report.vehicleSummary.tamperedReading}
+                  onChange={(e) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, tamperedReading: e.target.value }
+                  })}
+                  rightText={
+                    <span className="font-bold text-slate-500">
+                      {report.vehicleSummary.odometerUnit}
+                    </span>
+                  } 
+                />
+              </div>
+            </ReusableSection>
+          </div>
+        );
+
+      case 'section-report-overview':
+        return (
+          <div id="section-report-overview" className="scroll-mt-6">
+            <ReusableSection title="Report Overview" className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="w-full sm:w-1/3 flex flex-col gap-4">
+                <InputField 
+                  label="Pass Percentage" 
+                  placeholder="e.g. 55" 
+                  type="number"
+                  min="0"
+                  max="100"
+                  rightText="%" 
+                  value={report.reportOverview.pass}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const num = Math.min(100, Math.max(0, Number(val) || 0));
+                    updateReport({
+                      reportOverview: {
+                        ...report.reportOverview,
+                        pass: String(num),
+                        fail: String(100 - num),
+                        autoCalculate: false,
+                      },
+                    });
+                  }}
+                />
+                <InputField 
+                  label="Defects / Fail Percentage" 
+                  placeholder="e.g. 45" 
+                  type="number"
+                  min="0"
+                  max="100"
+                  rightText="%" 
+                  value={report.reportOverview.fail}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const num = Math.min(100, Math.max(0, Number(val) || 0));
+                    updateReport({
+                      reportOverview: {
+                        ...report.reportOverview,
+                        fail: String(num),
+                        pass: String(100 - num),
+                        autoCalculate: false,
+                      },
+                    });
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => updateReport({
+                    reportOverview: {
+                      ...report.reportOverview,
+                      autoCalculate: true,
+                      pass: String(calculatedStats.pass),
+                      fail: String(calculatedStats.fail),
+                    },
+                  })}
+                  className="text-xs font-semibold text-[#9723FF] hover:underline flex items-center gap-1 w-fit"
+                >
+                  <Sparkles size={13} />
+                  Auto-calculate from points
+                </button>
+              </div>
+
+              {/* Real Dynamic Conic-Gradient Pie Chart */}
+              <div className="w-full sm:w-1/3 flex flex-col items-center justify-center py-4">
+                <div 
+                  className="w-[130px] h-[130px] rounded-full shadow-md border-4 border-white transition-all duration-500" 
+                  style={{
+                    background: `conic-gradient(#5BC335 0% ${report.reportOverview.pass}%, #FE8E4B ${report.reportOverview.pass}% 100%)`
+                  }}
+                />
+                <div className="flex items-center gap-4 mt-3 text-xs font-bold">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#5BC335]" />
+                    <span>Pass {report.reportOverview.pass}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#FE8E4B]" />
+                    <span>Defects {report.reportOverview.fail}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full sm:w-1/3 text-xs text-slate-500 leading-relaxed bg-[#F8FAFC] p-4 rounded-2xl border border-slate-100">
+                <span className="font-bold text-[#1E1035] block mb-1">Inspection Formula</span>
+                Scores are calculated across chassis, tyres, rims, brakes, and electrical subsystems. Green represents safe parameters; orange indicates repairs or defects required.
+              </div>
+            </ReusableSection>
+          </div>
+        );
+
+      case 'section-tyres':
+        return (
+          <div id="section-tyres" className="flex flex-col gap-4 scroll-mt-6">
+            <ReusableSection title="Tyres" className="pb-8">
+              <ChassisVisualizer items={report.tyres} setItemStatus={setTyreStatus} />
+            </ReusableSection>
+            <div className="flex flex-col gap-4">
+              <InspectionDetailCard title="Rear Right (RR)" data={report.tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
+              <InspectionDetailCard title="Rear Left (RL)" data={report.tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
+              <InspectionDetailCard title="Front Right (FR)" data={report.tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
+              <InspectionDetailCard title="Front Left (FL)" data={report.tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
+              <InspectionDetailCard title="Spare tyre (ST)" data={report.tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
+            </div>
+          </div>
+        );
+
+      case 'section-rims':
+        return (
+          <div id="section-rims" className="flex flex-col gap-4 scroll-mt-6">
+            <ReusableSection title="Rims" className="pb-8">
+              <ChassisVisualizer items={report.rims} setItemStatus={setRimStatus} />
+            </ReusableSection>
+            <div className="flex flex-col gap-4">
+              <InspectionDetailCard title="Rear Right (RR)" data={report.rims.RR} onChange={(d) => updateRimData('RR', d)} onImageClick={() => handleRimImageClick('RR')} />
+              <InspectionDetailCard title="Rear Left (RL)" data={report.rims.RL} onChange={(d) => updateRimData('RL', d)} onImageClick={() => handleRimImageClick('RL')} />
+              <InspectionDetailCard title="Front Right (FR)" data={report.rims.FR} onChange={(d) => updateRimData('FR', d)} onImageClick={() => handleRimImageClick('FR')} />
+              <InspectionDetailCard title="Front Left (FL)" data={report.rims.FL} onChange={(d) => updateRimData('FL', d)} onImageClick={() => handleRimImageClick('FL')} />
+              <InspectionDetailCard title="Spare tyre (ST)" data={report.rims.ST} onChange={(d) => updateRimData('ST', d)} onImageClick={() => handleRimImageClick('ST')} />
+            </div>
+          </div>
+        );
+
+      case 'section-brakes':
+        return (
+          <div id="section-brakes" className="flex flex-col gap-4 scroll-mt-6">
+            <ReusableSection title="Brakes" className="pb-8">
+              <ChassisVisualizer items={report.brakes} setItemStatus={setBrakeStatus} />
+            </ReusableSection>
+            <div className="flex flex-col gap-4">
+              <InspectionDetailCard title="Rear Right (RR)" data={report.brakes.RR} onChange={(d) => updateBrakeData('RR', d)} onImageClick={() => handleBrakeImageClick('RR')} />
+              <InspectionDetailCard title="Rear Left (RL)" data={report.brakes.RL} onChange={(d) => updateBrakeData('RL', d)} onImageClick={() => handleBrakeImageClick('RL')} />
+              <InspectionDetailCard title="Front Right (FR)" data={report.brakes.FR} onChange={(d) => updateBrakeData('FR', d)} onImageClick={() => handleBrakeImageClick('FR')} />
+              <InspectionDetailCard title="Front Left (FL)" data={report.brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
+              <InspectionDetailCard title="Spare tyre (ST)" data={report.brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
+            </div>
+          </div>
+        );
+
+      case 'section-body':
+        return (
+          <div key="section-body" className="scroll-mt-6">
+            <BodySection 
+              initialComments={report.bodyComments}
+              onCommentsChange={(c) => updateReport({ bodyComments: c }, false)}
+            />
+          </div>
+        );
+
+      case 'section-interior-exterior':
+        return (
+          <div key="section-interior-exterior" className="scroll-mt-6">
+            <InteriorExteriorSection 
+              initialComments={report.interiorComments}
+              onCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+            />
+          </div>
+        );
+
+      case 'section-electrical':
+        return (
+          <div key="section-electrical" className="scroll-mt-6">
+            <ElectricalSection />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div 
@@ -884,487 +1335,37 @@ export default function HomeDashboard() {
               {/* 3. Main Content Canvas */}
               <main className="flex-1 flex flex-col overflow-visible xl:overflow-hidden min-w-0 xl:min-w-[500px]">
                 <div className="flex-1 overflow-visible xl:overflow-y-auto custom-scrollbar xl:pr-3 xl:pb-6 space-y-6">
-                  
-                  {/* Inspection Details Section */}
-                  <div id="section-inspection-details">
-                    <ReusableSection title="Inspection Details">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <InputField 
-                          label="Date" 
-                          required 
-                          rightIcon={<Calendar size={18} />} 
-                          placeholder="DD-MM-YYYY"
-                          value={report.inspectionDetails.date}
-                          onChange={(e) => updateReport({
-                            inspectionDetails: { ...report.inspectionDetails, date: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Time" 
-                          required 
-                          rightIcon={<Clock size={18} />} 
-                          placeholder="HH:MM" 
-                          value={report.inspectionDetails.time}
-                          onChange={(e) => updateReport({
-                            inspectionDetails: { ...report.inspectionDetails, time: e.target.value }
-                          })}
-                        />
-                        <SelectField 
-                          label="Inspection Type" 
-                          required 
-                          placeholder="Select Inspection Type"
-                          options={inspectionTypeOptions}
-                          value={report.inspectionDetails.inspectionType}
-                          onChange={(e) => updateReport({
-                            inspectionDetails: { ...report.inspectionDetails, inspectionType: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="VIN Number" 
-                          required 
-                          placeholder="Enter 17-digit VIN" 
-                          maxLength={17}
-                          value={report.inspectionDetails.vinNumber}
-                          onChange={(e) => updateReport({
-                            inspectionDetails: { ...report.inspectionDetails, vinNumber: e.target.value.toUpperCase() }
-                          })}
-                        />
-                      </div>
-                    </ReusableSection>
-                  </div>
-
-                  {/* Vehicle Summary Section */}
-                  <div id="section-vehicle-summary">
-                    <ReusableSection title="Vehicle Summary">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
-                        <InputField 
-                          label="Make" 
-                          placeholder="Enter Make (e.g. Toyota)" 
-                          value={report.vehicleSummary.make}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, make: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Model" 
-                          placeholder="Enter Model (e.g. Tundra)" 
-                          value={report.vehicleSummary.model}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, model: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Model Year" 
-                          placeholder="YYYY" 
-                          type="number"
-                          min="1900"
-                          max={new Date().getFullYear() + 1}
-                          rightIcon={<Calendar size={18} />} 
-                          value={report.vehicleSummary.year}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, year: e.target.value }
-                          })}
-                        />
-                        
-                        <InputField 
-                          label="Regional Specs" 
-                          placeholder="GCC, American, Euro..." 
-                          rightIcon={<MapPin size={18} />} 
-                          value={report.vehicleSummary.regionalSpecs}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, regionalSpecs: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Transmission" 
-                          placeholder="Automatic, Manual..." 
-                          value={report.vehicleSummary.transmission}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, transmission: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Engine Size" 
-                          placeholder="3.5L V6, 2.0L Turbo..." 
-                          value={report.vehicleSummary.engineSize}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, engineSize: e.target.value }
-                          })}
-                        />
-                        
-                        <SelectField 
-                          label="Odometer Status" 
-                          placeholder="Select Odometer Status" 
-                          options={odometerStatusOptions}
-                          value={report.vehicleSummary.odometerStatus}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, odometerStatus: e.target.value }
-                          })}
-                        />
-
-                        {/* Spare Type Toggle */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-semibold text-[#1E1035]">Spare Type</label>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              type="button"
-                              onClick={() => updateReport({
-                                vehicleSummary: { ...report.vehicleSummary, spareType: 'available' }
-                              })}
-                              className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
-                                report.vehicleSummary.spareType === 'available'
-                                  ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
-                                  : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
-                              }`}
-                            >
-                              Available
-                            </button>
-                            <button 
-                              type="button"
-                              onClick={() => updateReport({
-                                vehicleSummary: { ...report.vehicleSummary, spareType: 'not-available' }
-                              })}
-                              className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
-                                report.vehicleSummary.spareType === 'not-available'
-                                  ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
-                                  : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
-                              }`}
-                            >
-                              Not-Available
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Number of Keys with Stepper */}
-                        <InputField 
-                          label="Number of Keys" 
-                          placeholder="Number of Keys" 
-                          type="number"
-                          min="0"
-                          max="10"
-                          value={report.vehicleSummary.numberOfKeys}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, numberOfKeys: Number(e.target.value) || 0 }
-                          })}
-                          rightIcon={
-                            <div className="flex flex-col items-center justify-center text-slate-400">
-                              <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5">
-                                <ChevronUp size={12} strokeWidth={3} />
-                              </button>
-                              <button type="button" onClick={decrementKeys} className="hover:text-[#1E1035] p-0.5">
-                                <ChevronDown size={12} strokeWidth={3} />
-                              </button>
-                            </div>
-                          } 
-                        />
-
-                        <InputField 
-                          label="Vehicle Type" 
-                          placeholder="SUV, Truck, Sedan, Coupe..." 
-                          value={report.vehicleSummary.vehicleType}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, vehicleType: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="External Colour" 
-                          placeholder="Grey, White, Black..." 
-                          value={report.vehicleSummary.externalColour}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, externalColour: e.target.value }
-                          })}
-                        />
-                        <InputField 
-                          label="Fuel Type" 
-                          placeholder="Petrol, Diesel, Hybrid, EV..." 
-                          value={report.vehicleSummary.fuelType}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, fuelType: e.target.value }
-                          })}
-                        />
-                        
-                        <InputField 
-                          label="Odometer Reading" 
-                          placeholder="Current mileage" 
-                          value={report.vehicleSummary.odometerReading}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, odometerReading: e.target.value }
-                          })}
-                          rightText={
-                            <button 
-                              type="button" 
-                              onClick={toggleOdometerUnit}
-                              className="font-bold hover:underline cursor-pointer flex items-center gap-1"
-                              title="Toggle between KM and Miles"
-                            >
-                              <span className={report.vehicleSummary.odometerUnit === 'KM' ? 'text-[#9723FF]' : 'text-slate-400'}>KM</span>
-                              <span>/</span>
-                              <span className={report.vehicleSummary.odometerUnit === 'Miles' ? 'text-[#9723FF]' : 'text-slate-400'}>Miles</span>
-                            </button>
-                          } 
-                        />
-                        <InputField 
-                          label="Tampered Odometer Reading" 
-                          placeholder="Reported tampered reading" 
-                          value={report.vehicleSummary.tamperedReading}
-                          onChange={(e) => updateReport({
-                            vehicleSummary: { ...report.vehicleSummary, tamperedReading: e.target.value }
-                          })}
-                          rightText={
-                            <span className="font-bold text-slate-500">
-                              {report.vehicleSummary.odometerUnit}
-                            </span>
-                          } 
-                        />
-                      </div>
-                    </ReusableSection>
-                  </div>
-
-                  {/* Report Overview Section with Dynamic Pie Chart */}
-                  <div id="section-report-overview">
-                    <ReusableSection title="Report Overview" className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                      <div className="w-full sm:w-1/3 flex flex-col gap-4">
-                        <InputField 
-                          label="Pass Percentage" 
-                          placeholder="e.g. 55" 
-                          type="number"
-                          min="0"
-                          max="100"
-                          rightText="%" 
-                          value={report.reportOverview.pass}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const num = Math.min(100, Math.max(0, Number(val) || 0));
-                            updateReport({
-                              reportOverview: {
-                                ...report.reportOverview,
-                                pass: String(num),
-                                fail: String(100 - num),
-                                autoCalculate: false,
-                              },
-                            });
-                          }}
-                        />
-                        <InputField 
-                          label="Defects / Fail Percentage" 
-                          placeholder="e.g. 45" 
-                          type="number"
-                          min="0"
-                          max="100"
-                          rightText="%" 
-                          value={report.reportOverview.fail}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const num = Math.min(100, Math.max(0, Number(val) || 0));
-                            updateReport({
-                              reportOverview: {
-                                ...report.reportOverview,
-                                fail: String(num),
-                                pass: String(100 - num),
-                                autoCalculate: false,
-                              },
-                            });
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateReport({
-                            reportOverview: {
-                              ...report.reportOverview,
-                              autoCalculate: true,
-                              pass: String(calculatedStats.pass),
-                              fail: String(calculatedStats.fail),
-                            },
-                          })}
-                          className="text-xs font-semibold text-[#9723FF] hover:underline flex items-center gap-1 w-fit"
-                        >
-                          <Sparkles size={13} />
-                          Auto-calculate from points
-                        </button>
-                      </div>
-
-                      {/* Real Dynamic Conic-Gradient Pie Chart */}
-                      <div className="w-full sm:w-1/3 flex flex-col items-center justify-center py-4">
-                        <div 
-                          className="w-[130px] h-[130px] rounded-full shadow-md border-4 border-white transition-all duration-500" 
-                          style={{
-                            background: `conic-gradient(#5BC335 0% ${report.reportOverview.pass}%, #FE8E4B ${report.reportOverview.pass}% 100%)`
-                          }}
-                        />
-                        <div className="flex items-center gap-4 mt-3 text-xs font-bold">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-[#5BC335]" />
-                            <span>Pass {report.reportOverview.pass}%</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-[#FE8E4B]" />
-                            <span>Defects {report.reportOverview.fail}%</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="w-full sm:w-1/3 text-xs text-slate-500 leading-relaxed bg-[#F8FAFC] p-4 rounded-2xl border border-slate-100">
-                        <span className="font-bold text-[#1E1035] block mb-1">Inspection Formula</span>
-                        Scores are calculated across chassis, tyres, rims, brakes, and electrical subsystems. Green represents safe parameters; orange indicates repairs or defects required.
-                      </div>
-                    </ReusableSection>
-                  </div>
-                  
-                  {/* Tyres Section */}
-                  <div id="section-tyres">
-                    <ReusableSection title="Tyres" className="pb-8">
-                      <ChassisVisualizer items={report.tyres} setItemStatus={setTyreStatus} />
-                    </ReusableSection>
-                  </div>
-
-                  {/* Tyre Details Section */}
-                  <div className="flex flex-col gap-4">
-                    <InspectionDetailCard title="Rear Right (RR)" data={report.tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
-                    <InspectionDetailCard title="Rear Left (RL)" data={report.tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
-                    <InspectionDetailCard title="Front Right (FR)" data={report.tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
-                    <InspectionDetailCard title="Front Left (FL)" data={report.tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
-                    <InspectionDetailCard title="Spare tyre (ST)" data={report.tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
-                  </div>
-
-                  {/* Rims Section */}
-                  <div id="section-rims">
-                    <ReusableSection title="Rims" className="pb-8 mt-8">
-                      <ChassisVisualizer items={report.rims} setItemStatus={setRimStatus} />
-                    </ReusableSection>
-                  </div>
-
-                  {/* Rim Details Section */}
-                  <div className="flex flex-col gap-4">
-                    <InspectionDetailCard title="Rear Right (RR)" data={report.rims.RR} onChange={(d) => updateRimData('RR', d)} onImageClick={() => handleRimImageClick('RR')} />
-                    <InspectionDetailCard title="Rear Left (RL)" data={report.rims.RL} onChange={(d) => updateRimData('RL', d)} onImageClick={() => handleRimImageClick('RL')} />
-                    <InspectionDetailCard title="Front Right (FR)" data={report.rims.FR} onChange={(d) => updateRimData('FR', d)} onImageClick={() => handleRimImageClick('FR')} />
-                    <InspectionDetailCard title="Front Left (FL)" data={report.rims.FL} onChange={(d) => updateRimData('FL', d)} onImageClick={() => handleRimImageClick('FL')} />
-                    <InspectionDetailCard title="Spare tyre (ST)" data={report.rims.ST} onChange={(d) => updateRimData('ST', d)} onImageClick={() => handleRimImageClick('ST')} />
-                  </div>
-
-                  {/* Brakes Section */}
-                  <div id="section-brakes">
-                    <ReusableSection title="Brakes" className="pb-8 mt-8">
-                      <ChassisVisualizer items={report.brakes} setItemStatus={setBrakeStatus} />
-                    </ReusableSection>
-                  </div>
-
-                  {/* Brake Details Section */}
-                  <div className="flex flex-col gap-4">
-                    <InspectionDetailCard title="Rear Right (RR)" data={report.brakes.RR} onChange={(d) => updateBrakeData('RR', d)} onImageClick={() => handleBrakeImageClick('RR')} />
-                    <InspectionDetailCard title="Rear Left (RL)" data={report.brakes.RL} onChange={(d) => updateBrakeData('RL', d)} onImageClick={() => handleBrakeImageClick('RL')} />
-                    <InspectionDetailCard title="Front Right (FR)" data={report.brakes.FR} onChange={(d) => updateBrakeData('FR', d)} onImageClick={() => handleBrakeImageClick('FR')} />
-                    <InspectionDetailCard title="Front Left (FL)" data={report.brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
-                    <InspectionDetailCard title="Spare tyre (ST)" data={report.brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
-                  </div>
-
-                  {/* Body Section */}
-                  <BodySection 
-                    initialComments={report.bodyComments}
-                    onCommentsChange={(c) => updateReport({ bodyComments: c }, false)}
-                  />
-
-                  {/* Interior & Exterior Section */}
-                  <InteriorExteriorSection 
-                    initialComments={report.interiorComments}
-                    onCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
-                  />
-
-                  {/* Electrical Section */}
-                  <ElectricalSection />
+                  {/* Dynamic Interchangeable Inspection Sections */}
+                  {sectionOrder.map((secId) => (
+                    <div key={secId} className="transition-all duration-300">
+                      {renderInspectionSection(secId)}
+                    </div>
+                  ))}
                   
                 </div>
               </main>
 
-              {/* 4. Right Sidebar Container */}
+              {/* 4. Right Sidebar Container with Segmented Tabs */}
               <aside 
-                id="section-client-details"
-                className="w-full xl:w-[320px] flex flex-col gap-4 h-auto xl:h-full overflow-visible xl:overflow-y-auto custom-scrollbar shrink-0 z-10 pb-20"
+                id="sidebar-inspector-controls"
+                className="w-full xl:w-[336px] flex flex-col gap-4 h-auto xl:h-full overflow-visible xl:overflow-y-auto custom-scrollbar shrink-0 z-10 pb-20 xl:pb-0"
               >
-                {/* Box 1: Add Client Details */}
-                <SidebarCard title="Add Client Details" description="Client's contact information to associate them with this report">
-                  <InputField 
-                    label="Client Name" 
-                    placeholder="Enter Client Name" 
-                    icon={<User size={16} fill="currentColor" strokeWidth={0} />} 
-                    value={report.clientDetails.name}
-                    onChange={(e) => updateReport({
-                      clientDetails: { ...report.clientDetails, name: e.target.value }
-                    })}
-                  />
-                  
-                  {/* WhatsApp Number with Country Code Dropdown */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1E1035]">WhatsApp Number</label>
-                    <div className="relative flex items-center w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-3 focus-within:ring-2 focus-within:ring-[#1E1035]/20 transition-all">
-                      <div className="flex items-center gap-1 pr-1.5 border-r border-slate-200">
-                        <select
-                          value={report.clientDetails.countryCode}
-                          onChange={(e) => updateReport({
-                            clientDetails: { ...report.clientDetails, countryCode: e.target.value }
-                          })}
-                          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer"
-                        >
-                          {countryCodeOptions.map(c => (
-                            <option key={c.value} value={c.value}>{c.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <input 
-                        type="tel" 
-                        placeholder="54 409 3009" 
-                        value={report.clientDetails.whatsappNumber}
-                        onChange={(e) => updateReport({
-                          clientDetails: { ...report.clientDetails, whatsappNumber: e.target.value }
-                        })}
-                        className="flex-1 min-w-0 bg-transparent text-sm text-[#190933] placeholder-slate-400 pl-2 focus:outline-none" 
-                      />
-                    </div>
-                  </div>
-                  
-                  <InputField 
-                    label="Email Address" 
-                    placeholder="client@example.com" 
-                    type="email"
-                    icon={<Eye size={16} fill="currentColor" strokeWidth={0} />} 
-                    value={report.clientDetails.email}
-                    onChange={(e) => updateReport({
-                      clientDetails: { ...report.clientDetails, email: e.target.value }
-                    })}
-                  />
-                  <InputField 
-                    label="Vehicle Details" 
-                    placeholder="2025 Toyota Tundra TRD Pro" 
-                    value={report.clientDetails.vehicleDetails}
-                    onChange={(e) => updateReport({
-                      clientDetails: { ...report.clientDetails, vehicleDetails: e.target.value }
-                    })}
-                  />
-                  <SelectField 
-                    label="Location" 
-                    placeholder="Select Location" 
-                    options={locationOptions}
-                    icon={<MapPin size={16} fill="currentColor" strokeWidth={0} />} 
-                    value={report.clientDetails.location}
-                    onChange={(e) => updateReport({
-                      clientDetails: { ...report.clientDetails, location: e.target.value }
-                    })}
-                  />
-                </SidebarCard>
-                
-                {/* Box 2: Our Team */}
-                <SidebarCard title="Our Team" description="Details related to our inspection team">
-                  <SelectField 
-                    label="Inspector" 
-                    placeholder="Select Inspector" 
-                    options={inspectorOptions}
-                    icon={<User size={16} />} 
-                    value={report.teamDetails.inspector}
-                    onChange={(e) => updateReport({
-                      teamDetails: { inspector: e.target.value }
-                    })}
-                  />
-                </SidebarCard>
+                <InspectorSidebarTabs 
+                  activeTab={activeSidebarTab}
+                  onTabChange={setActiveSidebarTab}
+                  sectionOrder={sectionOrder}
+                  onSectionOrderChange={handleSectionOrderChange}
+                  report={report}
+                  onUpdateClientDetails={(details) => updateReport({
+                    clientDetails: { ...report.clientDetails, ...details }
+                  })}
+                  onUpdateTeamDetails={(details) => updateReport({
+                    teamDetails: { ...report.teamDetails, ...details }
+                  })}
+                  countryCodeOptions={countryCodeOptions}
+                  locationOptions={locationOptions}
+                  inspectorOptions={inspectorOptions}
+                />
               </aside>
             </>
           ) : (
@@ -1649,6 +1650,7 @@ export default function HomeDashboard() {
                   type="button"
                   onClick={() => {
                     resetReport(initialReportData);
+                    handleSectionOrderChange(DEFAULT_SECTION_ORDER);
                     setIsResetConfirmOpen(false);
                     showToast('Report reset to clean defaults', 'info');
                   }}
