@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 
@@ -10,35 +11,16 @@ interface ImageUploadBoxProps {
 export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({ status, progress, url }) => {
   if (status === 'empty') {
     return (
-      <div className="w-full aspect-[4/3] bg-[#F4F5F8] rounded-[16px] border border-[#E2E4EB] flex flex-col items-center justify-center cursor-pointer hover:bg-[#EDEFF4] transition-colors relative">
-        <div className="relative mb-4 flex items-center justify-center h-[54px] w-full">
-           {/* Card -2 (Far Left) */}
-           <div className="absolute w-[44px] h-[40px] bg-white/40 rounded-xl shadow-sm -ml-[56px] border border-white/50"></div>
-           {/* Card -1 (Left) */}
-           <div className="absolute w-[52px] h-[46px] bg-white/70 rounded-xl shadow-sm -ml-[28px] border border-white/80"></div>
-           {/* Card +2 (Far Right) */}
-           <div className="absolute w-[44px] h-[40px] bg-white/40 rounded-xl shadow-sm ml-[56px] border border-white/50"></div>
-           {/* Card +1 (Right) */}
-           <div className="absolute w-[52px] h-[46px] bg-white/70 rounded-xl shadow-sm ml-[28px] border border-white/80"></div>
-           
-           {/* Center Card */}
-           <div className="absolute w-[64px] h-[54px] bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-slate-50 flex flex-col items-center justify-start p-1.5 z-10">
-             <div className="w-full flex-1 bg-[#F4F5F8] rounded-lg overflow-hidden relative mb-1">
-               <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#CFD2DF] rounded-full"></div>
-               <svg className="absolute bottom-0 w-full h-[18px] text-[#CFD2DF]" viewBox="0 0 40 18" preserveAspectRatio="none" fill="currentColor">
-                 <path d="M0,18 L12,6 L20,13 L32,0 L40,18 Z" />
-               </svg>
-             </div>
-             <div className="flex items-center justify-center gap-1 w-full pb-0.5">
-               <div className="w-1.5 h-0.5 bg-[#E2E4EB] rounded-full"></div>
-               <div className="w-1.5 h-0.5 bg-[#E2E4EB] rounded-full"></div>
-               <div className="w-1.5 h-0.5 bg-[#E2E4EB] rounded-full"></div>
-             </div>
-           </div>
-        </div>
-        <span className="text-[12px] font-medium text-[#74768B] text-center px-4 leading-[1.5]">
-          Drag & drop, or <br/><span className="text-[#5368FF] font-bold underline">click to add</span> images
-        </span>
+      <div className="w-full aspect-[4/3] bg-[#F4F5F8] rounded-[20px] border border-[#E2E4EB] flex flex-col items-center justify-center cursor-pointer hover:bg-[#EDEFF4] transition-colors relative p-4 group">
+        <img
+          src="/assets/img-drop.png"
+          alt="Drag and drop illustration"
+          className="w-[90px] h-auto object-contain mb-3 select-none pointer-events-none transition-transform duration-200 group-hover:scale-105"
+        />
+        <p className="text-[12px] font-medium text-[#74768B] text-center leading-[1.5] select-none">
+          Drag &amp; drop, or <br/>
+          <span className="text-[#5368FF] font-semibold underline">click to add</span> images
+        </p>
       </div>
     );
   }

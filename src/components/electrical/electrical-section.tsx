@@ -7,37 +7,10 @@ import { GeneralCommentsCard } from '../ui/general-comments-card';
 import { HeadingCard } from '../ui/heading-card';
 import { AddHeadlineButton } from '../ui/add-headline-button';
 import { CheckCircle2, RotateCcw } from 'lucide-react';
+import { ELECTRICAL_INSPECTION_ITEMS } from '@/constants/inspection-points';
 
 export function ElectricalSection() {
-  const items = [
-    'Gear Lever',
-    'Doors',
-    'Rear Windscreen',
-    'Steering',
-    'Key',
-    'Infotainment',
-    'Windows Operation',
-    'Seats Adjustment',
-    'Door Lock',
-    'A/C Control & Cooling',
-    'Cameras',
-    'Gauges',
-    'Rear View / Side Mirror',
-    'A/C Grilles',
-    'Ignition System',
-    'Brake Lights',
-    'Headlights',
-    'Fog Lights',
-    'Reverse Lights',
-    'Number Plate Lights',
-    'Indicators & Hazards',
-    'Wipers',
-    'Soft Closing Doors',
-    'Interior Lights',
-    'Cruise Control',
-    'Horn',
-    'Parking Sensors',
-  ];
+  const items = ELECTRICAL_INSPECTION_ITEMS;
 
   // Key to force reset / re-render if "Mark All" is clicked
   const [bulkStatus, setBulkStatus] = useState<'pass' | 'fail' | 'weak' | null>(null);

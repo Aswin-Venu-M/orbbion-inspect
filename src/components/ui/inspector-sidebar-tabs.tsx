@@ -19,7 +19,7 @@ import {
   SectionId, 
   DEFAULT_SECTION_ORDER, 
   getSectionsInOrder 
-} from './section-titles-card';
+} from '@/constants/sections';
 
 export type SidebarTabId = 'sections' | 'client' | 'team';
 

@@ -19,12 +19,7 @@ import { InputField } from '@/components/ui/input-field';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
-import { 
-  SectionTitlesCard, 
-  SectionId, 
-  DEFAULT_SECTION_ORDER, 
-  INSPECTION_SECTIONS_MAP 
-} from '@/components/ui/section-titles-card';
+import { SectionTitlesCard } from '@/components/ui/section-titles-card';
 import { InspectorSidebarTabs, SidebarTabId } from '@/components/ui/inspector-sidebar-tabs';
 import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
@@ -34,13 +29,18 @@ import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
 import {
+  SectionId,
+  DEFAULT_SECTION_ORDER,
+  INSPECTION_SECTIONS_MAP,
+  SEARCHABLE_SECTIONS,
+  INITIAL_MEDIA_FILES,
   inspectionTypeOptions,
   odometerStatusOptions,
   locationOptions,
   inspectorOptions,
   countryCodeOptions,
   initialReportData,
-} from '@/lib/default-data';
+} from '@constants';
 
 interface MediaItem {
   id: string;
@@ -127,22 +127,7 @@ export default function HomeDashboard() {
   const [cardUploadTarget, setCardUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake'; id: string } | null>(null);
 
   // Media Gallery files state
-  const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([
-    {
-      id: 'init-1',
-      url: 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&q=80&w=400',
-      name: 'front_wheel.jpg',
-      progress: 100,
-      status: 'completed',
-    },
-    {
-      id: 'init-2',
-      url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400',
-      name: 'side_profile.jpg',
-      progress: 100,
-      status: 'completed',
-    },
-  ]);
+  const [mediaFiles, setMediaFiles] = useState<MediaItem[]>(INITIAL_MEDIA_FILES);
 
   const activeUploadIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -487,21 +472,7 @@ export default function HomeDashboard() {
     target.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
   };
 
-  // Search items list for Spotlight modal
-  const searchableSections = [
-    { title: 'Inspection Details', id: 'section-inspection-details', category: 'General' },
-    { title: 'Vehicle Summary', id: 'section-vehicle-summary', category: 'General' },
-    { title: 'Report Overview', id: 'section-report-overview', category: 'General' },
-    { title: 'Tyres Inspection', id: 'section-tyres', category: 'Chassis' },
-    { title: 'Rims Inspection', id: 'section-rims', category: 'Chassis' },
-    { title: 'Brakes Inspection', id: 'section-brakes', category: 'Chassis' },
-    { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
-    { title: 'Interior & Exterior', id: 'section-interior-exterior', category: 'Interior' },
-    { title: 'Electrical Components (27 items)', id: 'section-electrical', category: 'Diagnostics' },
-    { title: 'Client & Team Contacts', id: 'section-client-details', category: 'Client' },
-  ];
-
-  const filteredSearchSections = searchableSections.filter(s =>
+  const filteredSearchSections = SEARCHABLE_SECTIONS.filter(s =>
     s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.category.toLowerCase().includes(searchQuery.toLowerCase())
   );

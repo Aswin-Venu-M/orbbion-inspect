@@ -3,16 +3,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ThumbsUp, ThumbsDown, Frown, Ban } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InspectionDetailCard, InspectionDetailState } from './inspection-detail-card';
+import { 
+  CHASSIS_STATUS_COLORS, 
+  CHASSIS_WHEEL_POSITIONS, 
+  CHASSIS_STATUS_LEGEND 
+} from '@/constants/visualizers';
 
 export type InspectionState = 'pass' | 'fail' | 'weak' | 'na';
 
 const getColor = (state: InspectionState) => {
-  switch (state) {
-    case 'pass': return '#7FD159';
-    case 'fail': return '#FE8E4B';
-    case 'weak': return '#FFED00';
-    case 'na': return '#D3D3D3';
-  }
+  return CHASSIS_STATUS_COLORS[state] || CHASSIS_STATUS_COLORS.na;
 };
 
 const ActionPopup = ({ onSelect, onClose, popupRef }: { onSelect: (s: InspectionState) => void, onClose: () => void, popupRef?: React.RefObject<HTMLDivElement | null> | null }) => {
@@ -91,10 +91,12 @@ export const ChassisVisualizer = ({ items, setItemStatus }: { items: Record<stri
     <div className="w-full flex flex-col pt-2 pb-6">
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 px-2 mb-6">
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#7FD159]"></div><span className="text-xs font-semibold text-slate-500">Pass</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#FFED00]"></div><span className="text-xs font-semibold text-slate-500">Weak</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#FE8E4B]"></div><span className="text-xs font-semibold text-slate-500">Fail</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-[#D3D3D3]"></div><span className="text-xs font-semibold text-slate-500">Not Available</span></div>
+        {CHASSIS_STATUS_LEGEND.map((leg) => (
+          <div key={leg.label} className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-md" style={{ backgroundColor: leg.color }} />
+            <span className="text-xs font-semibold text-slate-500">{leg.label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Chassis View */}
@@ -105,12 +107,20 @@ export const ChassisVisualizer = ({ items, setItemStatus }: { items: Record<stri
 
         <img src="/assets/chasis.png" alt="Vehicle Chassis" className="w-[80%] h-auto object-contain opacity-80 pointer-events-none" />
 
-        {/* Adjusting the top/left percentages based on a typical isometric chassis view */}
-        <VisualizerButton id="FL" label="FL" top="33%" left="56%" state={items?.FL?.status || 'na'} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
-        <VisualizerButton id="FR" label="FR" top="48%" left="72%" state={items?.FR?.status || 'na'} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
-        <VisualizerButton id="RL" label="RL" top="61%" left="28%" state={items?.RL?.status || 'na'} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
-        <VisualizerButton id="ST" label="ST" top="73%" left="35%" state={items?.ST?.status || 'na'} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
-        <VisualizerButton id="RR" label="RR" top="77%" left="45%" state={items?.RR?.status || 'na'} activePopup={activePopup} setActivePopup={setActivePopup} setItemState={setItemStatus} />
+        {/* Isometric 5-wheel buttons */}
+        {CHASSIS_WHEEL_POSITIONS.map((wheel) => (
+          <VisualizerButton 
+            key={wheel.id}
+            id={wheel.id} 
+            label={wheel.label} 
+            top={wheel.top} 
+            left={wheel.left} 
+            state={items?.[wheel.id]?.status || 'na'} 
+            activePopup={activePopup} 
+            setActivePopup={setActivePopup} 
+            setItemState={setItemStatus} 
+          />
+        ))}
       </div>
     </div>
   );

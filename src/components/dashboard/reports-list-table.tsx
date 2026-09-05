@@ -9,6 +9,12 @@ import {
   Car, Eye, FileEdit, Trash2, Download, RefreshCw, X
 } from 'lucide-react';
 import { ReportListItem } from '@/lib/reports-data';
+import { 
+  REPORT_FILTER_TABS, 
+  REPORT_LOCATION_FILTER_OPTIONS, 
+  REPORT_VEHICLE_TYPE_FILTER_OPTIONS, 
+  REPORT_SORT_OPTIONS 
+} from '@/constants/options';
 
 interface ReportsListTableProps {
   reports: ReportListItem[];
@@ -121,15 +127,7 @@ export function ReportsListTable({ reports, onDeleteReport }: ReportsListTablePr
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           {/* Filter Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none touch-pan-x">
-            {(
-              [
-                { id: 'all', label: 'All Inspections', count: tabCounts.all },
-                { id: 'published', label: 'Published', count: tabCounts.published },
-                { id: 'draft', label: 'Drafts', count: tabCounts.draft },
-                { id: 'tampered', label: 'Tampered / Alerts', count: tabCounts.tampered },
-                { id: 'defects', label: 'High Defect (>30%)', count: tabCounts.defects },
-              ] as const
-            ).map((tab) => (
+            {REPORT_FILTER_TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -147,7 +145,7 @@ export function ReportsListTable({ reports, onDeleteReport }: ReportsListTablePr
                       : 'bg-slate-200/80 text-slate-700'
                   }`}
                 >
-                  {tab.count}
+                  {tabCounts[tab.id]}
                 </span>
               </button>
             ))}
@@ -205,10 +203,9 @@ export function ReportsListTable({ reports, onDeleteReport }: ReportsListTablePr
               onChange={(e) => setLocationFilter(e.target.value)}
               className="flex-1 sm:flex-initial min-w-[130px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#F8F9FB] border border-slate-200/80 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 cursor-pointer"
             >
-              <option value="all">All Emirates (UAE)</option>
-              <option value="Dubai">Dubai Hubs</option>
-              <option value="Abu Dhabi">Abu Dhabi</option>
-              <option value="Sharjah">Sharjah Hub</option>
+              {REPORT_LOCATION_FILTER_OPTIONS.map((loc) => (
+                <option key={loc.value} value={loc.value}>{loc.label}</option>
+              ))}
             </select>
 
             {/* Vehicle Type Dropdown */}
@@ -217,11 +214,9 @@ export function ReportsListTable({ reports, onDeleteReport }: ReportsListTablePr
               onChange={(e) => setVehicleTypeFilter(e.target.value)}
               className="flex-1 sm:flex-initial min-w-[130px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#F8F9FB] border border-slate-200/80 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 cursor-pointer"
             >
-              <option value="all">All Vehicle Types</option>
-              <option value="SUV">SUV</option>
-              <option value="Truck">Truck</option>
-              <option value="Sports">Sports / Coupe</option>
-              <option value="Sedan">Sedan</option>
+              {REPORT_VEHICLE_TYPE_FILTER_OPTIONS.map((vt) => (
+                <option key={vt.value} value={vt.value}>{vt.label}</option>
+              ))}
             </select>
           </div>
 
@@ -236,10 +231,9 @@ export function ReportsListTable({ reports, onDeleteReport }: ReportsListTablePr
               onChange={(e) => setSortBy(e.target.value as any)}
               className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#F8F9FB] border border-slate-200/80 text-xs font-bold text-[#1E1035] focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 cursor-pointer"
             >
-              <option value="date_desc">Newest First</option>
-              <option value="pass_desc">Highest Pass Rate</option>
-              <option value="pass_asc">Lowest Pass Rate</option>
-              <option value="defects_desc">Most Defects Count</option>
+              {REPORT_SORT_OPTIONS.map((sort) => (
+                <option key={sort.value} value={sort.value}>{sort.label}</option>
+              ))}
             </select>
           </div>
         </div>

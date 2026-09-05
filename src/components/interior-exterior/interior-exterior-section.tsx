@@ -8,6 +8,7 @@ import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
 import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2 } from 'lucide-react';
+import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 
 interface InteriorExteriorSectionProps {
   initialComments?: string;
@@ -26,31 +27,9 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const [customHeadlines, setCustomHeadlines] = useState<{ id: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const chunk1 = [
-    { num: 1, label: "Roof Lining" },
-    { num: 2, label: "Rear View Mirror" },
-    { num: 3, label: "Steering Wheel Upholstery" },
-    { num: 4, label: "Seats Upholstery" },
-    { num: 5, label: "Gear Lever" },
-    { num: 6, label: "Trunk Lining" },
-  ];
-  
-  const chunk2 = [
-    { num: 7, label: "Armrest & Side Pockets" },
-    { num: 8, label: "Dashboard" },
-    { num: 9, label: "Floor Mats" },
-    { num: 10, label: "Doors" },
-    { num: 11, label: "Front Windscreen" },
-    { num: 12, label: "Rear Windscreen" },
-  ];
-  
-  const chunk3 = [
-    { num: 13, label: "Side windows" },
-    { num: 14, label: "Hood" },
-    { num: 15, label: "Trunk" },
-    { num: 16, label: "Front Bumper" },
-    { num: 17, label: "Back Bumper" },
-  ];
+  const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
+  const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
+  const chunk3 = INTERIOR_EXTERIOR_POINTS.chunk3;
 
   const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

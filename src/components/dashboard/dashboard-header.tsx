@@ -6,6 +6,7 @@ import {
   Search, Plus, Sparkles, SlidersHorizontal, Calendar, 
   ShieldCheck, RefreshCw, CarFront, FileText, ChevronDown 
 } from 'lucide-react';
+import { DATE_PRESET_OPTIONS } from '@/constants/options';
 
 interface DashboardHeaderProps {
   searchQuery: string;
@@ -104,14 +105,7 @@ export function DashboardHeader({
             <Calendar size={13} />
             Period:
           </span>
-          {(
-            [
-              { id: 'today', label: 'Today' },
-              { id: '7d', label: 'Last 7 Days' },
-              { id: '30d', label: 'This Month' },
-              { id: 'all', label: 'All Records' },
-            ] as const
-          ).map((preset) => (
+          {DATE_PRESET_OPTIONS.map((preset) => (
             <button
               key={preset.id}
               onClick={() => onDatePresetChange(preset.id)}

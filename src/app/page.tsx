@@ -21,6 +21,8 @@ import {
   initialDashboardKPI, 
   weeklyActivityData, 
   inspectionTypeBreakdown,
+} from '@constants';
+import { 
   ReportListItem,
   DashboardKPIData 
 } from '@/lib/reports-data';

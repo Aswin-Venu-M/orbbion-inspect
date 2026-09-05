@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { CarBodyVisualizer, BodyPartStatus, BodyPartId } from './car-body-visualizer';
+import { INITIAL_BODY_PART_STATUSES } from '@/constants/visualizers';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
 import { HeadingCard } from '@/components/ui/heading-card';
@@ -18,21 +19,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
   initialComments = '',
   onCommentsChange,
 }) => {
-  const [partStatuses, setPartStatuses] = useState<BodyPartStatus>({
-    frontBumper: 'good',
-    hood: 'good',
-    roof: 'good',
-    trunk: 'good',
-    rearBumper: 'good',
-    leftFrontFender: 'good',
-    leftFrontDoor: 'good',
-    leftBackDoor: 'good',
-    leftRearFender: 'good',
-    rightFrontFender: 'good',
-    rightFrontDoor: 'good',
-    rightBackDoor: 'good',
-    rightRearFender: 'good',
-  });
+  const [partStatuses, setPartStatuses] = useState<BodyPartStatus>(INITIAL_BODY_PART_STATUSES);
 
   const [comments, setComments] = useState(initialComments);
   const [bodyImages, setBodyImages] = useState<string[]>([]);

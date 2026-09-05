@@ -143,18 +143,15 @@ export const InspectionDetailCard = ({
             </button>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center p-4">
-            <div className="w-[88px] h-[72px] bg-white rounded-[16px] shadow-sm border border-[#E5E7EB] flex items-center justify-center mb-3 text-[#E5E7EB]">
-              {/* Abstract image icon similar to the user image */}
-              <svg width="42" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </div>
-            <p className="text-xs font-medium text-[#A0A4AB]">
-              Drag & drop, or<br/>
-              <span className="text-[#3354FA] hover:underline cursor-pointer">click to add</span> images
+          <div className="flex flex-col items-center justify-center text-center p-4 group">
+            <img
+              src="/assets/img-drop.png"
+              alt="Drag and drop illustration"
+              className="w-[88px] h-auto object-contain mb-3 select-none pointer-events-none transition-transform duration-200 group-hover:scale-105"
+            />
+            <p className="text-xs font-medium text-[#74768B] leading-relaxed select-none">
+              Drag &amp; drop, or<br/>
+              <span className="text-[#5368FF] font-semibold underline cursor-pointer">click to add</span> images
             </p>
           </div>
         )}
