@@ -813,11 +813,11 @@ export default function HomeDashboard() {
 
       case 'section-tyres':
         return (
-          <div id="section-tyres" className="flex flex-col gap-4 scroll-mt-6">
+          <div id="section-tyres" className="flex flex-col gap-2 scroll-mt-6">
             <ReusableSection title="Tyres" className="pb-8">
               <ChassisVisualizer items={report.tyres} setItemStatus={setTyreStatus} />
             </ReusableSection>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <InspectionDetailCard title="Rear Right (RR)" data={report.tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
               <InspectionDetailCard title="Rear Left (RL)" data={report.tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
               <InspectionDetailCard title="Front Right (FR)" data={report.tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
@@ -829,11 +829,11 @@ export default function HomeDashboard() {
 
       case 'section-rims':
         return (
-          <div id="section-rims" className="flex flex-col gap-4 scroll-mt-6">
+          <div id="section-rims" className="flex flex-col gap-2 scroll-mt-6">
             <ReusableSection title="Rims" className="pb-8">
               <ChassisVisualizer items={report.rims} setItemStatus={setRimStatus} />
             </ReusableSection>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <InspectionDetailCard title="Rear Right (RR)" data={report.rims.RR} onChange={(d) => updateRimData('RR', d)} onImageClick={() => handleRimImageClick('RR')} />
               <InspectionDetailCard title="Rear Left (RL)" data={report.rims.RL} onChange={(d) => updateRimData('RL', d)} onImageClick={() => handleRimImageClick('RL')} />
               <InspectionDetailCard title="Front Right (FR)" data={report.rims.FR} onChange={(d) => updateRimData('FR', d)} onImageClick={() => handleRimImageClick('FR')} />
@@ -845,11 +845,11 @@ export default function HomeDashboard() {
 
       case 'section-brakes':
         return (
-          <div id="section-brakes" className="flex flex-col gap-4 scroll-mt-6">
+          <div id="section-brakes" className="flex flex-col gap-2 scroll-mt-6">
             <ReusableSection title="Brakes" className="pb-8">
               <ChassisVisualizer items={report.brakes} setItemStatus={setBrakeStatus} />
             </ReusableSection>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               <InspectionDetailCard title="Rear Right (RR)" data={report.brakes.RR} onChange={(d) => updateBrakeData('RR', d)} onImageClick={() => handleBrakeImageClick('RR')} />
               <InspectionDetailCard title="Rear Left (RL)" data={report.brakes.RL} onChange={(d) => updateBrakeData('RL', d)} onImageClick={() => handleBrakeImageClick('RL')} />
               <InspectionDetailCard title="Front Right (FR)" data={report.brakes.FR} onChange={(d) => updateBrakeData('FR', d)} onImageClick={() => handleBrakeImageClick('FR')} />

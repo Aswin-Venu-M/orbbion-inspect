@@ -62,7 +62,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   };
 
   return (
-    <div id="section-interior-exterior" className="flex flex-col gap-6">
+    <div id="section-interior-exterior" className="flex flex-col gap-2">
       <input
         type="file"
         ref={fileInputRef}

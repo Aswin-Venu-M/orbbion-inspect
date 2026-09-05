@@ -68,7 +68,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
   };
 
   return (
-    <div id="section-body" className="flex flex-col gap-6 w-full">
+    <div id="section-body" className="flex flex-col gap-2 w-full">
       <input
         type="file"
         ref={fileInputRef}

@@ -31,7 +31,7 @@ export function ElectricalSection() {
   };
 
   return (
-    <div id="section-electrical" className="flex flex-col gap-6 w-full mt-4">
+    <div id="section-electrical" className="flex flex-col gap-2 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <SectionHeader title="Electrical" />
         <div className="flex items-center gap-2">
@@ -48,12 +48,13 @@ export function ElectricalSection() {
             onClick={() => handleMarkAll('weak')}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFFDE6] border border-[#FEEA85] text-[#856404] text-xs font-bold rounded-xl hover:bg-[#FFF9C4] transition-colors"
           >
+            <CheckCircle2 size={14} />
             Mark All Weak
           </button>
         </div>
       </div>
 
-      <div key={resetKey} className="flex flex-col gap-5">
+      <div key={resetKey} className="flex flex-col gap-2">
         {items.map((item, index) => (
           <InspectionItemCard
             key={`${item}-${index}`}
