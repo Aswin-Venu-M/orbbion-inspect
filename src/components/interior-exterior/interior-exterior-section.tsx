@@ -159,11 +159,11 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-5">
             <h3 className="text-[16px] font-bold text-[#1E1035]">Seats Upholstery</h3>
-            <div className="flex bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB]">
+            <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0">
               <button 
                 type="button"
                 onClick={() => setSeatsStatus('pass')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}
               >
@@ -172,7 +172,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               <button 
                 type="button"
                 onClick={() => setSeatsStatus('fail')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}
               >
@@ -181,7 +181,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               <button 
                 type="button"
                 onClick={() => setSeatsStatus('weak')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}
               >

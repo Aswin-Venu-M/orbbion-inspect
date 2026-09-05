@@ -46,35 +46,43 @@ export const InspectionDetailCard = ({
     <div className="bg-white rounded-[24px] border border-[#E5E7EB] p-5 flex flex-col md:flex-row gap-6 shadow-sm">
       <div className="flex-1 flex flex-col gap-4">
         {/* Header and Status */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <h3 className="font-bold text-[#1E1035] text-sm w-[130px] shrink-0">{title}</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 className="font-bold text-[#1E1035] text-[15px]">{title}</h3>
           
-          <div className="flex flex-wrap bg-[#F4F5F8] rounded-full p-1 border border-[#E5E7EB] w-fit">
+          <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0 self-start sm:self-auto">
             <button 
               type="button"
               onClick={() => onChange({ status: 'pass' })}
-              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'pass' ? 'bg-[#7FD159] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-3.5 py-1 text-[11px] font-bold tracking-wide rounded-full transition-all whitespace-nowrap ${
+                data.status === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+              }`}
             >
               PASS
             </button>
             <button 
               type="button"
               onClick={() => onChange({ status: 'fail' })}
-              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-3.5 py-1 text-[11px] font-bold tracking-wide rounded-full transition-all whitespace-nowrap ${
+                data.status === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+              }`}
             >
               FAIL
             </button>
             <button 
               type="button"
               onClick={() => onChange({ status: 'weak' })}
-              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-3.5 py-1 text-[11px] font-bold tracking-wide rounded-full transition-all whitespace-nowrap ${
+                data.status === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+              }`}
             >
               WEAK
             </button>
             <button 
               type="button"
               onClick={() => onChange({ status: 'na' })}
-              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'na' ? 'bg-[#D3D3D3] text-[#4A4A4A] shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-3.5 py-1 text-[11px] font-bold tracking-wide rounded-full transition-all whitespace-nowrap ${
+                data.status === 'na' ? 'bg-[#94A3B8] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+              }`}
             >
               N/A
             </button>
