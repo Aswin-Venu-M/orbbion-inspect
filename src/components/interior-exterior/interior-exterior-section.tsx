@@ -9,22 +9,30 @@ import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2 } from 'lucide-react';
 import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
+import { CustomHeadlineItem } from '@/lib/inspection-types';
 
 interface InteriorExteriorSectionProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
+  seatsStatus?: 'pass' | 'fail' | 'weak' | 'na';
+  onSeatsStatusChange?: (status: 'pass' | 'fail' | 'weak' | 'na') => void;
+  seatsImages?: { id: string; url: string }[];
+  onSeatsImagesChange?: (images: { id: string; url: string }[]) => void;
+  customHeadlines?: CustomHeadlineItem[];
+  onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
 }
 
 export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = ({
   initialComments = '',
   onCommentsChange,
+  seatsStatus = 'pass',
+  onSeatsStatusChange,
+  seatsImages = [],
+  onSeatsImagesChange,
+  customHeadlines = [],
+  onCustomHeadlinesChange,
 }) => {
-  const [seatsStatus, setSeatsStatus] = useState<'pass' | 'fail' | 'weak'>('pass');
   const [seatsComments, setSeatsComments] = useState(initialComments);
-  const [seatsImages, setSeatsImages] = useState<{ id: string; url: string }[]>([
-    { id: 'initial-1', url: '/assets/car-tw.png' },
-  ]);
-  const [customHeadlines, setCustomHeadlines] = useState<{ id: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
@@ -40,39 +48,53 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newImages = Array.from(files).map(f => ({
+    
+    const validFiles = Array.from(files).filter(f => {
+      if (!f.type.startsWith('image/')) {
+        alert(`File ${f.name} is not a valid image.`);
+        return false;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        alert(`File ${f.name} is too large. Maximum size is 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    const newImages = validFiles.map(f => ({
       id: Math.random().toString(36).substring(7),
       url: URL.createObjectURL(f)
     }));
-    setSeatsImages(prev => [...prev, ...newImages]);
+    
+    onSeatsImagesChange?.([...seatsImages, ...newImages]);
     if (e.target) e.target.value = '';
   };
 
   const removeSeatsImage = (idToRemove: string) => {
-    setSeatsImages(prev => {
-      const img = prev.find(i => i.id === idToRemove);
-      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      return prev.filter(i => i.id !== idToRemove);
-    });
+    const img = seatsImages.find(i => i.id === idToRemove);
+    if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+    onSeatsImagesChange?.(seatsImages.filter(i => i.id !== idToRemove));
   };
-
   const seatsImagesRef = useRef(seatsImages);
-  seatsImagesRef.current = seatsImages;
+  useEffect(() => {
+    seatsImagesRef.current = seatsImages;
+  }, [seatsImages]);
 
   useEffect(() => {
+    const currentImages = seatsImagesRef.current;
     return () => {
-      seatsImagesRef.current.forEach(img => {
+      currentImages.forEach(img => {
         if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
       });
     };
   }, []);
 
   const addHeadline = () => {
-    setCustomHeadlines(prev => [...prev, { id: Math.random().toString(36).substring(7) }]);
+    onCustomHeadlinesChange?.([...customHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
   };
 
   const removeHeadline = (id: string) => {
-    setCustomHeadlines(prev => prev.filter(h => h.id !== id));
+    onCustomHeadlinesChange?.(customHeadlines.filter(h => h.id !== id));
   };
 
   return (
@@ -176,7 +198,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
             <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0">
               <button 
                 type="button"
-                onClick={() => setSeatsStatus('pass')}
+                onClick={() => onSeatsStatusChange?.('pass')}
                 className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}
@@ -185,7 +207,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               </button>
               <button 
                 type="button"
-                onClick={() => setSeatsStatus('fail')}
+                onClick={() => onSeatsStatusChange?.('fail')}
                 className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}
@@ -194,7 +216,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               </button>
               <button 
                 type="button"
-                onClick={() => setSeatsStatus('weak')}
+                onClick={() => onSeatsStatusChange?.('weak')}
                 className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
                   seatsStatus === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
                 }`}

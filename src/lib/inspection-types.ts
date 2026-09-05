@@ -74,8 +74,13 @@ export interface FullInspectionReport {
   transmissionComments?: string;
   transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
   customHeadlines?: CustomHeadlineItem[];
+  seatsStatus?: 'pass' | 'fail' | 'weak' | 'na';
+  seatsImages?: { id: string; url: string }[];
   generalPhotosExteriorComments?: string;
+  generalPhotosExteriorImages?: { id: string; url: string }[];
   generalPhotosInteriorComments?: string;
+  generalPhotosInteriorImages?: { id: string; url: string }[];
   generalPhotosEngineComments?: string;
+  generalPhotosEngineImages?: { id: string; url: string }[];
   inspectorComments?: string;
 }

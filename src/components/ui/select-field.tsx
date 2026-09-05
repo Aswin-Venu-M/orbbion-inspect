@@ -40,6 +40,7 @@ export const SelectField = ({
         <select
           id={selectId}
           required={required}
+          title={options?.find(o => o.value === props.value)?.label || props.value?.toString() || placeholder}
           className={`w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] text-sm text-[#190933] rounded-[14px] px-4 appearance-none focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all ${
             icon ? "pl-11" : ""
           }`}

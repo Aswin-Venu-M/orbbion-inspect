@@ -74,6 +74,11 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
   transmissionComments: 'Transmission shifts smoothly through all gears without hesitation or slipping. Differential operates quietly with no leaks.',
   transmissionItems: {},
   customHeadlines: [],
+  seatsStatus: 'pass',
+  seatsImages: [],
+  generalPhotosExteriorImages: [],
+  generalPhotosInteriorImages: [],
+  generalPhotosEngineImages: [],
 };
 
 export const INITIAL_MEDIA_FILES = [

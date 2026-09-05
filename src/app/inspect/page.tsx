@@ -11,7 +11,7 @@ import {
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
-  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users
+  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
@@ -561,7 +561,7 @@ export default function HomeDashboard() {
                   type="number"
                   min="1900"
                   max={new Date().getFullYear() + 1}
-                  rightIcon={<Calendar size={18} />} 
+                  rightIcon={<Hash size={18} />} 
                   value={report.vehicleSummary.year}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, year: e.target.value }
@@ -889,6 +889,12 @@ export default function HomeDashboard() {
             <InteriorExteriorSection 
               initialComments={report.interiorComments}
               onCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+              seatsStatus={report.seatsStatus}
+              onSeatsStatusChange={(s) => updateReport({ seatsStatus: s }, false)}
+              seatsImages={report.seatsImages}
+              onSeatsImagesChange={(imgs) => updateReport({ seatsImages: imgs }, false)}
+              customHeadlines={report.customHeadlines}
+              onCustomHeadlinesChange={(h) => updateReport({ customHeadlines: h }, false)}
             />
           </div>
         );
@@ -900,9 +906,15 @@ export default function HomeDashboard() {
               exteriorComments={report.generalPhotosExteriorComments}
               interiorComments={report.generalPhotosInteriorComments}
               engineComments={report.generalPhotosEngineComments}
+              exteriorImages={report.generalPhotosExteriorImages}
+              interiorImages={report.generalPhotosInteriorImages}
+              engineImages={report.generalPhotosEngineImages}
               onExteriorCommentsChange={(c) => updateReport({ generalPhotosExteriorComments: c }, false)}
               onInteriorCommentsChange={(c) => updateReport({ generalPhotosInteriorComments: c }, false)}
               onEngineCommentsChange={(c) => updateReport({ generalPhotosEngineComments: c }, false)}
+              onExteriorImagesChange={(imgs) => updateReport({ generalPhotosExteriorImages: imgs }, false)}
+              onInteriorImagesChange={(imgs) => updateReport({ generalPhotosInteriorImages: imgs }, false)}
+              onEngineImagesChange={(imgs) => updateReport({ generalPhotosEngineImages: imgs }, false)}
             />
           </div>
         );

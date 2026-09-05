@@ -9,37 +9,53 @@ interface PhotoCategoryCardProps {
   title: string;
   comments: string;
   onCommentsChange: (val: string) => void;
+  images: { id: string; url: string }[];
+  onImagesChange: (images: { id: string; url: string }[]) => void;
 }
 
-const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange }) => {
-  const [images, setImages] = useState<{ id: string; url: string }[]>([]);
+const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange, images, onImagesChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newImages = Array.from(files).map(f => ({
+    
+    const validFiles = Array.from(files).filter(f => {
+      if (!f.type.startsWith('image/')) {
+        alert(`File ${f.name} is not a valid image.`);
+        return false;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        alert(`File ${f.name} is too large. Maximum size is 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    const newImages = validFiles.map(f => ({
       id: Math.random().toString(36).substring(7),
       url: URL.createObjectURL(f)
     }));
-    setImages(prev => [...prev, ...newImages]);
+    
+    onImagesChange([...images, ...newImages]);
     if (e.target) e.target.value = '';
   };
 
   const removeImage = (idToRemove: string) => {
-    setImages(prev => {
-      const img = prev.find(i => i.id === idToRemove);
-      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      return prev.filter(i => i.id !== idToRemove);
-    });
+    const img = images.find(i => i.id === idToRemove);
+    if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+    onImagesChange(images.filter(i => i.id !== idToRemove));
   };
 
   const imagesRef = useRef(images);
-  imagesRef.current = images;
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
 
   useEffect(() => {
+    const currentImages = imagesRef.current;
     return () => {
-      imagesRef.current.forEach(img => {
+      currentImages.forEach(img => {
         if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
       });
     };
@@ -94,19 +110,31 @@ interface GeneralPhotosSectionProps {
   interiorComments?: string;
   engineComments?: string;
   inspectorComments?: string;
+  exteriorImages?: { id: string; url: string }[];
+  interiorImages?: { id: string; url: string }[];
+  engineImages?: { id: string; url: string }[];
   onExteriorCommentsChange?: (val: string) => void;
   onInteriorCommentsChange?: (val: string) => void;
   onEngineCommentsChange?: (val: string) => void;
   onInspectorCommentsChange?: (val: string) => void;
+  onExteriorImagesChange?: (images: { id: string; url: string }[]) => void;
+  onInteriorImagesChange?: (images: { id: string; url: string }[]) => void;
+  onEngineImagesChange?: (images: { id: string; url: string }[]) => void;
 }
 
 export const GeneralPhotosSection: React.FC<GeneralPhotosSectionProps> = ({
   exteriorComments = '',
   interiorComments = '',
   engineComments = '',
+  exteriorImages = [],
+  interiorImages = [],
+  engineImages = [],
   onExteriorCommentsChange,
   onInteriorCommentsChange,
   onEngineCommentsChange,
+  onExteriorImagesChange,
+  onInteriorImagesChange,
+  onEngineImagesChange,
 }) => {
   return (
     <div id="section-general-photos" className="flex flex-col gap-2 w-full scroll-mt-6">
@@ -118,6 +146,8 @@ export const GeneralPhotosSection: React.FC<GeneralPhotosSectionProps> = ({
           title="Exterior" 
           comments={exteriorComments} 
           onCommentsChange={onExteriorCommentsChange || (() => {})} 
+          images={exteriorImages}
+          onImagesChange={onExteriorImagesChange || (() => {})}
         />
       </section>
       
@@ -127,6 +157,8 @@ export const GeneralPhotosSection: React.FC<GeneralPhotosSectionProps> = ({
           title="Interior" 
           comments={interiorComments} 
           onCommentsChange={onInteriorCommentsChange || (() => {})} 
+          images={interiorImages}
+          onImagesChange={onInteriorImagesChange || (() => {})}
         />
       </section>
       
@@ -136,6 +168,8 @@ export const GeneralPhotosSection: React.FC<GeneralPhotosSectionProps> = ({
           title="Engine Bay & Undercarriage" 
           comments={engineComments} 
           onCommentsChange={onEngineCommentsChange || (() => {})} 
+          images={engineImages}
+          onImagesChange={onEngineImagesChange || (() => {})}
         />
       </section>
     </div>
