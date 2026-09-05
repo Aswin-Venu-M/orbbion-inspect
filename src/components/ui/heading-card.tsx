@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { Trash2 } from 'lucide-react';
 
@@ -20,12 +20,25 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    setHeading(initialTitle);
+  }, [initialTitle]);
+
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
+
+  useEffect(() => {
+    return () => {
+      if (imageUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
       setImageUrl(URL.createObjectURL(file));
     }
     if (e.target) e.target.value = '';
@@ -33,7 +46,6 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
 
   const handleRemoveImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
     setImageUrl(null);
   };
 

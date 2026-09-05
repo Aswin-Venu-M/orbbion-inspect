@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
@@ -21,8 +21,8 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
 }) => {
   const [seatsStatus, setSeatsStatus] = useState<'pass' | 'fail' | 'weak'>('pass');
   const [seatsComments, setSeatsComments] = useState(initialComments);
-  const [seatsImages, setSeatsImages] = useState<string[]>([
-    '/assets/car-tw.png',
+  const [seatsImages, setSeatsImages] = useState<{ id: string; url: string }[]>([
+    { id: 'initial-1', url: '/assets/car-tw.png' },
   ]);
   const [customHeadlines, setCustomHeadlines] = useState<{ id: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,18 +40,32 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    setSeatsImages(prev => [...prev, ...newUrls]);
+    const newImages = Array.from(files).map(f => ({
+      id: Math.random().toString(36).substring(7),
+      url: URL.createObjectURL(f)
+    }));
+    setSeatsImages(prev => [...prev, ...newImages]);
     if (e.target) e.target.value = '';
   };
 
-  const removeSeatsImage = (index: number) => {
+  const removeSeatsImage = (idToRemove: string) => {
     setSeatsImages(prev => {
-      const url = prev[index];
-      if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
-      return prev.filter((_, i) => i !== index);
+      const img = prev.find(i => i.id === idToRemove);
+      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      return prev.filter(i => i.id !== idToRemove);
     });
   };
+
+  const seatsImagesRef = useRef(seatsImages);
+  seatsImagesRef.current = seatsImages;
+
+  useEffect(() => {
+    return () => {
+      seatsImagesRef.current.forEach(img => {
+        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      });
+    };
+  }, []);
 
   const addHeadline = () => {
     setCustomHeadlines(prev => [...prev, { id: Math.random().toString(36).substring(7) }]);
@@ -202,12 +216,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-            {seatsImages.map((url, i) => (
-              <div key={i} className="relative group">
-                <ImageUploadBox status="completed" url={url} />
+            {seatsImages.map((img) => (
+              <div key={img.id} className="relative group">
+                <ImageUploadBox status="completed" url={img.url} />
                 <button
                   type="button"
-                  onClick={() => removeSeatsImage(i)}
+                  onClick={() => removeSeatsImage(img.id)}
                   className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <Trash2 size={14} />

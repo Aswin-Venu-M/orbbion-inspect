@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { Trash2 } from 'lucide-react';
@@ -57,7 +57,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 }) => {
   const [partStatuses, setPartStatuses] = useState<Record<number, SubframePartStatus>>({});
   const [comments, setComments] = useState(initialComments);
-  const [generalImages, setGeneralImages] = useState<string[]>([]);
+  const [generalImages, setGeneralImages] = useState<{ id: string; url: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePartClick = (id: number) => {
@@ -90,18 +90,32 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    setGeneralImages(prev => [...prev, ...newUrls]);
+    const newImages = Array.from(files).map(f => ({
+      id: Math.random().toString(36).substring(7),
+      url: URL.createObjectURL(f)
+    }));
+    setGeneralImages(prev => [...prev, ...newImages]);
     if (e.target) e.target.value = '';
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = (idToRemove: string) => {
     setGeneralImages(prev => {
-      const url = prev[index];
-      if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
-      return prev.filter((_, i) => i !== index);
+      const img = prev.find(i => i.id === idToRemove);
+      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      return prev.filter(i => i.id !== idToRemove);
     });
   };
+
+  const generalImagesRef = useRef(generalImages);
+  generalImagesRef.current = generalImages;
+
+  useEffect(() => {
+    return () => {
+      generalImagesRef.current.forEach(img => {
+        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      });
+    };
+  }, []);
 
   // Group parts for the 3-column list
   const col1 = SUBFRAME_PARTS.slice(0, 7);
@@ -249,12 +263,12 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
         {/* General Photos Image Upload Box */}
         <div className="flex flex-wrap gap-4 items-center mt-6">
-          {generalImages.map((url, i) => (
-            <div key={i} className="w-[180px] relative group">
-              <ImageUploadBox status="completed" url={url} />
+          {generalImages.map((img) => (
+            <div key={img.id} className="w-[180px] relative group">
+              <ImageUploadBox status="completed" url={img.url} />
               <button
                 type="button"
-                onClick={() => removeImage(i)}
+                onClick={() => removeImage(img.id)}
                 className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 size={14} />

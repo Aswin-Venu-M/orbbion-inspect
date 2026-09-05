@@ -26,14 +26,16 @@ export type SectionId =
   | 'section-body'
   | 'section-engine'
   | 'section-transmission'
-  | 'section-general-photos';
+  | 'section-general-photos'
+  | 'section-client-details'
+  | 'section-team-details';
 
 export interface SectionItem {
   id: SectionId;
   num: string;
   title: string;
   subtitle: string;
-  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics' | 'Engine' | 'Transmission';
+  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics' | 'Engine' | 'Transmission' | 'Client' | 'Team';
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badgeText?: string;
   badgeColor?: string;
@@ -173,9 +175,27 @@ export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>
     badgeText: 'Required',
     badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/60',
   },
+  'section-client-details': {
+    id: 'section-client-details',
+    title: 'Client Details',
+    subtitle: 'Client contact information & location',
+    category: 'Client',
+    icon: Calendar,
+    badgeText: 'Client',
+    badgeColor: 'bg-purple-50 text-[#9723FF] border-purple-200/60',
+  },
+  'section-team-details': {
+    id: 'section-team-details',
+    title: 'Team Details',
+    subtitle: 'Details related to our inspection team',
+    category: 'Team',
+    icon: Calendar,
+    badgeText: 'Assigned',
+    badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/60',
+  },
 };
 
-export const SEARCHABLE_SECTIONS = [
+export const SEARCHABLE_SECTIONS: Array<{ title: string; id: SectionId; category: SectionItem['category'] }> = [
   { title: 'Inspection Details', id: 'section-inspection-details', category: 'General' },
   { title: 'Vehicle Summary', id: 'section-vehicle-summary', category: 'General' },
   { title: 'Report Overview', id: 'section-report-overview', category: 'General' },
@@ -193,14 +213,17 @@ export const SEARCHABLE_SECTIONS = [
 ];
 
 export const getSectionsInOrder = (order: SectionId[]): SectionItem[] => {
-  return order.map((id, index) => {
-    const sec = INSPECTION_SECTIONS_MAP[id];
-    const num = String(index + 1).padStart(2, '0');
-    return {
-      ...sec,
-      num,
-    };
-  });
+  return order
+    .map((id, index) => {
+      const sec = INSPECTION_SECTIONS_MAP[id];
+      if (!sec) return null;
+      const num = String(index + 1).padStart(2, '0');
+      return {
+        ...sec,
+        num,
+      };
+    })
+    .filter((sec): sec is SectionItem => sec !== null);
 };
 
 export const INSPECTION_SECTIONS: SectionItem[] = getSectionsInOrder(DEFAULT_SECTION_ORDER);

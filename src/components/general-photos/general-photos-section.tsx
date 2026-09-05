@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { Trash2 } from 'lucide-react';
@@ -12,24 +12,38 @@ interface PhotoCategoryCardProps {
 }
 
 const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange }) => {
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<{ id: string; url: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    setImages(prev => [...prev, ...newUrls]);
+    const newImages = Array.from(files).map(f => ({
+      id: Math.random().toString(36).substring(7),
+      url: URL.createObjectURL(f)
+    }));
+    setImages(prev => [...prev, ...newImages]);
     if (e.target) e.target.value = '';
   };
 
-  const removeImage = (index: number) => {
+  const removeImage = (idToRemove: string) => {
     setImages(prev => {
-      const url = prev[index];
-      if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
-      return prev.filter((_, i) => i !== index);
+      const img = prev.find(i => i.id === idToRemove);
+      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      return prev.filter(i => i.id !== idToRemove);
     });
   };
+
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach(img => {
+        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      });
+    };
+  }, []);
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -47,12 +61,12 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
       </div>
 
       <div className="flex flex-wrap gap-4 items-center mt-2">
-        {images.map((url, i) => (
-          <div key={i} className="w-[180px] relative group">
-            <ImageUploadBox status="completed" url={url} />
+        {images.map((img) => (
+          <div key={img.id} className="w-[180px] relative group">
+            <ImageUploadBox status="completed" url={img.url} />
             <button
               type="button"
-              onClick={() => removeImage(i)}
+              onClick={() => removeImage(img.id)}
               className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Trash2 size={14} />
