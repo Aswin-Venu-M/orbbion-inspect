@@ -68,5 +68,7 @@ export interface FullInspectionReport {
   bodyComments?: string;
   interiorComments?: string;
   electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
+  engineComments?: string;
+  engineItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
   customHeadlines?: CustomHeadlineItem[];
 }

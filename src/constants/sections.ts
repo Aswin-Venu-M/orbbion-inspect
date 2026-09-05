@@ -7,7 +7,8 @@ import {
   ShieldCheck, 
   Layers, 
   Sparkles, 
-  Zap 
+  Zap,
+  Gauge 
 } from 'lucide-react';
 import React from 'react';
 
@@ -18,16 +19,17 @@ export type SectionId =
   | 'section-tyres'
   | 'section-rims'
   | 'section-brakes'
-  | 'section-body'
   | 'section-interior-exterior'
-  | 'section-electrical';
+  | 'section-electrical'
+  | 'section-body'
+  | 'section-engine';
 
 export interface SectionItem {
   id: SectionId;
   num: string;
   title: string;
   subtitle: string;
-  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics';
+  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics' | 'Engine';
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badgeText?: string;
   badgeColor?: string;
@@ -40,9 +42,10 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   'section-tyres',
   'section-rims',
   'section-brakes',
-  'section-body',
   'section-interior-exterior',
   'section-electrical',
+  'section-body',
+  'section-engine',
 ];
 
 export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>> = {
@@ -127,6 +130,15 @@ export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>
     badgeText: '27 Points',
     badgeColor: 'bg-purple-50 text-[#9723FF] border-purple-200/60',
   },
+  'section-engine': {
+    id: 'section-engine',
+    title: 'Engine Inspection',
+    subtitle: '15-point powertrain & fluids check',
+    category: 'Engine',
+    icon: Gauge,
+    badgeText: '15 Points',
+    badgeColor: 'bg-orange-50 text-orange-600 border-orange-200/60',
+  },
 };
 
 export const SEARCHABLE_SECTIONS = [
@@ -136,9 +148,10 @@ export const SEARCHABLE_SECTIONS = [
   { title: 'Tyres Inspection', id: 'section-tyres', category: 'Chassis' },
   { title: 'Rims Inspection', id: 'section-rims', category: 'Chassis' },
   { title: 'Brakes Inspection', id: 'section-brakes', category: 'Chassis' },
-  { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
   { title: 'Interior & Exterior', id: 'section-interior-exterior', category: 'Interior' },
   { title: 'Electrical Components (27 items)', id: 'section-electrical', category: 'Diagnostics' },
+  { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
+  { title: 'Engine Inspection (15 items)', id: 'section-engine', category: 'Engine' },
   { title: 'Client & Team Contacts', id: 'section-client-details', category: 'Client' },
 ];
 

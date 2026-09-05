@@ -69,6 +69,8 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
   bodyComments: 'Minor hairline scratches on rear bumper. Paint depth uniform across all panels.',
   interiorComments: 'Interior upholstery in clean condition. Minimal wear on steering wheel and driver bolster.',
   electricalItems: {},
+  engineComments: 'Engine runs smoothly without vibrations or abnormal noises. Fluid levels are optimal and no leaks detected.',
+  engineItems: {},
   customHeadlines: [],
 };
 

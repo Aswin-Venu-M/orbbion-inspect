@@ -64,3 +64,22 @@ export const INTERIOR_EXTERIOR_POINTS = {
   chunk2: INTERIOR_EXTERIOR_POINTS_CHUNK2,
   chunk3: INTERIOR_EXTERIOR_POINTS_CHUNK3,
 } as const;
+
+export const ENGINE_INSPECTION_ITEMS = [
+  'Engine Upper Cover',
+  'Engine Shield Cover',
+  'Engine Mounts',
+  'Bonnet Hinge & Holder',
+  'Fender Liners',
+  'Drive Belt / Pulleys',
+  'Engine Idle',
+  'Engine Oil Filler Cap',
+  'Engine Oil Leaks',
+  'Engine Oil Condition',
+  'Coolant Condition',
+  'Coolant Cap',
+  'Hoses & Pipes',
+  'Exhaust System',
+  '4 Wheel Drive',
+] as const;
+

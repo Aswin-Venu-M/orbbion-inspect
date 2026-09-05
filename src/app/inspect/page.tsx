@@ -27,6 +27,7 @@ import { ReportPreview } from '@/components/ui/report-preview';
 import { InteriorExteriorSection } from '@/components/interior-exterior/interior-exterior-section';
 import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
+import { EngineSection } from '@/components/engine/engine-section';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
 import { SupportBadge } from '@/components/ui/support-badge';
 import {
@@ -74,7 +75,7 @@ export default function HomeDashboard() {
   const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('orbbion_section_order');
+        const saved = localStorage.getItem('orbbion_section_order_v3');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length === DEFAULT_SECTION_ORDER.length) {
@@ -114,7 +115,7 @@ export default function HomeDashboard() {
     setSectionOrder(newOrder);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('orbbion_section_order', JSON.stringify(newOrder));
+        localStorage.setItem('orbbion_section_order_v3', JSON.stringify(newOrder));
       } catch {
         // ignore
       }
@@ -883,6 +884,16 @@ export default function HomeDashboard() {
         return (
           <div key="section-electrical" className="scroll-mt-6">
             <ElectricalSection />
+          </div>
+        );
+
+      case 'section-engine':
+        return (
+          <div key="section-engine" className="scroll-mt-6">
+            <EngineSection 
+              initialComments={report.engineComments}
+              onCommentsChange={(c) => updateReport({ engineComments: c }, false)}
+            />
           </div>
         );
 
