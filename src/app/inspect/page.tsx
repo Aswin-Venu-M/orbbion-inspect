@@ -28,6 +28,7 @@ import { InteriorExteriorSection } from '@/components/interior-exterior/interior
 import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
+import { SupportBadge } from '@/components/ui/support-badge';
 import {
   SectionId,
   DEFAULT_SECTION_ORDER,
@@ -1429,23 +1430,6 @@ export default function HomeDashboard() {
         </div>
       </div>
 
-      {/* Always Fixed Support & Brand Footer */}
-      <div className="fixed bottom-[84px] md:bottom-6 right-4 md:right-6 z-40 flex items-center gap-3 pointer-events-auto print:hidden">
-        <div className="flex flex-col items-end text-right">
-          <span className="text-[12px] font-bold text-[#1E1035] leading-tight tracking-tight">Support@orbbion.com</span>
-          <span className="text-[10px] font-semibold text-slate-400 leading-tight mt-0.5">v.2.0 • Orbbion Inspect</span>
-        </div>
-        <button 
-          type="button"
-          onClick={() => {
-            if (activeTab === 'view') setActiveTab('edit');
-          }}
-          title={activeTab === 'view' ? "Return to editor" : "Orbbion Inspect"}
-          className="w-[38px] h-[38px] md:w-[42px] md:h-[42px] rounded-[14px] overflow-hidden flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 bg-[#180321]"
-        >
-          <img src="/assets/orbbion-logo.png" alt="Orbbion Logo" className="w-full h-full object-contain" />
-        </button>
-      </div>
 
       {/* MODAL 1: Spotlight Quick Jump Search */}
       <AnimatePresence>
@@ -1695,22 +1679,8 @@ export default function HomeDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Persistent Bottom-Right Support Footer */}
-      <footer className="fixed bottom-[84px] md:bottom-6 right-3 sm:right-4 md:right-6 z-40 bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-lg border border-slate-200/80 flex items-center gap-2.5 sm:gap-3 transition-all hover:scale-[1.02] cursor-pointer scale-95 sm:scale-100 origin-bottom-right">
-        <div className="flex flex-col items-end text-right">
-          <span className="text-xs font-bold text-[#1E1035] tracking-tight">
-            Support@orbbion.com
-          </span>
-          <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-            v.2.0 • Orbbion Inspect
-          </span>
-        </div>
-        <img
-          src="/assets/orbbion-logo.png"
-          alt="Orbbion Inspect"
-          className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain"
-        />
-      </footer>
+      {/* Persistent Bottom-Right Support Badge */}
+      <SupportBadge />
 
     </div>
   );

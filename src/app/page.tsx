@@ -16,6 +16,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { KPIStatsGrid } from '@/components/dashboard/kpi-stats-grid';
 import { ActivityChartCard } from '@/components/dashboard/activity-chart-card';
 import { ReportsListTable } from '@/components/dashboard/reports-list-table';
+import { SupportBadge } from '@/components/ui/support-badge';
 import { 
   initialReportsList, 
   initialDashboardKPI, 
@@ -242,22 +243,8 @@ export default function AppDashboardPage() {
         <ReportsListTable reports={reports} />
       </main>
 
-      {/* Persistent Bottom-Right Support Footer */}
-      <footer className="fixed bottom-[84px] md:bottom-6 right-3 sm:right-4 md:right-6 z-40 bg-white/95 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-lg border border-slate-200/80 flex items-center gap-2.5 sm:gap-3 transition-all hover:scale-[1.02] cursor-pointer scale-95 sm:scale-100 origin-bottom-right">
-        <div className="flex flex-col items-end text-right">
-          <span className="text-xs font-bold text-[#1E1035] tracking-tight">
-            Support@orbbion.com
-          </span>
-          <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">
-            v.2.0 • Orbbion Inspect
-          </span>
-        </div>
-        <img
-          src="/assets/orbbion-logo.png"
-          alt="Orbbion Inspect"
-          className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain"
-        />
-      </footer>
+      {/* Persistent Bottom-Right Support Badge */}
+      <SupportBadge />
 
       {/* Spotlight Search Modal (Ctrl+K) */}
       <AnimatePresence>
