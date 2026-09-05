@@ -22,6 +22,7 @@ import { SidebarCard } from '@/components/ui/sidebar-card';
 import { SectionTitlesCard } from '@/components/ui/section-titles-card';
 import { InspectorSidebarTabs, SidebarTabId } from '@/components/ui/inspector-sidebar-tabs';
 import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
+import { ChassisSubframeSection } from '@/components/chassis/chassis-subframe-section';
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
 import { ReportPreview } from '@/components/ui/report-preview';
 import { InteriorExteriorSection } from '@/components/interior-exterior/interior-exterior-section';
@@ -858,6 +859,16 @@ export default function HomeDashboard() {
               <InspectionDetailCard title="Front Left (FL)" data={report.brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
               <InspectionDetailCard title="Spare tyre (ST)" data={report.brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
             </div>
+          </div>
+        );
+
+      case 'section-chassis-subframe':
+        return (
+          <div key="section-chassis-subframe" className="scroll-mt-6">
+            <ChassisSubframeSection 
+              initialComments={report.chassisSubframeComments || ''}
+              onCommentsChange={(c) => updateReport({ chassisSubframeComments: c }, false)}
+            />
           </div>
         );
 

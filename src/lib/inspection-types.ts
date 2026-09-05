@@ -66,6 +66,7 @@ export interface FullInspectionReport {
   rims: Record<string, InspectionDetailState>;
   brakes: Record<string, InspectionDetailState>;
   bodyComments?: string;
+  chassisSubframeComments?: string;
   interiorComments?: string;
   electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
   engineComments?: string;

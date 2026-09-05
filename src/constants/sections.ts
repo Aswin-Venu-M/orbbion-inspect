@@ -20,6 +20,7 @@ export type SectionId =
   | 'section-tyres'
   | 'section-rims'
   | 'section-brakes'
+  | 'section-chassis-subframe'
   | 'section-interior-exterior'
   | 'section-electrical'
   | 'section-body'
@@ -44,6 +45,7 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   'section-tyres',
   'section-rims',
   'section-brakes',
+  'section-chassis-subframe',
   'section-interior-exterior',
   'section-electrical',
   'section-body',
@@ -106,6 +108,15 @@ export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>
     badgeText: '5 Brakes',
     badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
   },
+  'section-chassis-subframe': {
+    id: 'section-chassis-subframe',
+    title: 'Chassis & Subframe',
+    subtitle: 'Structural integrity & blueprint',
+    category: 'Chassis',
+    icon: Layers,
+    badgeText: '20 Points',
+    badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
+  },
   'section-body': {
     id: 'section-body',
     title: 'Body & Blueprint',
@@ -160,6 +171,7 @@ export const SEARCHABLE_SECTIONS = [
   { title: 'Tyres Inspection', id: 'section-tyres', category: 'Chassis' },
   { title: 'Rims Inspection', id: 'section-rims', category: 'Chassis' },
   { title: 'Brakes Inspection', id: 'section-brakes', category: 'Chassis' },
+  { title: 'Chassis & Subframe', id: 'section-chassis-subframe', category: 'Chassis' },
   { title: 'Interior & Exterior', id: 'section-interior-exterior', category: 'Interior' },
   { title: 'Electrical Components (27 items)', id: 'section-electrical', category: 'Diagnostics' },
   { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
