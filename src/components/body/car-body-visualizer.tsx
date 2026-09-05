@@ -144,93 +144,47 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
           className="absolute inset-0 w-full h-full select-none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* ============================================================ */}
-          {/* BOTTOM SIDE VIEW (Wheels DOWN) — Right side panels           */}
-          {/* Car faces RIGHT. Rear at left ~X=108, Front at right ~X=680  */}
-          {/* Side profile body occupies approx Y: 330 to 490             */}
-          {/* ============================================================ */}
+          {/* Right Rear Fender */}
+          {renderPart('rightRearFender', paths.rightRearFender, 'translate(121, 453)')}
 
-          {/* Right Rear Fender — native 208×137 */}
-          {renderPart('rightRearFender', paths.rightRearFender,
-            'translate(108, 345) scale(0.88, 0.88)'
-          )}
+          {/* Right Back Door */}
+          {renderPart('rightBackDoor', paths.rightBackDoor, 'translate(257, 489)')}
 
-          {/* Right Back Door — native 126×94 */}
-          {renderPart('rightBackDoor', paths.rightBackDoor,
-            'translate(275, 360) scale(0.92, 0.92)'
-          )}
+          {/* Right Front Door */}
+          {renderPart('rightFrontDoor', paths.rightFrontDoor, 'translate(382, 497)')}
 
-          {/* Right Front Door — native 136×88 */}
-          {renderPart('rightFrontDoor', paths.rightFrontDoor,
-            'translate(385, 358) scale(0.92, 0.92)'
-          )}
+          {/* Right Front Fender */}
+          {renderPart('rightFrontFender', paths.rightFrontFender, 'translate(496, 489)')}
 
-          {/* Right Front Fender — native 177×104 */}
-          {renderPart('rightFrontFender', paths.rightFrontFender,
-            'translate(500, 345) scale(0.88, 0.88)'
-          )}
 
-          {/* ============================================================ */}
-          {/* TOP SIDE VIEW (Wheels UP) — Left side panels                 */}
-          {/* Car faces RIGHT. Same X positions, Y flipped.               */}
-          {/* Side profile body occupies approx Y: 20 to 180              */}
-          {/* scale(sx, -sy) flips vertically; translate Y is the bottom  */}
-          {/* ============================================================ */}
+          {/* Left Rear Fender */}
+          {renderPart('leftRearFender', paths.leftRearFender, 'translate(104.25, 106)')}
 
-          {/* Left Rear Fender — native 208×137, flipped */}
-          {renderPart('leftRearFender', paths.leftRearFender,
-            'translate(108, 170) scale(0.88, -0.88)'
-          )}
+          {/* Left Back Door */}
+          {renderPart('leftBackDoor', paths.leftBackDoor, 'translate(256.5, 166)')}
 
-          {/* Left Back Door — native 126×94, flipped */}
-          {renderPart('leftBackDoor', paths.leftBackDoor,
-            'translate(275, 153) scale(0.92, -0.92)'
-          )}
+          {/* Left Front Door */}
+          {renderPart('leftFrontDoor', paths.leftFrontDoor, 'translate(379.5, 164)')}
 
-          {/* Left Front Door — native 136×88, flipped */}
-          {renderPart('leftFrontDoor', paths.leftFrontDoor,
-            'translate(385, 152) scale(0.92, -0.92)'
-          )}
+          {/* Left Front Fender */}
+          {renderPart('leftFrontFender', paths.leftFrontFender, 'translate(494, 156)')}
 
-          {/* Left Front Fender — native 177×104, flipped */}
-          {renderPart('leftFrontFender', paths.leftFrontFender,
-            'translate(500, 167) scale(0.88, -0.88)'
-          )}
 
-          {/* Top Roof Arch (thin strip between top car and center) */}
-          {renderPart('roof', paths.roof,
-            'translate(282, 175) scale(1.22, -0.30)'
-          )}
+          {/* Center / Top Items */}
+          {/* Rear Bumper */}
+          {renderPart('rearBumper', paths.rearBumper, 'translate(33, 271)')}
 
-          {/* ============================================================ */}
-          {/* CENTER TOP VIEW — Trunk, Roof, Hood                         */}
-          {/* ============================================================ */}
+          {/* Trunk */}
+          {renderPart('trunk', paths.trunk, 'translate(145, 299)')}
 
-          {/* Rear Bumper — native 93×210, positioned at left edge */}
-          {renderPart('rearBumper', paths.rearBumper,
-            'translate(28, 148) scale(0.82, 0.82)'
-          )}
+          {/* Roof */}
+          {renderPart('roof', paths.roof, 'translate(261.92, 311.5)')}
 
-          {/* Trunk — native 51×153, rotated -90° for horizontal layout */}
-          {renderPart('trunk', paths.trunk,
-            'translate(140, 180) scale(1.85, 0.82) rotate(-90)'
-          )}
+          {/* Hood */}
+          {renderPart('hood', paths.hood, 'translate(565, 282)')}
 
-          {/* Center Roof — native 201×127 */}
-          {renderPart('roof', paths.roof,
-            'translate(256, 180) scale(1.22, 1.22)'
-          )}
-
-          {/* Hood — native 116×187, rotated 90° for horizontal layout */}
-          {renderPart('hood', paths.hood,
-            'translate(510, 170) scale(1.52, 0.95) rotate(90)'
-          )}
-
-          {/* Front Bumper — native 65×209, positioned at right edge */}
-          {renderPart('frontBumper', paths.frontBumper,
-            'translate(690, 148) scale(0.82, 0.82)'
-          )}
-
+          {/* Front Bumper */}
+          {renderPart('frontBumper', paths.frontBumper, 'translate(684, 271)')}
         </svg>
       </div>
     </div>
