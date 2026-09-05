@@ -49,6 +49,11 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
+    if (files.length > 20) {
+      alert(`You can only upload up to 20 images at once.`);
+      return;
+    }
+
     const validFiles = Array.from(files).filter(f => {
       if (!f.type.startsWith('image/')) {
         alert(`File ${f.name} is not a valid image.`);
@@ -62,7 +67,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     });
 
     const newImages = validFiles.map(f => ({
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
       url: URL.createObjectURL(f)
     }));
     
@@ -80,17 +85,8 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     seatsImagesRef.current = seatsImages;
   }, [seatsImages]);
 
-  useEffect(() => {
-    const currentImages = seatsImagesRef.current;
-    return () => {
-      currentImages.forEach(img => {
-        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      });
-    };
-  }, []);
-
   const addHeadline = () => {
-    onCustomHeadlinesChange?.([...customHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
+    onCustomHeadlinesChange?.([...customHeadlines, { id: crypto.randomUUID(), title: '', comments: '' }]);
   };
 
   const removeHeadline = (id: string) => {
@@ -103,7 +99,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp"
         multiple
         className="hidden"
       />
@@ -232,6 +228,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               type="text" 
               value={seatsComments}
               onChange={handleSeatsCommentChange}
+              maxLength={1000}
               placeholder="Enter observations regarding seats, wear and tear, or stains..." 
               className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-1 focus:ring-[#1E1035]/20 transition-all" 
             />
@@ -267,8 +264,16 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
       {customHeadlines.map(h => (
         <HeadingCard
           key={h.id}
+          initialTitle={h.title}
+          initialComments={h.comments}
           isRemovable
           onRemove={() => removeHeadline(h.id)}
+          onChangeTitle={(title) => {
+            onCustomHeadlinesChange?.(customHeadlines.map(ch => ch.id === h.id ? { ...ch, title } : ch));
+          }}
+          onChangeComments={(comments) => {
+            onCustomHeadlinesChange?.(customHeadlines.map(ch => ch.id === h.id ? { ...ch, comments } : ch));
+          }}
         />
       ))}
 

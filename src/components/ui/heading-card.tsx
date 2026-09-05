@@ -9,6 +9,8 @@ interface HeadingCardProps {
   initialComments?: string;
   onRemove?: () => void;
   isRemovable?: boolean;
+  onChangeTitle?: (title: string) => void;
+  onChangeComments?: (comments: string) => void;
 }
 
 export const HeadingCard: React.FC<HeadingCardProps> = ({
@@ -16,6 +18,8 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   initialComments = '',
   onRemove,
   isRemovable = false,
+  onChangeTitle,
+  onChangeComments,
 }) => {
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
@@ -76,7 +80,11 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
           <input 
             type="text" 
             value={heading}
-            onChange={(e) => setHeading(e.target.value)}
+            maxLength={1000}
+            onChange={(e) => {
+              setHeading(e.target.value);
+              onChangeTitle?.(e.target.value);
+            }}
             placeholder="Enter custom section heading (e.g. Underbody Shielding)" 
             className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
           />
@@ -87,7 +95,11 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
           <input 
             type="text" 
             value={comments}
-            onChange={(e) => setComments(e.target.value)}
+            maxLength={1000}
+            onChange={(e) => {
+              setComments(e.target.value);
+              onChangeComments?.(e.target.value);
+            }}
             placeholder="Enter notes or remarks for this section" 
             className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
           />

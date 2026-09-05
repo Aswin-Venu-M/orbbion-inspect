@@ -29,10 +29,6 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({ status, progress
     <div className="relative w-full aspect-[4/3] rounded-[16px] overflow-hidden shadow-sm group border border-[#E2E4EB]">
       <img src={url} alt="upload" className={`w-full h-full object-cover ${status === 'uploading' ? 'brightness-50' : ''}`} />
       
-      <button className="absolute top-3 right-3 w-[26px] h-[26px] bg-[#FFEBEB] rounded-[8px] flex items-center justify-center text-[#FF6363] shadow-sm hover:bg-red-100 transition-colors z-20">
-        <Trash2 size={14} strokeWidth={2.5} />
-      </button>
-
       {status === 'uploading' && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
           <div className="flex justify-between items-end mb-2">

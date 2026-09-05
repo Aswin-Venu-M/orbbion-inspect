@@ -20,6 +20,11 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
+    if (files.length > 20) {
+      alert(`You can only upload up to 20 images at once.`);
+      return;
+    }
+
     const validFiles = Array.from(files).filter(f => {
       if (!f.type.startsWith('image/')) {
         alert(`File ${f.name} is not a valid image.`);
@@ -33,7 +38,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
     });
 
     const newImages = validFiles.map(f => ({
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
       url: URL.createObjectURL(f)
     }));
     
@@ -52,15 +57,6 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
     imagesRef.current = images;
   }, [images]);
 
-  useEffect(() => {
-    const currentImages = imagesRef.current;
-    return () => {
-      currentImages.forEach(img => {
-        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      });
-    };
-  }, []);
-
   return (
     <div className="flex flex-col gap-4 w-full">
       <h3 className="text-[16px] font-bold text-[#1E1035]">{title}</h3>
@@ -71,6 +67,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
           type="text" 
           value={comments}
           onChange={(e) => onCommentsChange(e.target.value)}
+          maxLength={1000}
           placeholder="Enter comments" 
           className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
         />
@@ -94,7 +91,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept="image/*"
+            accept="image/jpeg, image/png, image/webp"
             multiple
             className="hidden"
           />
