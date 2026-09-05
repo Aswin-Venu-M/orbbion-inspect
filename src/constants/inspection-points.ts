@@ -83,3 +83,13 @@ export const ENGINE_INSPECTION_ITEMS = [
   '4 Wheel Drive',
 ] as const;
 
+export const TRANSMISSION_INSPECTION_ITEMS = [
+  'Transmission Fluid Level & Condition',
+  'Transmission Fluid Leaks',
+  'Gear Selector',
+  'Unusual Noise',
+  'Gear Shifting',
+  'Differential',
+] as const;
+
+

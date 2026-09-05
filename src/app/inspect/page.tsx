@@ -28,6 +28,7 @@ import { InteriorExteriorSection } from '@/components/interior-exterior/interior
 import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { EngineSection } from '@/components/engine/engine-section';
+import { TransmissionSection } from '@/components/transmission/transmission-section';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
 import { SupportBadge } from '@/components/ui/support-badge';
 import {
@@ -75,7 +76,7 @@ export default function HomeDashboard() {
   const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('orbbion_section_order_v3');
+        const saved = localStorage.getItem('orbbion_section_order_v4');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length === DEFAULT_SECTION_ORDER.length) {
@@ -115,7 +116,7 @@ export default function HomeDashboard() {
     setSectionOrder(newOrder);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('orbbion_section_order_v3', JSON.stringify(newOrder));
+        localStorage.setItem('orbbion_section_order_v4', JSON.stringify(newOrder));
       } catch {
         // ignore
       }
@@ -893,6 +894,16 @@ export default function HomeDashboard() {
             <EngineSection 
               initialComments={report.engineComments}
               onCommentsChange={(c) => updateReport({ engineComments: c }, false)}
+            />
+          </div>
+        );
+
+      case 'section-transmission':
+        return (
+          <div key="section-transmission" className="scroll-mt-6">
+            <TransmissionSection 
+              initialComments={report.transmissionComments}
+              onCommentsChange={(c) => updateReport({ transmissionComments: c }, false)}
             />
           </div>
         );

@@ -8,7 +8,8 @@ import {
   Layers, 
   Sparkles, 
   Zap,
-  Gauge 
+  Gauge,
+  Cog 
 } from 'lucide-react';
 import React from 'react';
 
@@ -22,14 +23,15 @@ export type SectionId =
   | 'section-interior-exterior'
   | 'section-electrical'
   | 'section-body'
-  | 'section-engine';
+  | 'section-engine'
+  | 'section-transmission';
 
 export interface SectionItem {
   id: SectionId;
   num: string;
   title: string;
   subtitle: string;
-  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics' | 'Engine';
+  category: 'General' | 'Chassis' | 'Body' | 'Interior' | 'Diagnostics' | 'Engine' | 'Transmission';
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badgeText?: string;
   badgeColor?: string;
@@ -46,6 +48,7 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   'section-electrical',
   'section-body',
   'section-engine',
+  'section-transmission',
 ];
 
 export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>> = {
@@ -139,6 +142,15 @@ export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>
     badgeText: '15 Points',
     badgeColor: 'bg-orange-50 text-orange-600 border-orange-200/60',
   },
+  'section-transmission': {
+    id: 'section-transmission',
+    title: 'Transmission',
+    subtitle: '6-point gearbox & differential check',
+    category: 'Transmission',
+    icon: Cog,
+    badgeText: '6 Points',
+    badgeColor: 'bg-blue-50 text-blue-600 border-blue-200/60',
+  },
 };
 
 export const SEARCHABLE_SECTIONS = [
@@ -152,6 +164,7 @@ export const SEARCHABLE_SECTIONS = [
   { title: 'Electrical Components (27 items)', id: 'section-electrical', category: 'Diagnostics' },
   { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
   { title: 'Engine Inspection (15 items)', id: 'section-engine', category: 'Engine' },
+  { title: 'Transmission Inspection (6 items)', id: 'section-transmission', category: 'Transmission' },
   { title: 'Client & Team Contacts', id: 'section-client-details', category: 'Client' },
 ];
 

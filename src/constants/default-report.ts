@@ -71,6 +71,8 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
   electricalItems: {},
   engineComments: 'Engine runs smoothly without vibrations or abnormal noises. Fluid levels are optimal and no leaks detected.',
   engineItems: {},
+  transmissionComments: 'Transmission shifts smoothly through all gears without hesitation or slipping. Differential operates quietly with no leaks.',
+  transmissionItems: {},
   customHeadlines: [],
 };
 
