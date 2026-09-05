@@ -25,7 +25,8 @@ export type SectionId =
   | 'section-electrical'
   | 'section-body'
   | 'section-engine'
-  | 'section-transmission';
+  | 'section-transmission'
+  | 'section-general-photos';
 
 export interface SectionItem {
   id: SectionId;
@@ -51,6 +52,7 @@ export const DEFAULT_SECTION_ORDER: SectionId[] = [
   'section-body',
   'section-engine',
   'section-transmission',
+  'section-general-photos',
 ];
 
 export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>> = {
@@ -162,6 +164,15 @@ export const INSPECTION_SECTIONS_MAP: Record<SectionId, Omit<SectionItem, 'num'>
     badgeText: '6 Points',
     badgeColor: 'bg-blue-50 text-blue-600 border-blue-200/60',
   },
+  'section-general-photos': {
+    id: 'section-general-photos',
+    title: 'General Photos',
+    subtitle: 'Exterior, Interior & Engine Bay',
+    category: 'General',
+    icon: Sparkles,
+    badgeText: 'Required',
+    badgeColor: 'bg-emerald-50 text-emerald-600 border-emerald-200/60',
+  },
 };
 
 export const SEARCHABLE_SECTIONS = [
@@ -177,6 +188,7 @@ export const SEARCHABLE_SECTIONS = [
   { title: 'Body & Chassis Blueprint', id: 'section-body', category: 'Body' },
   { title: 'Engine Inspection (15 items)', id: 'section-engine', category: 'Engine' },
   { title: 'Transmission Inspection (6 items)', id: 'section-transmission', category: 'Transmission' },
+  { title: 'General Photos', id: 'section-general-photos', category: 'General' },
   { title: 'Client & Team Contacts', id: 'section-client-details', category: 'Client' },
 ];
 

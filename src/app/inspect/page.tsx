@@ -26,6 +26,7 @@ import { ChassisSubframeSection } from '@/components/chassis/chassis-subframe-se
 import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
 import { ReportPreview } from '@/components/ui/report-preview';
 import { InteriorExteriorSection } from '@/components/interior-exterior/interior-exterior-section';
+import { GeneralPhotosSection } from '@/components/general-photos/general-photos-section';
 import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { EngineSection } from '@/components/engine/engine-section';
@@ -888,6 +889,20 @@ export default function HomeDashboard() {
             <InteriorExteriorSection 
               initialComments={report.interiorComments}
               onCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+            />
+          </div>
+        );
+
+      case 'section-general-photos':
+        return (
+          <div key="section-general-photos" className="scroll-mt-6">
+            <GeneralPhotosSection 
+              exteriorComments={report.generalPhotosExteriorComments}
+              interiorComments={report.generalPhotosInteriorComments}
+              engineComments={report.generalPhotosEngineComments}
+              onExteriorCommentsChange={(c) => updateReport({ generalPhotosExteriorComments: c }, false)}
+              onInteriorCommentsChange={(c) => updateReport({ generalPhotosInteriorComments: c }, false)}
+              onEngineCommentsChange={(c) => updateReport({ generalPhotosEngineComments: c }, false)}
             />
           </div>
         );
