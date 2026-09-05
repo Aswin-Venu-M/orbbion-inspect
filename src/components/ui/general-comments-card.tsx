@@ -19,7 +19,13 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    return () => {
+      if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
+    };
+  }, [imageUrl]);
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setComments(val);
     onCommentsChange?.(val);
@@ -46,18 +52,19 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp"
         className="hidden"
       />
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <label className="text-[14px] font-bold text-[#1E1035]">General Comments</label>
-          <input 
-            type="text" 
+          <label htmlFor="general-comments-input" className="text-[14px] font-bold text-[#1E1035]">General Comments</label>
+          <textarea 
+            id="general-comments-input"
             value={comments}
             onChange={handleCommentChange}
             placeholder={placeholder}
-            className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
+            rows={3}
+            className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
           />
         </div>
 

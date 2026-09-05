@@ -61,7 +61,7 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp"
         className="hidden"
       />
       {isRemovable && onRemove && (
@@ -76,8 +76,9 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
       )}
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <label className="text-[14px] font-bold text-[#1E1035]">Headline</label>
+          <label htmlFor={`headline-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Headline</label>
           <input 
+            id={`headline-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`}
             type="text" 
             value={heading}
             maxLength={1000}
@@ -91,17 +92,18 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[14px] font-bold text-[#1E1035]">Remarks & Observations</label>
-          <input 
-            type="text" 
+          <label htmlFor={`remarks-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Remarks & Observations</label>
+          <textarea 
+            id={`remarks-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`}
             value={comments}
             maxLength={1000}
+            rows={3}
             onChange={(e) => {
               setComments(e.target.value);
               onChangeComments?.(e.target.value);
             }}
             placeholder="Enter notes or remarks for this section" 
-            className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
+            className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
           />
         </div>
 

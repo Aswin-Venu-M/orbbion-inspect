@@ -140,8 +140,8 @@ export function ReportPreview({
   clientDetails = defaultClientDetails,
   overviewStats = defaultOverviewStats,
 }: ReportPreviewProps) {
-  const passVal = Math.max(0, Math.min(100, Number(overviewStats.pass) || 55));
-  const failVal = Math.max(0, Math.min(100 - passVal, Number(overviewStats.fail) || (100 - passVal)));
+  const passVal = Math.max(0, Math.min(100, overviewStats.pass !== undefined ? Number(overviewStats.pass) : 55));
+  const failVal = Math.max(0, Math.min(100 - passVal, overviewStats.fail !== undefined ? Number(overviewStats.fail) : (100 - passVal)));
 
   return (
     <div className="w-full p-4 md:p-8 flex flex-col items-center gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
@@ -442,6 +442,48 @@ export function ReportPreview({
         </div>
 
       </div>
+
+      {/* PAGE 5: Brakes Section */}
+      {brakes && (
+        <div
+          id="preview-page-5"
+          className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-full print:max-w-none print:break-after-page"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+              <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
+            </div>
+            <div className="text-[#64748B] text-sm font-semibold">
+              Comprehensive Green Book
+            </div>
+          </div>
+
+          {/* Brakes Banner */}
+          <div className="bg-[#1F2022] rounded-[24px] px-6 py-4 mb-6 shadow-sm">
+            <h2 className="text-white text-lg font-semibold">Brakes</h2>
+          </div>
+
+          {/* Visualizer Block */}
+          <div className="bg-white rounded-3xl p-6 mb-6 shadow-sm relative flex flex-col items-center justify-center min-h-[230px]">
+            <div className="absolute top-6 left-6 text-[#A0A4AB] font-bold text-[14px]">
+              Brake Status
+            </div>
+            <div className="scale-90 pointer-events-none">
+              <ChassisVisualizer items={brakes} setItemStatus={() => {}} />
+            </div>
+          </div>
+
+          {/* Brakes Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <PreviewPositionCard title="Rear Right (RR)" data={brakes.RR} />
+            <PreviewPositionCard title="Rear Left (RL)" data={brakes.RL} />
+            <PreviewPositionCard title="Spare tyre (ST)" data={brakes.ST} />
+            <PreviewPositionCard title="Front Right (FR)" data={brakes.FR} />
+            <PreviewPositionCard title="Front Left (FL)" data={brakes.FL} />
+          </div>
+        </div>
+      )}
 
     </div>
   );

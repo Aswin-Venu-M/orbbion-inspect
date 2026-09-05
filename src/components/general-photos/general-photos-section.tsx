@@ -20,7 +20,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    if (files.length > 20) {
+    if (images.length + files.length > 20) {
       alert(`You can only upload up to 20 images at once.`);
       return;
     }
@@ -62,14 +62,15 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
       <h3 className="text-[16px] font-bold text-[#1E1035]">{title}</h3>
       
       <div className="flex flex-col gap-2">
-        <label className="text-[14px] font-bold text-[#1E1035]">Comments</label>
-        <input 
-          type="text" 
+        <label htmlFor={`photo-category-${title.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Comments</label>
+        <textarea 
+          id={`photo-category-${title.replace(/\s+/g, '-').toLowerCase()}`}
           value={comments}
           onChange={(e) => onCommentsChange(e.target.value)}
           maxLength={1000}
+          rows={3}
           placeholder="Enter comments" 
-          className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 
+          className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
         />
       </div>
 

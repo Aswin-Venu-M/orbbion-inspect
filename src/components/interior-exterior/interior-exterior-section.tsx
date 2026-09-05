@@ -49,7 +49,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    if (files.length > 20) {
+    if (seatsImages.length + files.length > 20) {
       alert(`You can only upload up to 20 images at once.`);
       return;
     }
@@ -223,14 +223,15 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
           </div>
           
           <div className="flex flex-col gap-2">
-            <label className="text-[14px] font-bold text-[#1E1035]">Comments</label>
-            <input 
-              type="text" 
+            <label htmlFor="seats-comments" className="text-[14px] font-bold text-[#1E1035]">Comments</label>
+            <textarea 
+              id="seats-comments"
               value={seatsComments}
               onChange={handleSeatsCommentChange}
               maxLength={1000}
+              rows={3}
               placeholder="Enter observations regarding seats, wear and tear, or stains..." 
-              className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-1 focus:ring-[#1E1035]/20 transition-all" 
+              className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-1 focus:ring-[#1E1035]/20 transition-all resize-y" 
             />
           </div>
 
