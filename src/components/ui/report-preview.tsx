@@ -154,23 +154,23 @@ export function ReportPreview({
         {/* Background Image Area */}
         <div className="absolute top-0 left-0 w-full h-[65%]">
           <img 
-            src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=2000" 
+            src="/assets/report-front.png" 
             alt="Cover Background" 
-            className="w-full h-full object-cover opacity-90"
+            className="w-full h-full object-cover opacity-95"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/40 to-white"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-transparent to-white"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-10 flex flex-col h-full p-10">
           {/* Logo Area */}
           <div className="w-full flex justify-center mt-8">
-            <div className="w-24 h-24 bg-[#009E49] rounded-2xl flex items-center justify-center text-white shadow-lg">
-              <div className="text-3xl font-bold italic flex items-center">
-                <span className="border-4 border-white rounded-full w-14 h-14 flex items-center justify-center">
-                  C
-                </span>
-              </div>
+            <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-xl flex items-center justify-center bg-white/10 backdrop-blur-xs border border-white/40">
+              <img 
+                src="/assets/checkmycar-logo.png" 
+                alt="CheckMyCar Logo" 
+                className="w-full h-full object-contain" 
+              />
             </div>
           </div>
 
@@ -221,8 +221,8 @@ export function ReportPreview({
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1">
-            <span className="w-3 h-3 border-2 border-white rounded-full inline-block"></span> CheckMyCar.ae
+          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
           </div>
           <div className="text-[#64748B] text-sm font-semibold">
             Comprehensive Green Book
@@ -368,8 +368,8 @@ export function ReportPreview({
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1">
-            <span className="w-3 h-3 border-2 border-white rounded-full inline-block"></span> CheckMyCar.ae
+          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
           </div>
           <div className="text-[#64748B] text-sm font-semibold">
             Comprehensive Green Book
@@ -409,8 +409,8 @@ export function ReportPreview({
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1">
-            <span className="w-3 h-3 border-2 border-white rounded-full inline-block"></span> CheckMyCar.ae
+          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
           </div>
           <div className="text-[#64748B] text-sm font-semibold">
             Comprehensive Green Book
