@@ -10,7 +10,7 @@ import {
   Calendar, Clock, ChevronDown, ChevronUp, User, MapPin, RotateCcw, RotateCw, 
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
-  CarFront, Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
+  Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
   ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
@@ -963,15 +963,18 @@ export default function HomeDashboard() {
         
         {/* Top Group: Search + Navigation Links */}
         <div className="flex flex-col justify-start items-center w-full">
-          {/* Brand / Quick Search Action */}
-          <button 
-            onClick={() => setIsSearchOpen(true)}
-            title="Search Sections (Ctrl+K)"
-            className="w-[46px] h-[46px] bg-[#008751] rounded-[14px] flex items-center justify-center shadow-sm relative hover:bg-[#007043] transition-colors shrink-0 group cursor-pointer"
+          {/* Brand Logo */}
+          <Link 
+            href="/"
+            title="CheckMyCar"
+            className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center shadow-xs relative hover:scale-105 active:scale-95 transition-all shrink-0 group cursor-pointer overflow-hidden"
           >
-            <Search size={22} strokeWidth={2.5} className="text-white transform -scale-x-100 group-hover:scale-110 transition-transform" />
-            <CarFront size={11} strokeWidth={2.5} className="text-white absolute mt-[2px] ml-[2px]" />
-          </button>
+            <img 
+              src="/assets/checkmycar-logo.png" 
+              alt="CheckMyCar" 
+              className="w-full h-full object-contain select-none" 
+            />
+          </Link>
           
           <div className="flex flex-col gap-5 w-full mt-7">
             {/* Dashboard / Home */}

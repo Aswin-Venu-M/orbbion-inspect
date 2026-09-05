@@ -6,7 +6,7 @@ import { Familjen_Grotesk } from 'next/font/google';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Search, CarFront, LayoutDashboard, FileText, Pencil, 
+  Search, LayoutDashboard, FileText, Pencil, 
   HelpCircle, Sparkles, CheckCircle2, AlertCircle, Info,
   X, ExternalLink, ArrowRight, ShieldCheck, Plus, Check,
   Car
@@ -154,15 +154,18 @@ export default function AppDashboardPage() {
       <nav className="hidden md:flex fixed left-0 top-0 h-screen w-[90px] flex-col justify-between items-center px-3 py-6 z-50 bg-white border-r border-slate-100 print:hidden">
         {/* Top Group: Brand Quick Jump + Navigation Links */}
         <div className="flex flex-col justify-start items-center w-full">
-          {/* Brand/Search Spotlight trigger */}
-          <button
-            onClick={() => setIsSearchModalOpen(true)}
-            title="Spotlight Search (Ctrl+K)"
-            className="w-[46px] h-[46px] bg-[#008751] rounded-[14px] flex items-center justify-center shadow-sm relative hover:bg-[#007043] transition-colors shrink-0 group cursor-pointer"
+          {/* Brand Logo */}
+          <Link
+            href="/"
+            title="CheckMyCar"
+            className="w-[46px] h-[46px] rounded-[14px] flex items-center justify-center shadow-xs relative hover:scale-105 active:scale-95 transition-all shrink-0 group cursor-pointer overflow-hidden"
           >
-            <Search size={22} strokeWidth={2.5} className="text-white transform -scale-x-100 group-hover:scale-110 transition-transform" />
-            <CarFront size={11} strokeWidth={2.5} className="text-white absolute mt-[2px] ml-[2px]" />
-          </button>
+            <img 
+              src="/assets/checkmycar-logo.png" 
+              alt="CheckMyCar" 
+              className="w-full h-full object-contain select-none" 
+            />
+          </Link>
 
           <div className="flex flex-col gap-5 w-full mt-7">
             {/* Dashboard (Active) */}
