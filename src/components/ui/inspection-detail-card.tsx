@@ -36,10 +36,10 @@ export const InspectionDetailCard = ({
     setImgError(false);
   }, [data.image?.url]);
 
-  const handleCommentBlur = () => {
-    if (localComments !== data.comments) {
-      onChange({ comments: localComments });
-    }
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalComments(val);
+    onChange({ comments: val });
   };
 
   return (
@@ -49,24 +49,34 @@ export const InspectionDetailCard = ({
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <h3 className="font-bold text-[#1E1035] text-sm w-[130px] shrink-0">{title}</h3>
           
-          <div className="flex bg-[#F4F5F8] rounded-full p-1 border border-[#E5E7EB] w-fit">
+          <div className="flex flex-wrap bg-[#F4F5F8] rounded-full p-1 border border-[#E5E7EB] w-fit">
             <button 
+              type="button"
               onClick={() => onChange({ status: 'pass' })}
-              className={`px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'pass' ? 'bg-[#7FD159] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'pass' ? 'bg-[#7FD159] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
             >
               PASS
             </button>
             <button 
+              type="button"
               onClick={() => onChange({ status: 'fail' })}
-              className={`px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
             >
               FAIL
             </button>
             <button 
+              type="button"
               onClick={() => onChange({ status: 'weak' })}
-              className={`px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
             >
               WEAK
+            </button>
+            <button 
+              type="button"
+              onClick={() => onChange({ status: 'na' })}
+              className={`px-3 sm:px-4 py-1 text-xs font-bold rounded-full transition-all ${data.status === 'na' ? 'bg-[#D3D3D3] text-[#4A4A4A] shadow-sm' : 'text-[#A0A4AB] hover:bg-white'}`}
+            >
+              N/A
             </button>
           </div>
         </div>
@@ -78,17 +88,16 @@ export const InspectionDetailCard = ({
             placeholder="YYYY" 
             type="number"
             min="1900"
-            max={new Date().getFullYear()}
+            max={new Date().getFullYear() + 1}
             rightIcon={<Calendar size={18} />} 
-            value={data.year}
+            value={data.year || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ year: e.target.value })}
           />
           <InputField 
             label="Comments" 
             placeholder="Enter comments" 
-            value={localComments}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalComments(e.target.value)}
-            onBlur={handleCommentBlur}
+            value={localComments || ''}
+            onChange={handleCommentChange}
           />
         </div>
       </div>

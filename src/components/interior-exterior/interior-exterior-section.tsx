@@ -1,14 +1,31 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
 import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
+import { Trash2 } from 'lucide-react';
 
-export const InteriorExteriorSection = () => {
+interface InteriorExteriorSectionProps {
+  initialComments?: string;
+  onCommentsChange?: (comments: string) => void;
+}
+
+export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = ({
+  initialComments = '',
+  onCommentsChange,
+}) => {
+  const [seatsStatus, setSeatsStatus] = useState<'pass' | 'fail' | 'weak'>('pass');
+  const [seatsComments, setSeatsComments] = useState(initialComments);
+  const [seatsImages, setSeatsImages] = useState<string[]>([
+    '/assets/car-tw.png',
+  ]);
+  const [customHeadlines, setCustomHeadlines] = useState<{ id: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const chunk1 = [
     { num: 1, label: "Roof Lining" },
     { num: 2, label: "Rear View Mirror" },
@@ -35,10 +52,48 @@ export const InteriorExteriorSection = () => {
     { num: 17, label: "Back Bumper" },
   ];
 
+  const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSeatsComments(val);
+    onCommentsChange?.(val);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
+    setSeatsImages(prev => [...prev, ...newUrls]);
+    if (e.target) e.target.value = '';
+  };
+
+  const removeSeatsImage = (index: number) => {
+    setSeatsImages(prev => {
+      const url = prev[index];
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const addHeadline = () => {
+    setCustomHeadlines(prev => [...prev, { id: Math.random().toString(36).substring(7) }]);
+  };
+
+  const removeHeadline = (id: string) => {
+    setCustomHeadlines(prev => prev.filter(h => h.id !== id));
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <div id="section-interior-exterior" className="flex flex-col gap-6">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        multiple
+        className="hidden"
+      />
+      
       <ReusableSection title="Interior & Exterior">
-        
         {/* Top Badges */}
         <div className="flex justify-center items-center gap-3 mt-4 mb-10">
           <StatusBadge label="REPAIRED" type="repaired" />
@@ -47,7 +102,7 @@ export const InteriorExteriorSection = () => {
         </div>
 
         {/* Car Diagram */}
-        <div className="relative w-full max-w-[700px] mx-auto px-10 mt-10 mb-12">
+        <div className="relative w-full max-w-[700px] mx-auto px-6 sm:px-10 mt-6 mb-12">
           <div className="relative w-full">
             <img src="/assets/car-tw.png" alt="Car Top View" className="w-full h-auto block" />
             
@@ -91,7 +146,7 @@ export const InteriorExteriorSection = () => {
           </div>
 
           {/* Legend Grid */}
-          <div className="flex flex-col md:flex-row justify-between gap-6 md:gap-4 px-4 md:px-12 mt-12 mb-10">
+          <div className="flex flex-col md:flex-row justify-between gap-6 md:gap-4 px-2 sm:px-8 mt-12 mb-6">
             <div className="flex flex-col gap-3">
               {chunk1.map(item => (
                 <div key={item.num} className="flex gap-2.5 text-[12px] font-bold text-[#1E1035]">
@@ -123,12 +178,36 @@ export const InteriorExteriorSection = () => {
       {/* Seats Upholstery Section */}
       <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100">
         <div className="flex flex-col gap-5">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center justify-between gap-5">
             <h3 className="text-[16px] font-bold text-[#1E1035]">Seats Upholstery</h3>
             <div className="flex bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB]">
-              <button className="px-6 py-1 rounded-full text-[11px] tracking-wide font-bold bg-[#71D64B] text-white shadow-sm">PASS</button>
-              <button className="px-6 py-1 rounded-full text-[11px] tracking-wide font-bold text-[#74768B] hover:text-[#1E1035] transition-colors">FAIL</button>
-              <button className="px-6 py-1 rounded-full text-[11px] tracking-wide font-bold text-[#74768B] hover:text-[#1E1035] transition-colors">WEAK</button>
+              <button 
+                type="button"
+                onClick={() => setSeatsStatus('pass')}
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                  seatsStatus === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+                }`}
+              >
+                PASS
+              </button>
+              <button 
+                type="button"
+                onClick={() => setSeatsStatus('fail')}
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                  seatsStatus === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+                }`}
+              >
+                FAIL
+              </button>
+              <button 
+                type="button"
+                onClick={() => setSeatsStatus('weak')}
+                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all ${
+                  seatsStatus === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
+                }`}
+              >
+                WEAK
+              </button>
             </div>
           </div>
           
@@ -136,28 +215,50 @@ export const InteriorExteriorSection = () => {
             <label className="text-[14px] font-bold text-[#1E1035]">Comments</label>
             <input 
               type="text" 
-              placeholder="Enter comments" 
+              value={seatsComments}
+              onChange={handleSeatsCommentChange}
+              placeholder="Enter observations regarding seats, wear and tear, or stains..." 
               className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-1 focus:ring-[#1E1035]/20 transition-all" 
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-            <ImageUploadBox status="uploading" progress={56} url="/assets/car-tw.png" />
-            <ImageUploadBox status="uploading" progress={56} url="/assets/car-tw.png" />
-            <ImageUploadBox status="completed" url="/assets/car-tw.png" />
-            <ImageUploadBox status="empty" />
+            {seatsImages.map((url, i) => (
+              <div key={i} className="relative group">
+                <ImageUploadBox status="completed" url={url} />
+                <button
+                  type="button"
+                  onClick={() => removeSeatsImage(i)}
+                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <div onClick={() => fileInputRef.current?.click()}>
+              <ImageUploadBox status="empty" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* General Comments Section */}
-      <GeneralCommentsCard />
+      <GeneralCommentsCard placeholder="General interior & exterior comments..." />
 
-      {/* Heading Block */}
-      <HeadingCard />
+      {/* Default Heading Block */}
+      <HeadingCard initialTitle="Dashboard & Infotainment Screen Trim" />
+
+      {/* Dynamically added headlines */}
+      {customHeadlines.map(h => (
+        <HeadingCard
+          key={h.id}
+          isRemovable
+          onRemove={() => removeHeadline(h.id)}
+        />
+      ))}
 
       {/* Add Headline Button */}
-      <AddHeadlineButton />
+      <AddHeadlineButton onClick={addHeadline} label="Add Interior Headline" />
     </div>
   );
 };

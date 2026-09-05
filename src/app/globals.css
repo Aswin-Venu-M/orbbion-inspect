@@ -51,7 +51,6 @@ select {
   appearance: none;
 }
 
-
 .bg-dot-pattern {
   position: relative;
   background-image: radial-gradient(#E2E4EB 1px, transparent 1px);
@@ -76,4 +75,55 @@ select {
   pointer-events: none;
   opacity: 0.6; /* Slight transparency for elegance */
   z-index: 0;
+}
+
+/* Print Stylesheet for ReportPreview */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide app navigation, headers, toolbars, and non-preview elements */
+  nav,
+  header,
+  aside,
+  .print-hide,
+  .custom-scrollbar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Reset layout constraints for document flow */
+  div[class*="h-screen"],
+  div[class*="overflow-hidden"],
+  div[class*="custom-scrollbar"] {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+  }
+
+  /* Page break rules for preview pages */
+  #preview-page-1,
+  #preview-page-2,
+  #preview-page-3,
+  #preview-page-4 {
+    page-break-after: always !important;
+    break-after: page !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
