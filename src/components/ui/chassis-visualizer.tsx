@@ -31,12 +31,12 @@ const ActionPopup = ({ onSelect, onClose, popupRef }: { onSelect: (s: Inspection
       initial={{ opacity: 0, y: 10, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 10, scale: 0.9 }}
-      className="absolute z-50 flex gap-1.5 bg-[#4A4A4A] p-2 rounded-[24px] shadow-2xl -top-[80px] left-1/2 -translate-x-1/2"
+      className="absolute z-50 flex gap-1 sm:gap-1.5 bg-[#4A4A4A] p-1.5 sm:p-2 rounded-[20px] sm:rounded-[24px] shadow-2xl -top-[70px] sm:-top-[80px] left-1/2 -translate-x-1/2 max-w-[92vw]"
     >
-      <button aria-label="Pass" onClick={(e) => { e.stopPropagation(); onSelect('pass'); onClose(); }} className="w-[52px] h-[52px] bg-[#7FD159] rounded-[18px] flex items-center justify-center text-[#2A5913] hover:brightness-110 transition-all shadow-sm"><ThumbsUp size={24} strokeWidth={2.5} /></button>
-      <button aria-label="Fail" onClick={(e) => { e.stopPropagation(); onSelect('fail'); onClose(); }} className="w-[52px] h-[52px] bg-[#FE8E4B] rounded-[18px] flex items-center justify-center text-[#6E2A0C] hover:brightness-110 transition-all shadow-sm"><ThumbsDown size={24} strokeWidth={2.5} /></button>
-      <button aria-label="Weak" onClick={(e) => { e.stopPropagation(); onSelect('weak'); onClose(); }} className="w-[52px] h-[52px] bg-[#FFED00] rounded-[18px] flex items-center justify-center text-[#7A7000] hover:brightness-110 transition-all shadow-sm"><Frown size={24} strokeWidth={2.5} /></button>
-      <button aria-label="Not Available" onClick={(e) => { e.stopPropagation(); onSelect('na'); onClose(); }} className="w-[52px] h-[52px] bg-[#D3D3D3] rounded-[18px] flex items-center justify-center text-[#4A4A4A] hover:brightness-110 transition-all shadow-sm"><Ban size={24} strokeWidth={2.5} /></button>
+      <button aria-label="Pass" onClick={(e) => { e.stopPropagation(); onSelect('pass'); onClose(); }} className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] bg-[#7FD159] rounded-[14px] sm:rounded-[18px] flex items-center justify-center text-[#2A5913] hover:brightness-110 transition-all shadow-sm"><ThumbsUp className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
+      <button aria-label="Fail" onClick={(e) => { e.stopPropagation(); onSelect('fail'); onClose(); }} className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] bg-[#FE8E4B] rounded-[14px] sm:rounded-[18px] flex items-center justify-center text-[#6E2A0C] hover:brightness-110 transition-all shadow-sm"><ThumbsDown className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
+      <button aria-label="Weak" onClick={(e) => { e.stopPropagation(); onSelect('weak'); onClose(); }} className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] bg-[#FFED00] rounded-[14px] sm:rounded-[18px] flex items-center justify-center text-[#7A7000] hover:brightness-110 transition-all shadow-sm"><Frown className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
+      <button aria-label="Not Available" onClick={(e) => { e.stopPropagation(); onSelect('na'); onClose(); }} className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] bg-[#D3D3D3] rounded-[14px] sm:rounded-[18px] flex items-center justify-center text-[#4A4A4A] hover:brightness-110 transition-all shadow-sm"><Ban className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
     </motion.div>
   );
 };

@@ -137,7 +137,7 @@ export const InspectionDetailCard = ({
             
             <button 
               onClick={(e) => { e.stopPropagation(); onChange({ image: null }); }} 
-              className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-white shadow-sm transition-all opacity-0 group-hover:opacity-100"
+              className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-white shadow-sm transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
             >
               <Trash2 size={16} />
             </button>
