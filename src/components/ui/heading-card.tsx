@@ -20,6 +20,8 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   useEffect(() => {
     setHeading(initialTitle);
   }, [initialTitle]);
