@@ -22,6 +22,9 @@ interface InteriorExteriorSectionProps {
   onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
 }
 
+const MAX_IMAGES = 20;
+const MAX_IMAGE_SIZE_MB = 5;
+
 export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = ({
   initialComments = '',
   onCommentsChange,
@@ -33,7 +36,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   onCustomHeadlinesChange,
 }) => {
   const [seatsComments, setSeatsComments] = useState(initialComments);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setSeatsComments(initialComments);
+  }, [initialComments]);
 
   const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
@@ -46,21 +54,23 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    if (seatsImages.length + files.length > 20) {
-      alert(`You can only upload up to 20 images at once.`);
+    if (seatsImages.length + files.length > MAX_IMAGES) {
+      setUploadError(`You can only upload up to ${MAX_IMAGES} images at once.`);
+      if (e.target) e.target.value = '';
       return;
     }
 
     const validFiles = Array.from(files).filter(f => {
       if (!f.type.startsWith('image/')) {
-        alert(`File ${f.name} is not a valid image.`);
+        setUploadError(`File ${f.name} is not a valid image.`);
         return false;
       }
-      if (f.size > 5 * 1024 * 1024) {
-        alert(`File ${f.name} is too large. Maximum size is 5MB.`);
+      if (f.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+        setUploadError(`File ${f.name} is too large. Maximum size is ${MAX_IMAGE_SIZE_MB}MB.`);
         return false;
       }
       return true;
@@ -84,6 +94,14 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   useEffect(() => {
     seatsImagesRef.current = seatsImages;
   }, [seatsImages]);
+
+  useEffect(() => {
+    return () => {
+      seatsImagesRef.current.forEach(img => {
+        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+      });
+    };
+  }, []);
 
   const addHeadline = () => {
     onCustomHeadlinesChange?.([...customHeadlines, { id: crypto.randomUUID(), title: '', comments: '' }]);
@@ -235,6 +253,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
             />
           </div>
 
+          {uploadError && (
+            <div className="text-red-500 text-sm font-semibold mt-1">
+              {uploadError}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
             {seatsImages.map((img) => (
               <div key={img.id} className="relative group">
@@ -248,9 +272,14 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
                 </button>
               </div>
             ))}
-            <div onClick={() => fileInputRef.current?.click()}>
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              className="focus:outline-none focus:ring-2 focus:ring-[#1E1035] rounded-xl text-left"
+              aria-label="Upload Image"
+            >
               <ImageUploadBox status="empty" />
-            </div>
+            </button>
           </div>
         </div>
       </section>

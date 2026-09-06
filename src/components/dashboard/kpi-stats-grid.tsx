@@ -108,8 +108,17 @@ export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStat
 
       {/* 3. Drafts In-Progress */}
       <div 
+        role="button"
+        tabIndex={0}
+        aria-label="Filter reports by active drafts"
         onClick={onFilterDrafts}
-        className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md hover:border-purple-200 transition-all cursor-pointer"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFilterDrafts?.();
+          }
+        }}
+        className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md hover:border-purple-200 focus-visible:ring-2 focus-visible:ring-purple-500 transition-all cursor-pointer outline-none"
       >
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Drafts Queue</span>
@@ -140,8 +149,17 @@ export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStat
 
       {/* 4. Flagged Severe Defects */}
       <div 
+        role="button"
+        tabIndex={0}
+        aria-label="View tampered reports"
         onClick={onFilterTampered}
-        className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md hover:border-orange-200 transition-all cursor-pointer"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFilterTampered?.();
+          }
+        }}
+        className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md hover:border-orange-200 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all cursor-pointer outline-none"
       >
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Severe Flags</span>
@@ -194,7 +212,9 @@ export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStat
         <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4 overflow-hidden">
           <div 
             className="bg-blue-600 h-full rounded-full transition-all duration-700" 
-            style={{ width: `${(data.activeInspectors.onDuty / data.activeInspectors.total) * 100}%` }} 
+            style={{ 
+              width: `${data.activeInspectors.total > 0 ? (data.activeInspectors.onDuty / data.activeInspectors.total) * 100 : 0}%` 
+            }} 
           />
         </div>
       </div>

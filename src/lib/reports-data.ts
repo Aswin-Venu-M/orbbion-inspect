@@ -36,7 +36,7 @@ export interface ReportListItem {
   inspector: InspectorInfo;
   date: string;
   time: string;
-  inspectionType: '600-Points Comprehensive' | '300-Points Standard' | 'Pre-Purchase Inspection' | 'Chassis & Drivetrain';
+  inspectionType: '600-Points Comprehensive' | '300-Points Standard' | 'Pre-Purchase Inspection' | 'Chassis & Drivetrain Only' | 'Body & Paint Inspection';
   passPercentage: number;
   failPercentage: number;
   status: 'published' | 'draft' | 'in_review';

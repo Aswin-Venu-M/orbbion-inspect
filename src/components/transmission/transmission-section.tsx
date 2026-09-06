@@ -11,19 +11,51 @@ import { TRANSMISSION_INSPECTION_ITEMS } from '@/constants/inspection-points';
 interface TransmissionSectionProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
+  transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
+  onTransmissionItemsChange?: (items: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>) => void;
+  customHeadlines?: { id: string; title: string; comments: string; imageUrl?: string }[];
+  onCustomHeadlinesChange?: (headlines: { id: string; title: string; comments: string; imageUrl?: string }[]) => void;
 }
 
-export function TransmissionSection({ initialComments = '', onCommentsChange }: TransmissionSectionProps) {
+export function TransmissionSection({ 
+  initialComments = '', 
+  onCommentsChange,
+  transmissionItems = {},
+  onTransmissionItemsChange,
+  customHeadlines = [],
+  onCustomHeadlinesChange
+}: TransmissionSectionProps) {
   const items = TRANSMISSION_INSPECTION_ITEMS;
 
-  const [customHeadlines, setCustomHeadlines] = useState<{ id: string }[]>([]);
-
   const addHeadline = () => {
-    setCustomHeadlines(prev => [...prev, { id: Math.random().toString(36).substring(7) }]);
+    const newHeadline = { id: crypto.randomUUID(), title: '', comments: '' };
+    onCustomHeadlinesChange?.([...customHeadlines, newHeadline]);
   };
 
   const removeHeadline = (id: string) => {
-    setCustomHeadlines(prev => prev.filter(h => h.id !== id));
+    onCustomHeadlinesChange?.(customHeadlines.filter(h => h.id !== id));
+  };
+
+  const updateHeadlineTitle = (id: string, title: string) => {
+    onCustomHeadlinesChange?.(customHeadlines.map(h => h.id === id ? { ...h, title } : h));
+  };
+
+  const updateHeadlineComments = (id: string, comments: string) => {
+    onCustomHeadlinesChange?.(customHeadlines.map(h => h.id === id ? { ...h, comments } : h));
+  };
+
+  const handleItemStatusChange = (item: string, status: 'pass' | 'fail' | 'weak') => {
+    onTransmissionItemsChange?.({
+      ...transmissionItems,
+      [item]: { ...(transmissionItems[item] || { comments: '' }), status }
+    });
+  };
+
+  const handleItemCommentsChange = (item: string, comments: string) => {
+    onTransmissionItemsChange?.({
+      ...transmissionItems,
+      [item]: { ...(transmissionItems[item] || { status: 'pass' }), comments }
+    });
   };
 
   return (
@@ -31,11 +63,14 @@ export function TransmissionSection({ initialComments = '', onCommentsChange }: 
       <SectionHeader title="Transmission" />
 
       <div className="flex flex-col gap-2">
-        {items.map((item, index) => (
+        {items.map((item) => (
           <InspectionItemCard
-            key={`${item}-${index}`}
+            key={item}
             title={item}
-            initialStatus="pass"
+            initialStatus={transmissionItems[item]?.status || 'pass'}
+            initialComments={transmissionItems[item]?.comments || ''}
+            onStatusChange={(status) => handleItemStatusChange(item, status)}
+            onCommentsChange={(comments) => handleItemCommentsChange(item, comments)}
           />
         ))}
       </div>
@@ -54,8 +89,12 @@ export function TransmissionSection({ initialComments = '', onCommentsChange }: 
       {customHeadlines.map(h => (
         <HeadingCard
           key={h.id}
+          initialTitle={h.title}
+          initialComments={h.comments}
           isRemovable
           onRemove={() => removeHeadline(h.id)}
+          onChangeTitle={(title) => updateHeadlineTitle(h.id, title)}
+          onChangeComments={(comments) => updateHeadlineComments(h.id, comments)}
         />
       ))}
 

@@ -942,6 +942,10 @@ export default function HomeDashboard() {
             <TransmissionSection 
               initialComments={report.transmissionComments}
               onCommentsChange={(c) => updateReport({ transmissionComments: c }, false)}
+              transmissionItems={report.transmissionItems}
+              onTransmissionItemsChange={(items) => updateReport({ transmissionItems: items }, false)}
+              customHeadlines={report.customHeadlines}
+              onCustomHeadlinesChange={(headlines) => updateReport({ customHeadlines: headlines }, false)}
             />
           </div>
         );

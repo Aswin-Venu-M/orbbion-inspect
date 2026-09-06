@@ -15,7 +15,7 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
 
   const isVisible = isHovered || isOpen;
 
-  // Close on click outside
+  // Close on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (badgeRef.current && !badgeRef.current.contains(event.target as Node)) {
@@ -23,11 +23,19 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 

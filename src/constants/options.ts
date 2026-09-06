@@ -73,8 +73,10 @@ export const REPORT_VEHICLE_TYPE_FILTER_OPTIONS = [
   { value: 'all', label: 'All Vehicle Types' },
   { value: 'SUV', label: 'SUV' },
   { value: 'Truck', label: 'Truck' },
-  { value: 'Sports', label: 'Sports / Coupe' },
+  { value: 'Sports', label: 'Sports' },
+  { value: 'Coupe', label: 'Coupe' },
   { value: 'Sedan', label: 'Sedan' },
+  { value: 'Hatchback', label: 'Hatchback' },
 ] as const;
 
 export const REPORT_SORT_OPTIONS = [
