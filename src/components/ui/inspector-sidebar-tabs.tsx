@@ -396,34 +396,7 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                 onChange={(e) => onUpdateTeamDetails({ inspector: e.target.value })}
               />
 
-              {/* Inspector Verification Card */}
-              <div className="bg-[#FAF9FD] rounded-2xl p-4 border border-purple-100/60 space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#9723FF]/10 text-[#9723FF] flex items-center justify-center shrink-0">
-                    <Award size={20} />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-[#1E1035] block leading-tight">
-                      {report.teamDetails.inspector || "Ahmed Al Mansoori"}
-                    </span>
-                    <span className="text-[10px] text-slate-500">Lead QA Inspector • Level 3</span>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t border-slate-100">
-                  <div className="bg-white p-2 rounded-xl border border-slate-100">
-                    <span className="text-slate-400 block">Hub Station</span>
-                    <span className="font-bold text-slate-700">Dubai Al Quoz</span>
-                  </div>
-                  <div className="bg-white p-2 rounded-xl border border-slate-100">
-                    <span className="text-slate-400 block">Status</span>
-                    <span className="font-bold text-emerald-600 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Active On Duty
-                    </span>
-                  </div>
-                </div>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
