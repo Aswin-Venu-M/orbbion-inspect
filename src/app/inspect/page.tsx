@@ -596,7 +596,7 @@ export default function HomeDashboard() {
                   options={inspectionTypeOptions}
                   value={report.inspectionDetails.inspectionType}
                   onChange={(e) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, inspectionType: e.target.value }
+                    inspectionDetails: { ...report.inspectionDetails, inspectionType: e.target.value as string }
                   })}
                 />
                 <InputField 
@@ -680,7 +680,7 @@ export default function HomeDashboard() {
                   options={odometerStatusOptions}
                   value={report.vehicleSummary.odometerStatus}
                   onChange={(e) => {
-                    const newStatus = e.target.value;
+                    const newStatus = e.target.value as string;
                     const isTampered = newStatus === 'Tampered';
                     updateReport({
                       vehicleSummary: { 
@@ -958,6 +958,12 @@ export default function HomeDashboard() {
             <ChassisSubframeSection 
               initialComments={report.chassisSubframeComments || ''}
               onCommentsChange={(c) => updateReport({ chassisSubframeComments: c }, false)}
+              partStatuses={report.chassisSubframePartStatuses}
+              onPartStatusesChange={(s) => updateReport({ chassisSubframePartStatuses: s }, false)}
+              chassisImages={report.chassisSubframeImages}
+              onChassisImagesChange={(i) => updateReport({ chassisSubframeImages: i }, false)}
+              customHeadlines={report.chassisSubframeCustomHeadlines}
+              onCustomHeadlinesChange={(h) => updateReport({ chassisSubframeCustomHeadlines: h }, false)}
             />
           </div>
         );
@@ -968,6 +974,12 @@ export default function HomeDashboard() {
             <BodySection 
               initialComments={report.bodyComments}
               onCommentsChange={(c) => updateReport({ bodyComments: c }, false)}
+              partStatuses={report.bodyPartStatuses as Record<string, string>}
+              onPartStatusesChange={(s) => updateReport({ bodyPartStatuses: s }, false)}
+              bodyImages={report.bodyImages}
+              onBodyImagesChange={(i) => updateReport({ bodyImages: i }, false)}
+              customHeadlines={report.bodyCustomHeadlines}
+              onCustomHeadlinesChange={(h) => updateReport({ bodyCustomHeadlines: h }, false)}
             />
           </div>
         );
@@ -976,14 +988,16 @@ export default function HomeDashboard() {
         return (
           <div key="section-interior-exterior" className="scroll-mt-6">
             <InteriorExteriorSection 
-              initialComments={report.interiorComments}
-              onCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+              seatsComments={report.interiorComments}
+              onSeatsCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
               seatsStatus={report.seatsStatus}
               onSeatsStatusChange={(s) => updateReport({ seatsStatus: s }, false)}
               seatsImages={report.seatsImages}
               onSeatsImagesChange={(imgs) => updateReport({ seatsImages: imgs }, false)}
-              customHeadlines={report.customHeadlines}
-              onCustomHeadlinesChange={(h) => updateReport({ customHeadlines: h }, false)}
+              generalComments={report.generalPhotosInteriorComments}
+              onGeneralCommentsChange={(c) => updateReport({ generalPhotosInteriorComments: c }, false)}
+              customHeadlines={report.interiorCustomHeadlines}
+              onCustomHeadlinesChange={(h) => updateReport({ interiorCustomHeadlines: h }, false)}
             />
           </div>
         );
@@ -1031,8 +1045,16 @@ export default function HomeDashboard() {
             <TransmissionSection 
               initialComments={report.transmissionComments}
               onCommentsChange={(c) => updateReport({ transmissionComments: c }, false)}
-              transmissionItems={report.transmissionItems}
-              onTransmissionItemsChange={(items) => updateReport({ transmissionItems: items }, false)}
+              items={report.transmissionItems as Record<string, any>}
+              onItemChange={(id, data) => {
+                const currentItems = report.transmissionItems || {};
+                updateReport({
+                  transmissionItems: {
+                    ...currentItems,
+                    [id]: { ...currentItems[id], ...data } as any
+                  }
+                }, false);
+              }}
               customHeadlines={report.customHeadlines}
               onCustomHeadlinesChange={(headlines) => updateReport({ customHeadlines: headlines }, false)}
             />
@@ -1580,6 +1602,7 @@ export default function HomeDashboard() {
                     inspectionDetails={report.inspectionDetails}
                     clientDetails={report.clientDetails}
                     overviewStats={report.reportOverview}
+                    report={report}
                   />
                 </div>
               </div>

@@ -66,14 +66,30 @@ export interface FullInspectionReport {
   rims: Record<string, InspectionDetailState>;
   brakes: Record<string, InspectionDetailState>;
   bodyComments?: string;
+  bodyImages?: string[];
+  bodyPartStatuses?: Record<string, string>;
+  bodyCustomHeadlines?: CustomHeadlineItem[];
+
   chassisSubframeComments?: string;
+  chassisSubframeImages?: string[];
+  chassisSubframePartStatuses?: Record<number, 'unchecked' | 'checked' | 'repaired' | 'damaged'>;
+  chassisSubframeCustomHeadlines?: CustomHeadlineItem[];
+
   interiorComments?: string;
-  electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
+  interiorCustomHeadlines?: CustomHeadlineItem[];
+
+  electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
+  electricalCustomHeadlines?: CustomHeadlineItem[];
+
   engineComments?: string;
-  engineItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
+  engineItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
+  engineCustomHeadlines?: CustomHeadlineItem[];
+
   transmissionComments?: string;
-  transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
-  customHeadlines?: CustomHeadlineItem[];
+  transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
+  transmissionCustomHeadlines?: CustomHeadlineItem[];
+
+  customHeadlines?: CustomHeadlineItem[]; // Legacy or general Custom Headlines if any
   seatsStatus?: 'pass' | 'fail' | 'weak' | 'na';
   seatsImages?: { id: string; url: string }[];
   generalPhotosExteriorComments?: string;

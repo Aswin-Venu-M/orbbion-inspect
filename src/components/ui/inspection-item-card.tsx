@@ -9,8 +9,10 @@ interface InspectionItemCardProps {
   showToggle?: boolean;
   initialStatus?: 'pass' | 'fail' | 'weak';
   initialComments?: string;
+  imageUrls?: string[];
   onStatusChange?: (status: 'pass' | 'fail' | 'weak') => void;
   onCommentsChange?: (comments: string) => void;
+  onImagesChange?: (urls: string[]) => void;
 }
 
 export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
@@ -19,13 +21,25 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   showToggle = true,
   initialStatus = 'pass',
   initialComments = '',
+  imageUrls: externalImageUrls,
   onStatusChange,
   onCommentsChange,
+  onImagesChange,
 }) => {
   const [status, setStatus] = useState<'pass' | 'fail' | 'weak'>(initialStatus);
   const [comments, setComments] = useState<string>(initialComments);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
+  React.useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
+
+  const displayImageUrls = externalImageUrls ?? localImageUrls;
 
   const handleStatusClick = (newStatus: 'pass' | 'fail' | 'weak') => {
     setStatus(newStatus);
@@ -42,18 +56,28 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    setImageUrls(prev => [...prev, ...newUrls]);
+    
+    if (onImagesChange) {
+      onImagesChange([...displayImageUrls, ...newUrls]);
+    } else {
+      setLocalImageUrls(prev => [...prev, ...newUrls]);
+    }
+    
     if (e.target) e.target.value = '';
   };
 
   const handleRemoveImage = (index: number) => {
-    setImageUrls(prev => {
-      const urlToRemove = prev[index];
-      if (urlToRemove?.startsWith('blob:')) {
-        URL.revokeObjectURL(urlToRemove);
-      }
-      return prev.filter((_, i) => i !== index);
-    });
+    const urlToRemove = displayImageUrls[index];
+    if (urlToRemove?.startsWith('blob:')) {
+      URL.revokeObjectURL(urlToRemove);
+    }
+    
+    const newUrls = displayImageUrls.filter((_, i) => i !== index);
+    if (onImagesChange) {
+      onImagesChange(newUrls);
+    } else {
+      setLocalImageUrls(newUrls);
+    }
   };
 
   return (
@@ -115,7 +139,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
 
         {hasMultipleImages ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-            {imageUrls.map((url, i) => (
+            {displayImageUrls.map((url, i) => (
               <div key={i} className="relative group">
                 <ImageUploadBox status="completed" url={url} />
                 <button
@@ -133,9 +157,9 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
           </div>
         ) : (
           <div className="w-full sm:w-[220px] mt-1">
-            {imageUrls.length > 0 ? (
+            {displayImageUrls.length > 0 ? (
               <div className="relative group">
-                <ImageUploadBox status="completed" url={imageUrls[0]} />
+                <ImageUploadBox status="completed" url={displayImageUrls[0]} />
                 <button
                   type="button"
                   onClick={() => handleRemoveImage(0)}

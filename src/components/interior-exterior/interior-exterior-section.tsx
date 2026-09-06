@@ -12,12 +12,14 @@ import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
 
 interface InteriorExteriorSectionProps {
-  initialComments?: string;
-  onCommentsChange?: (comments: string) => void;
+  seatsComments?: string;
+  onSeatsCommentsChange?: (comments: string) => void;
   seatsStatus?: 'pass' | 'fail' | 'weak' | 'na';
   onSeatsStatusChange?: (status: 'pass' | 'fail' | 'weak' | 'na') => void;
   seatsImages?: { id: string; url: string }[];
   onSeatsImagesChange?: (images: { id: string; url: string }[]) => void;
+  generalComments?: string;
+  onGeneralCommentsChange?: (comments: string) => void;
   customHeadlines?: CustomHeadlineItem[];
   onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
 }
@@ -26,23 +28,20 @@ const MAX_IMAGES = 20;
 const MAX_IMAGE_SIZE_MB = 5;
 
 export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = ({
-  initialComments = '',
-  onCommentsChange,
+  seatsComments = '',
+  onSeatsCommentsChange,
   seatsStatus = 'pass',
   onSeatsStatusChange,
   seatsImages = [],
   onSeatsImagesChange,
+  generalComments = '',
+  onGeneralCommentsChange,
   customHeadlines = [],
   onCustomHeadlinesChange,
 }) => {
-  const [seatsComments, setSeatsComments] = useState(initialComments);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    setSeatsComments(initialComments);
-  }, [initialComments]);
 
   useEffect(() => {
     return () => {
@@ -54,14 +53,16 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
   const chunk3 = INTERIOR_EXTERIOR_POINTS.chunk3;
 
+  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
+    { id: 'default-interior', title: 'Dashboard & Infotainment Screen Trim', comments: '', imageUrl: undefined }
+  ];
+
   const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
-    setSeatsComments(val);
-    
-    if (onCommentsChange) {
+    if (onSeatsCommentsChange) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        onCommentsChange(val);
+        onSeatsCommentsChange(val);
       }, 400);
     }
   };
@@ -99,29 +100,19 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   };
 
   const removeSeatsImage = (idToRemove: string) => {
-    const img = seatsImages.find(i => i.id === idToRemove);
-    if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
     onSeatsImagesChange?.(seatsImages.filter(i => i.id !== idToRemove));
   };
-  const seatsImagesRef = useRef(seatsImages);
-  useEffect(() => {
-    seatsImagesRef.current = seatsImages;
-  }, [seatsImages]);
-
-  useEffect(() => {
-    return () => {
-      seatsImagesRef.current.forEach(img => {
-        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      });
-    };
-  }, []);
 
   const addHeadline = () => {
-    onCustomHeadlinesChange?.([...customHeadlines, { id: crypto.randomUUID(), title: '', comments: '' }]);
+    onCustomHeadlinesChange?.([...defaultHeadlines, { id: crypto.randomUUID(), title: '', comments: '' }]);
   };
 
   const removeHeadline = (id: string) => {
-    onCustomHeadlinesChange?.(customHeadlines.filter(h => h.id !== id));
+    onCustomHeadlinesChange?.(defaultHeadlines.filter(h => h.id !== id));
+  };
+
+  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
+    onCustomHeadlinesChange?.(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
   };
 
   return (
@@ -257,7 +248,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
             <label htmlFor="seats-comments" className="text-[14px] font-bold text-[#1E1035]">Comments</label>
             <textarea 
               id="seats-comments"
-              value={seatsComments}
+              defaultValue={seatsComments}
               onChange={handleSeatsCommentChange}
               maxLength={1000}
               rows={3}
@@ -298,25 +289,24 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
       </section>
 
       {/* General Comments Section */}
-      <GeneralCommentsCard placeholder="General interior & exterior comments..." />
-
-      {/* Default Heading Block */}
-      <HeadingCard initialTitle="Dashboard & Infotainment Screen Trim" />
+      <GeneralCommentsCard 
+        placeholder="General interior & exterior comments..." 
+        initialComments={generalComments}
+        onCommentsChange={onGeneralCommentsChange}
+      />
 
       {/* Dynamically added headlines */}
-      {customHeadlines.map(h => (
+      {defaultHeadlines.map(h => (
         <HeadingCard
           key={h.id}
           initialTitle={h.title}
           initialComments={h.comments}
-          isRemovable
+          initialImageUrl={h.imageUrl}
+          isRemovable={defaultHeadlines.length > 1}
           onRemove={() => removeHeadline(h.id)}
-          onChangeTitle={(title) => {
-            onCustomHeadlinesChange?.(customHeadlines.map(ch => ch.id === h.id ? { ...ch, title } : ch));
-          }}
-          onChangeComments={(comments) => {
-            onCustomHeadlinesChange?.(customHeadlines.map(ch => ch.id === h.id ? { ...ch, comments } : ch));
-          }}
+          onChangeTitle={(title) => updateHeadline(h.id, { title })}
+          onChangeComments={(comments) => updateHeadline(h.id, { comments })}
+          onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
         />
       ))}
 

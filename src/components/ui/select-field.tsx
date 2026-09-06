@@ -47,10 +47,10 @@ export const SelectField = ({
       </label>
       <div className="relative">
         <Combobox
-          selectedValue={value as string | number}
-          onSelectedValueChange={(val) => {
+          value={value as string | null}
+          onValueChange={(val) => {
             if (onChange) {
-              onChange({ target: { value: val } });
+              onChange({ target: { value: val as string } });
             }
           }}
           itemToStringLabel={(itemValue) => {

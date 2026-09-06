@@ -8,6 +8,8 @@ import {
   VehicleSummaryData,
   ClientDetailsData,
   ReportOverviewData,
+  FullInspectionReport,
+  CustomHeadlineItem,
 } from '@/lib/inspection-types';
 
 interface ReportPreviewProps {
@@ -18,6 +20,7 @@ interface ReportPreviewProps {
   inspectionDetails?: InspectionDetailsData;
   clientDetails?: ClientDetailsData;
   overviewStats?: ReportOverviewData;
+  report?: FullInspectionReport;
 }
 
 const defaultVehicleData: VehicleSummaryData = {
@@ -132,6 +135,108 @@ function PreviewPositionCard({
   );
 }
 
+function GenericItemCard({
+  title,
+  status,
+  comments,
+  images = [],
+}: {
+  title: string;
+  status?: string;
+  comments?: string;
+  images?: string[];
+}) {
+  const getBadgeStyle = () => {
+    switch (status?.toLowerCase()) {
+      case 'pass':
+      case 'checked':
+        return 'bg-[#5BC335] text-white';
+      case 'fail':
+      case 'damaged':
+        return 'bg-[#FE8E4B] text-white';
+      case 'weak':
+      case 'repaired':
+        return 'bg-[#FFED00] text-[#7A7000]';
+      case 'na':
+      case 'unchecked':
+        return 'bg-[#D3D3D3] text-[#4A4A4A]';
+      default:
+        return 'bg-[#F4F5F8] text-[#1E1035] border border-slate-200';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status?.toLowerCase()) {
+      case 'pass': return 'PASS';
+      case 'fail': return 'FAIL';
+      case 'weak': return 'WEAK';
+      case 'na': return 'N/A';
+      case 'checked': return 'CHECKED';
+      case 'unchecked': return 'UNCHECKED';
+      case 'repaired': return 'REPAIRED';
+      case 'damaged': return 'DAMAGED';
+      default: return status ? status.toUpperCase() : 'N/A';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-3xl p-5 flex flex-col shadow-sm border border-slate-100">
+      <div className="flex justify-between items-center mb-3 gap-2">
+        <span className="text-[#1E1035] text-[13px] font-bold truncate">{title}</span>
+        {status && (
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase shrink-0 ${getBadgeStyle()}`}>
+            {getStatusText()}
+          </span>
+        )}
+      </div>
+
+      {images.length > 0 ? (
+        <div className="rounded-2xl overflow-hidden aspect-[4/3] mb-3 mt-auto bg-slate-100 border border-slate-200">
+          <img
+            src={images[0]}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="rounded-2xl overflow-hidden aspect-[4/3] mb-3 mt-auto bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs font-semibold">
+          No Image Provided
+        </div>
+      )}
+
+      {comments ? (
+        <p className="text-[#1E1035] text-[12px] font-medium leading-tight line-clamp-2">
+          {comments}
+        </p>
+      ) : (
+        <p className="text-[#A0A4AB] text-[11px] italic">No remarks recorded</p>
+      )}
+    </div>
+  );
+}
+
+function PreviewPage({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+  return (
+    <div
+      id={id}
+      className="w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-full print:max-w-none print:break-after-page"
+    >
+      <div className="flex justify-between items-center mb-8">
+        <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+          <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
+        </div>
+        <div className="text-[#64748B] text-sm font-semibold">
+          Comprehensive Green Book
+        </div>
+      </div>
+      <div className="bg-[#1F2022] rounded-[24px] px-6 py-4 mb-6 shadow-sm">
+        <h2 className="text-white text-lg font-semibold">{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function ReportPreview({
   tyres,
   rims,
@@ -140,6 +245,7 @@ export function ReportPreview({
   inspectionDetails = defaultInspectionDetails,
   clientDetails = defaultClientDetails,
   overviewStats = defaultOverviewStats,
+  report,
 }: ReportPreviewProps) {
   const passVal = Math.max(0, Math.min(100, overviewStats.pass !== undefined ? Number(overviewStats.pass) : 55));
   const failVal = Math.max(0, Math.min(100 - passVal, overviewStats.fail !== undefined ? Number(overviewStats.fail) : (100 - passVal)));
@@ -485,6 +591,255 @@ export function ReportPreview({
           </div>
         </div>
       )}
+
+      {/* PAGE 6: Chassis & Subframe */}
+      {report?.chassisSubframePartStatuses && (
+        <PreviewPage id="preview-page-chassis" title="Chassis & Subframe">
+          {report.chassisSubframeComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.chassisSubframeComments}</p>
+            </div>
+          )}
+          {report.chassisSubframeImages && report.chassisSubframeImages.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              {report.chassisSubframeImages.map((img, i) => (
+                <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm">
+                  <img src={img} alt="Chassis" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(report.chassisSubframePartStatuses).map(([key, status]) => (
+              <GenericItemCard key={key} title={`Point ${key}`} status={status} />
+            ))}
+          </div>
+          {report.chassisSubframeCustomHeadlines && report.chassisSubframeCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.chassisSubframeCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 7: Body */}
+      {report?.bodyPartStatuses && (
+        <PreviewPage id="preview-page-body" title="Body">
+          {report.bodyComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.bodyComments}</p>
+            </div>
+          )}
+          {report.bodyImages && report.bodyImages.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              {report.bodyImages.map((img, i) => (
+                <div key={i} className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm">
+                  <img src={img} alt="Body" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(report.bodyPartStatuses).map(([key, status]) => (
+              <GenericItemCard key={key} title={key} status={status as string} />
+            ))}
+          </div>
+          {report.bodyCustomHeadlines && report.bodyCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.bodyCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 8: Interior & Exterior */}
+      {(report?.seatsStatus || report?.interiorCustomHeadlines) && (
+        <PreviewPage id="preview-page-interior" title="Interior & Exterior">
+          {report.interiorComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Seats Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.interiorComments}</p>
+            </div>
+          )}
+          {report.seatsStatus && (
+             <div className="mb-6">
+               <GenericItemCard title="Seats Condition" status={report.seatsStatus} images={report.seatsImages?.map(i => i.url)} />
+             </div>
+          )}
+          {report.generalPhotosInteriorComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">General Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.generalPhotosInteriorComments}</p>
+            </div>
+          )}
+          {report.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.interiorCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 9: Engine */}
+      {report?.engineItems && (
+        <PreviewPage id="preview-page-engine" title="Engine">
+          {report.engineComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.engineComments}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(report.engineItems).map(([key, data]) => (
+              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+            ))}
+          </div>
+          {report.engineCustomHeadlines && report.engineCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.engineCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 10: Transmission */}
+      {report?.transmissionItems && (
+        <PreviewPage id="preview-page-transmission" title="Transmission">
+          {report.transmissionComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.transmissionComments}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(report.transmissionItems).map(([key, data]) => (
+              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+            ))}
+          </div>
+          {report.transmissionCustomHeadlines && report.transmissionCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.transmissionCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 11: Electrical */}
+      {report?.electricalItems && (
+        <PreviewPage id="preview-page-electrical" title="Electrical">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {Object.entries(report.electricalItems).map(([key, data]) => (
+              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+            ))}
+          </div>
+          {report.electricalCustomHeadlines && report.electricalCustomHeadlines.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {report.electricalCustomHeadlines.map(h => (
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                ))}
+              </div>
+            </div>
+          )}
+        </PreviewPage>
+      )}
+
+      {/* PAGE 12: General Photos */}
+      {(report?.generalPhotosExteriorImages?.length || report?.generalPhotosInteriorImages?.length || report?.generalPhotosEngineImages?.length) ? (
+        <PreviewPage id="preview-page-general-photos" title="General Photos">
+          
+          {/* Exterior */}
+          {(report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) || report.generalPhotosExteriorComments ? (
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Exterior</h3>
+              {report.generalPhotosExteriorComments && (
+                <div className="bg-white rounded-3xl p-5 mb-4 shadow-sm border border-slate-100">
+                  <p className="text-xs text-slate-600 leading-relaxed">{report.generalPhotosExteriorComments}</p>
+                </div>
+              )}
+              {report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {report.generalPhotosExteriorImages.map((img) => (
+                    <div key={img.id} className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm bg-white p-1 border border-slate-100">
+                      <img src={img.url} alt="Exterior" className="w-full h-full object-cover rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Interior */}
+          {(report.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0) || report.generalPhotosInteriorComments ? (
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Interior</h3>
+              {report.generalPhotosInteriorComments && (
+                <div className="bg-white rounded-3xl p-5 mb-4 shadow-sm border border-slate-100">
+                  <p className="text-xs text-slate-600 leading-relaxed">{report.generalPhotosInteriorComments}</p>
+                </div>
+              )}
+              {report.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {report.generalPhotosInteriorImages.map((img) => (
+                    <div key={img.id} className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm bg-white p-1 border border-slate-100">
+                      <img src={img.url} alt="Interior" className="w-full h-full object-cover rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Engine */}
+          {(report.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0) || report.generalPhotosEngineComments ? (
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-[#1E1035] mb-4">Engine</h3>
+              {report.generalPhotosEngineComments && (
+                <div className="bg-white rounded-3xl p-5 mb-4 shadow-sm border border-slate-100">
+                  <p className="text-xs text-slate-600 leading-relaxed">{report.generalPhotosEngineComments}</p>
+                </div>
+              )}
+              {report.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {report.generalPhotosEngineImages.map((img) => (
+                    <div key={img.id} className="aspect-[4/3] rounded-2xl overflow-hidden shadow-sm bg-white p-1 border border-slate-100">
+                      <img src={img.url} alt="Engine" className="w-full h-full object-cover rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </PreviewPage>
+      ) : null}
 
     </div>
   );

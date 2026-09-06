@@ -1,61 +1,51 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { SectionHeader } from '../ui/section-header';
 import { InspectionItemCard } from '../ui/inspection-item-card';
 import { GeneralCommentsCard } from '../ui/general-comments-card';
 import { HeadingCard } from '../ui/heading-card';
 import { AddHeadlineButton } from '../ui/add-headline-button';
 import { TRANSMISSION_INSPECTION_ITEMS } from '@/constants/inspection-points';
+import { CustomHeadlineItem } from '@/lib/inspection-types';
 
 interface TransmissionSectionProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
-  transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>;
-  onTransmissionItemsChange?: (items: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string }>) => void;
-  customHeadlines?: { id: string; title: string; comments: string; imageUrl?: string }[];
-  onCustomHeadlinesChange?: (headlines: { id: string; title: string; comments: string; imageUrl?: string }[]) => void;
+  items?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
+  onItemChange?: (id: string, data: Partial<{ status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>) => void;
+  customHeadlines?: CustomHeadlineItem[];
+  onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
 }
 
 export function TransmissionSection({ 
   initialComments = '', 
   onCommentsChange,
-  transmissionItems = {},
-  onTransmissionItemsChange,
+  items = {},
+  onItemChange,
   customHeadlines = [],
   onCustomHeadlinesChange
 }: TransmissionSectionProps) {
-  const items = TRANSMISSION_INSPECTION_ITEMS;
+  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
+    { id: 'default-transmission', title: 'Transmission & Drivetrain Diagnostics', comments: '', imageUrl: undefined }
+  ];
 
   const addHeadline = () => {
-    const newHeadline = { id: crypto.randomUUID(), title: '', comments: '' };
-    onCustomHeadlinesChange?.([...customHeadlines, newHeadline]);
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange([...defaultHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
+    }
   };
 
   const removeHeadline = (id: string) => {
-    onCustomHeadlinesChange?.(customHeadlines.filter(h => h.id !== id));
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange(defaultHeadlines.filter(h => h.id !== id));
+    }
   };
 
-  const updateHeadlineTitle = (id: string, title: string) => {
-    onCustomHeadlinesChange?.(customHeadlines.map(h => h.id === id ? { ...h, title } : h));
-  };
-
-  const updateHeadlineComments = (id: string, comments: string) => {
-    onCustomHeadlinesChange?.(customHeadlines.map(h => h.id === id ? { ...h, comments } : h));
-  };
-
-  const handleItemStatusChange = (item: string, status: 'pass' | 'fail' | 'weak') => {
-    onTransmissionItemsChange?.({
-      ...transmissionItems,
-      [item]: { ...(transmissionItems[item] || { comments: '' }), status }
-    });
-  };
-
-  const handleItemCommentsChange = (item: string, comments: string) => {
-    onTransmissionItemsChange?.({
-      ...transmissionItems,
-      [item]: { ...(transmissionItems[item] || { status: 'pass' }), comments }
-    });
+  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
+    }
   };
 
   return (
@@ -63,16 +53,21 @@ export function TransmissionSection({
       <SectionHeader title="Transmission" />
 
       <div className="flex flex-col gap-2">
-        {items.map((item) => (
-          <InspectionItemCard
-            key={item}
-            title={item}
-            initialStatus={transmissionItems[item]?.status || 'pass'}
-            initialComments={transmissionItems[item]?.comments || ''}
-            onStatusChange={(status) => handleItemStatusChange(item, status)}
-            onCommentsChange={(comments) => handleItemCommentsChange(item, comments)}
-          />
-        ))}
+        {TRANSMISSION_INSPECTION_ITEMS.map((item, index) => {
+          const itemData = items[item] || { status: 'pass', comments: '', images: [] };
+          return (
+            <InspectionItemCard
+              key={`${item}-${index}`}
+              title={item}
+              initialStatus={itemData.status}
+              initialComments={itemData.comments}
+              imageUrls={itemData.images}
+              onStatusChange={(status) => onItemChange?.(item, { status })}
+              onCommentsChange={(comments) => onItemChange?.(item, { comments })}
+              onImagesChange={(images) => onItemChange?.(item, { images })}
+            />
+          );
+        })}
       </div>
 
       {/* General Comments Section */}
@@ -82,19 +77,18 @@ export function TransmissionSection({
         onCommentsChange={onCommentsChange}
       />
 
-      {/* Default Heading Block */}
-      <HeadingCard initialTitle="Transmission & Drivetrain Diagnostics" />
-
-      {/* Dynamically added headlines */}
-      {customHeadlines.map(h => (
+      {/* Dynamically added headlines including the default one */}
+      {defaultHeadlines.map((h, index) => (
         <HeadingCard
           key={h.id}
           initialTitle={h.title}
           initialComments={h.comments}
-          isRemovable
+          initialImageUrl={h.imageUrl}
+          isRemovable={index !== 0} // Make the first one non-removable
           onRemove={() => removeHeadline(h.id)}
-          onChangeTitle={(title) => updateHeadlineTitle(h.id, title)}
-          onChangeComments={(comments) => updateHeadlineComments(h.id, comments)}
+          onChangeTitle={(title) => updateHeadline(h.id, { title })}
+          onChangeComments={(comments) => updateHeadline(h.id, { comments })}
+          onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
         />
       ))}
 

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { Trash2 } from 'lucide-react';
+import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { HeadingCard } from '@/components/ui/heading-card';
+import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 
 export type SubframePartStatus = 'repaired' | 'damaged' | 'checked' | 'unchecked';
 
@@ -49,28 +52,41 @@ const STATUS_COLORS: Record<SubframePartStatus, string> = {
 interface ChassisSubframeSectionProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
+  partStatuses?: Record<number, SubframePartStatus>;
+  onPartStatusesChange?: (statuses: Record<number, SubframePartStatus>) => void;
+  chassisImages?: string[];
+  onChassisImagesChange?: (images: string[]) => void;
+  customHeadlines?: CustomHeadlineItem[];
+  onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
 }
 
 export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
   initialComments = '',
   onCommentsChange,
+  partStatuses = {},
+  onPartStatusesChange,
+  chassisImages = [],
+  onChassisImagesChange,
+  customHeadlines = [],
+  onCustomHeadlinesChange
 }) => {
-  const [partStatuses, setPartStatuses] = useState<Record<number, SubframePartStatus>>({});
-  const [comments, setComments] = useState(initialComments);
-  const [generalImages, setGeneralImages] = useState<{ id: string; url: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
+    { id: 'default-chassis', title: 'Chassis Details', comments: '', imageUrl: undefined }
+  ];
+
   const handlePartClick = (id: number) => {
-    setPartStatuses((prev) => {
-      const current = prev[id] || 'unchecked';
-      let nextStatus: SubframePartStatus = 'checked';
-      if (current === 'unchecked') nextStatus = 'checked';
-      else if (current === 'checked') nextStatus = 'repaired';
-      else if (current === 'repaired') nextStatus = 'damaged';
-      else if (current === 'damaged') nextStatus = 'unchecked';
-      
-      return { ...prev, [id]: nextStatus };
-    });
+    const current = partStatuses[id] || 'unchecked';
+    let nextStatus: SubframePartStatus = 'checked';
+    if (current === 'unchecked') nextStatus = 'checked';
+    else if (current === 'checked') nextStatus = 'repaired';
+    else if (current === 'repaired') nextStatus = 'damaged';
+    else if (current === 'damaged') nextStatus = 'unchecked';
+    
+    if (onPartStatusesChange) {
+      onPartStatusesChange({ ...partStatuses, [id]: nextStatus });
+    }
   };
 
   const setAllStatus = (status: SubframePartStatus) => {
@@ -78,44 +94,53 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     SUBFRAME_PARTS.forEach(p => {
       newStatuses[p.id] = status;
     });
-    setPartStatuses(newStatuses);
+    if (onPartStatusesChange) {
+      onPartStatusesChange(newStatuses);
+    }
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setComments(val);
-    onCommentsChange?.(val);
+    if (onCommentsChange) {
+      onCommentsChange(val);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newImages = Array.from(files).map(f => ({
-      id: Math.random().toString(36).substring(7),
-      url: URL.createObjectURL(f)
-    }));
-    setGeneralImages(prev => [...prev, ...newImages]);
+    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
+    if (onChassisImagesChange) {
+      onChassisImagesChange([...chassisImages, ...newUrls]);
+    }
     if (e.target) e.target.value = '';
   };
 
-  const removeImage = (idToRemove: string) => {
-    setGeneralImages(prev => {
-      const img = prev.find(i => i.id === idToRemove);
-      if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      return prev.filter(i => i.id !== idToRemove);
-    });
+  const removeImage = (index: number) => {
+    if (onChassisImagesChange) {
+      const newImages = [...chassisImages];
+      newImages.splice(index, 1);
+      onChassisImagesChange(newImages);
+    }
   };
 
-  const generalImagesRef = useRef(generalImages);
-  generalImagesRef.current = generalImages;
+  const addHeadline = () => {
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange([...defaultHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
+    }
+  };
 
-  useEffect(() => {
-    return () => {
-      generalImagesRef.current.forEach(img => {
-        if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
-      });
-    };
-  }, []);
+  const removeHeadline = (id: string) => {
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange(defaultHeadlines.filter(h => h.id !== id));
+    }
+  };
+
+  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
+    if (onCustomHeadlinesChange) {
+      onCustomHeadlinesChange(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
+    }
+  };
 
   // Group parts for the 3-column list
   const col1 = SUBFRAME_PARTS.slice(0, 7);
@@ -124,15 +149,6 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
   return (
     <div id="section-chassis-subframe" className="flex flex-col gap-2 w-full scroll-mt-6">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        multiple
-        className="hidden"
-      />
-      
       <ReusableSection title="Chassis & Subframe">
         <div className="flex flex-col gap-8 items-center bg-white rounded-[20px] p-6 sm:p-8">
           
@@ -254,7 +270,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
           <label className="text-[14px] font-bold text-[#1E1035]">Comments</label>
           <input 
             type="text" 
-            value={comments}
+            value={initialComments}
             onChange={handleCommentChange}
             placeholder="Enter comments" 
             className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-1 focus:ring-[#1E1035]/20 transition-all" 
@@ -263,13 +279,13 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
         {/* General Photos Image Upload Box */}
         <div className="flex flex-wrap gap-4 items-center mt-6">
-          {generalImages.map((img) => (
-            <div key={img.id} className="w-[180px] relative group">
-              <ImageUploadBox status="completed" url={img.url} />
+          {chassisImages.map((imgUrl, i) => (
+            <div key={i} className="w-[180px] relative group">
+              <ImageUploadBox status="completed" url={imgUrl} />
               <button
                 type="button"
-                onClick={() => removeImage(img.id)}
-                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => removeImage(i)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
               >
                 <Trash2 size={14} />
               </button>
@@ -280,6 +296,24 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
           </div>
         </div>
       </ReusableSection>
+      
+      {/* Dynamically added headlines */}
+      {defaultHeadlines.map((headline) => (
+        <HeadingCard
+          key={headline.id}
+          initialTitle={headline.title}
+          initialComments={headline.comments}
+          initialImageUrl={headline.imageUrl}
+          isRemovable={defaultHeadlines.length > 1}
+          onRemove={() => removeHeadline(headline.id)}
+          onChangeTitle={(title) => updateHeadline(headline.id, { title })}
+          onChangeComments={(comments) => updateHeadline(headline.id, { comments })}
+          onChangeImage={(imageUrl) => updateHeadline(headline.id, { imageUrl: imageUrl || undefined })}
+        />
+      ))}
+
+      {/* Add Headline Button */}
+      <AddHeadlineButton onClick={addHeadline} label="Add Chassis Headline" />
     </div>
   );
 };

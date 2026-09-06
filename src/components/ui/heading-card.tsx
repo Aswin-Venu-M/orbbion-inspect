@@ -7,23 +7,28 @@ import { Trash2 } from 'lucide-react';
 interface HeadingCardProps {
   initialTitle?: string;
   initialComments?: string;
+  initialImageUrl?: string;
   onRemove?: () => void;
   isRemovable?: boolean;
   onChangeTitle?: (title: string) => void;
   onChangeComments?: (comments: string) => void;
+  onChangeImage?: (url: string | null) => void;
 }
 
 export const HeadingCard: React.FC<HeadingCardProps> = ({
   initialTitle = '',
   initialComments = '',
+  initialImageUrl = null,
   onRemove,
   isRemovable = false,
   onChangeTitle,
   onChangeComments,
+  onChangeImage,
 }) => {
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [localImageUrl, setLocalImageUrl] = useState<string | null>(initialImageUrl);
+  const imageUrl = onChangeImage ? initialImageUrl : localImageUrl;
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
@@ -45,14 +50,23 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageUrl(URL.createObjectURL(file));
+      const url = URL.createObjectURL(file);
+      if (onChangeImage) {
+        onChangeImage(url);
+      } else {
+        setLocalImageUrl(url);
+      }
     }
     if (e.target) e.target.value = '';
   };
 
   const handleRemoveImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setImageUrl(null);
+    if (onChangeImage) {
+      onChangeImage(null);
+    } else {
+      setLocalImageUrl(null);
+    }
   };
 
   return (
