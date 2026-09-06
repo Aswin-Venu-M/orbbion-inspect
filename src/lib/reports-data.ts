@@ -1,14 +1,20 @@
+import { INSPECTION_TYPE_OPTIONS, ODOMETER_STATUS_OPTIONS, REPORT_VEHICLE_TYPE_FILTER_OPTIONS } from '@/constants/options';
+
+// Omit the 'all' option from vehicle types for the strict data model
+type VehicleTypeFilter = typeof REPORT_VEHICLE_TYPE_FILTER_OPTIONS[number]['value'];
+type VehicleType = Exclude<VehicleTypeFilter, 'all'>;
+
 export interface VehicleInfo {
   make: string;
   model: string;
   year: number;
-  type: 'Truck' | 'SUV' | 'Sedan' | 'Coupe' | 'Sports' | 'Hatchback';
+  type: VehicleType;
   color: string;
   colorHex: string;
   imageUrl: string;
   vin: string;
   odometer: string;
-  odometerStatus: 'Normal' | 'Tampered' | 'Replaced' | 'Inoperative';
+  odometerStatus: typeof ODOMETER_STATUS_OPTIONS[number]['value'];
   transmission: string;
   specs: string;
 }
@@ -36,7 +42,7 @@ export interface ReportListItem {
   inspector: InspectorInfo;
   date: string;
   time: string;
-  inspectionType: '600-Points Comprehensive' | '300-Points Standard' | 'Pre-Purchase Inspection' | 'Chassis & Drivetrain Only' | 'Body & Paint Inspection';
+  inspectionType: typeof INSPECTION_TYPE_OPTIONS[number]['value'];
   passPercentage: number;
   failPercentage: number;
   status: 'published' | 'draft' | 'in_review';

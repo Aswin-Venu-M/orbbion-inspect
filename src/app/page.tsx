@@ -44,6 +44,18 @@ export default function AppDashboardPage() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
+  // Lifted state from ReportsListTable
+  const [reportsActiveTab, setReportsActiveTab] = useState<'all' | 'published' | 'draft' | 'tampered' | 'defects'>('all');
+
+  // Debounced Search for Spotlight
+  const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState('');
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedGlobalSearch(globalSearch);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [globalSearch]);
+
   const showToast = useCallback((text: string, type: 'success' | 'info' = 'info') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 3000);
@@ -54,7 +66,11 @@ export default function AppDashboardPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsSearchModalOpen((prev) => !prev);
+        if (!isSearchModalOpen) {
+          setIsSearchModalOpen(true);
+        } else {
+          document.getElementById('spotlight-search-input')?.focus();
+        }
       }
       if (e.key === 'Escape') {
         setIsSearchModalOpen(false);
@@ -67,8 +83,8 @@ export default function AppDashboardPage() {
 
   // Quick jump items for Spotlight search
   const spotlightSearchResults = useMemo(() => {
-    if (!globalSearch.trim()) return reports.slice(0, 5);
-    const q = globalSearch.toLowerCase();
+    if (!debouncedGlobalSearch.trim()) return reports.slice(0, 5);
+    const q = debouncedGlobalSearch.toLowerCase();
     return reports.filter((r) =>
       r.vehicle.vin.toLowerCase().includes(q) ||
       `${r.vehicle.year} ${r.vehicle.make} ${r.vehicle.model}`.toLowerCase().includes(q) ||
@@ -76,7 +92,7 @@ export default function AppDashboardPage() {
       r.inspector.name.toLowerCase().includes(q) ||
       r.reportNumber.toLowerCase().includes(q)
     );
-  }, [reports, globalSearch]);
+  }, [reports, debouncedGlobalSearch]);
 
   const handleRefresh = () => {
     showToast('Syncing real-time inspection records with Dubai Hub...', 'info');
@@ -86,12 +102,14 @@ export default function AppDashboardPage() {
   };
 
   const handleFilterDrafts = () => {
+    setReportsActiveTab('draft');
     const el = document.getElementById('reports-section');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
     showToast('Showing Drafts queue requiring review', 'info');
   };
 
   const handleFilterTampered = () => {
+    setReportsActiveTab('tampered');
     const el = document.getElementById('reports-section');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
     showToast('Showing vehicles with severe alerts or odometer tampering', 'info');
@@ -143,6 +161,8 @@ export default function AppDashboardPage() {
         </Link>
         <button
           onClick={() => setIsHelpModalOpen(true)}
+          aria-expanded={isHelpModalOpen}
+          aria-label="Help and documentation"
           className="flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-[#1E1035]"
         >
           <HelpCircle size={20} />
@@ -209,6 +229,8 @@ export default function AppDashboardPage() {
         {/* Bottom Group: SOP Help Guide Modal */}
         <button
           onClick={() => setIsHelpModalOpen(true)}
+          aria-expanded={isHelpModalOpen}
+          aria-label="Open Inspection SOP & Standard Guide"
           title="Inspection SOP & Standard Guide"
           className="w-9 h-9 rounded-full bg-[#9CA3AF] hover:bg-[#85808B] transition-colors flex items-center justify-center text-white text-[15px] font-bold shadow-sm mb-2 cursor-pointer"
         >
@@ -243,7 +265,11 @@ export default function AppDashboardPage() {
         />
 
         {/* 4. Comprehensive Reports Directory & Data Grid */}
-        <ReportsListTable reports={reports} />
+        <ReportsListTable 
+          reports={reports} 
+          activeTab={reportsActiveTab} 
+          onActiveTabChange={setReportsActiveTab} 
+        />
       </main>
 
       {/* Persistent Bottom-Right Support Badge */}
@@ -269,15 +295,18 @@ export default function AppDashboardPage() {
               <div className="p-4 border-b border-slate-100 flex items-center gap-3">
                 <Search size={20} className="text-[#9723FF]" />
                 <input
+                  id="spotlight-search-input"
                   type="text"
                   value={globalSearch}
                   onChange={(e) => setGlobalSearch(e.target.value)}
                   placeholder="Search any VIN, Make, Model, Client, or Report ID..."
                   autoFocus
+                  aria-label="Search reports"
                   className="flex-1 text-sm font-semibold text-[#1E1035] placeholder:text-slate-400 focus:outline-none"
                 />
                 <button
                   onClick={() => setIsSearchModalOpen(false)}
+                  aria-label="Close search"
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X size={18} />
@@ -354,6 +383,7 @@ export default function AppDashboardPage() {
                 </div>
                 <button
                   onClick={() => setIsHelpModalOpen(false)}
+                  aria-label="Close help"
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X size={18} />

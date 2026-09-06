@@ -44,22 +44,19 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
       ref={badgeRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => setIsOpen((prev) => !prev)}
-      role="button"
-      tabIndex={0}
-      aria-label="Orbbion Support"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setIsOpen((prev) => !prev);
-        }
-      }}
-      className={`fixed bottom-[84px] md:bottom-6 right-3 sm:right-4 md:right-6 z-40 flex items-center transition-all duration-300 cursor-pointer select-none origin-bottom-right print:hidden ${
+      className={`fixed bottom-[84px] md:bottom-6 right-3 sm:right-4 md:right-6 z-40 flex items-center transition-all duration-300 select-none origin-bottom-right print:hidden ${
         isVisible
           ? 'bg-white/95 backdrop-blur-md border border-slate-200/80 px-3 sm:px-3.5 py-2 sm:py-2 rounded-2xl shadow-xl'
           : 'bg-[#180321] p-2 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
       } ${className}`}
     >
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        aria-label="Toggle Orbbion Support"
+        className="absolute inset-0 w-full h-full cursor-pointer rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9723FF]"
+      />
+      
       <AnimatePresence>
         {isVisible && (
           <motion.div
@@ -69,9 +66,13 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="overflow-hidden whitespace-nowrap flex flex-col items-end text-right"
           >
-            <span className="text-[12px] font-bold text-[#1E1035] leading-tight tracking-tight">
+            <a 
+              href="mailto:Support@orbbion.com"
+              onClick={(e) => e.stopPropagation()}
+              className="text-[12px] font-bold text-[#1E1035] leading-tight tracking-tight relative z-10 hover:text-[#9723FF] transition-colors cursor-pointer"
+            >
               Support@orbbion.com
-            </span>
+            </a>
             <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase leading-tight mt-0.5">
               v.2.0 • Orbbion Inspect
             </span>
@@ -80,7 +81,7 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
       </AnimatePresence>
 
       <div
-        className={`flex items-center justify-center shrink-0 transition-transform duration-200 ${
+        className={`flex items-center justify-center shrink-0 transition-transform duration-200 relative z-10 pointer-events-none ${
           isVisible
             ? 'w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#180321] p-1 shadow-xs'
             : 'w-7 h-7 sm:w-8 sm:h-8'

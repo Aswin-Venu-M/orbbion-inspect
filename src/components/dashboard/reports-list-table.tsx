@@ -20,14 +20,24 @@ interface ReportsListTableProps {
   reports: ReportListItem[];
   onDeleteReport?: (id: string) => void;
   onDuplicateReport?: (report: ReportListItem) => void;
+  activeTab?: TabFilter;
+  onActiveTabChange?: (tab: TabFilter) => void;
 }
 
-type TabFilter = 'all' | 'published' | 'draft' | 'tampered' | 'defects';
+export type TabFilter = 'all' | 'published' | 'draft' | 'tampered' | 'defects';
 
-export function ReportsListTable({ reports, onDeleteReport }: ReportsListTableProps) {
+export function ReportsListTable({ 
+  reports, 
+  onDeleteReport,
+  activeTab: externalActiveTab,
+  onActiveTabChange,
+}: ReportsListTableProps) {
   // State
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [activeTab, setActiveTab] = useState<TabFilter>('all');
+  const [internalActiveTab, setInternalActiveTab] = useState<TabFilter>('all');
+  
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
+  const setActiveTab = onActiveTabChange || setInternalActiveTab;
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('all');
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('all');

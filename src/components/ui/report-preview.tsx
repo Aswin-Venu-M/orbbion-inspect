@@ -135,6 +135,7 @@ function PreviewPositionCard({
 export function ReportPreview({
   tyres,
   rims,
+  brakes,
   vehicleData = defaultVehicleData,
   inspectionDetails = defaultInspectionDetails,
   clientDetails = defaultClientDetails,
