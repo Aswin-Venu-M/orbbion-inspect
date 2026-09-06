@@ -307,7 +307,7 @@ export default function AppDashboardPage() {
                 <button
                   onClick={() => setIsSearchModalOpen(false)}
                   aria-label="Close search"
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#9723FF] focus-visible:outline-none"
                 >
                   <X size={18} />
                 </button>
@@ -323,7 +323,7 @@ export default function AppDashboardPage() {
                     key={report.id}
                     href="/inspect"
                     onClick={() => setIsSearchModalOpen(false)}
-                    className="p-3 rounded-2xl hover:bg-purple-50/70 border border-transparent hover:border-purple-100 flex items-center justify-between transition-colors group"
+                    className="p-3 rounded-2xl hover:bg-purple-50/70 border border-transparent hover:border-purple-100 flex items-center justify-between transition-colors group focus-visible:ring-2 focus-visible:ring-[#9723FF] focus-visible:outline-none"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-8 rounded-lg overflow-hidden bg-slate-100 shrink-0">

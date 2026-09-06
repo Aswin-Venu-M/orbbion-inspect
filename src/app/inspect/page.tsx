@@ -289,6 +289,13 @@ export default function HomeDashboard() {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File size must be less than 10MB', 'error');
+      setCardUploadTarget(null);
+      if (e.target) e.target.value = '';
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     const { type, id } = cardUploadTarget;
 
@@ -326,10 +333,16 @@ export default function HomeDashboard() {
   const handleGalleryFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const allFiles = Array.from(files);
+    const validFiles = allFiles.filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
+    
     if (validFiles.length === 0) {
-      showToast('No valid image files found', 'error');
+      showToast('No valid images found (Max 10MB per file)', 'error');
       return;
+    }
+
+    if (validFiles.length < allFiles.length) {
+      showToast(`${allFiles.length - validFiles.length} file(s) skipped (exceeded 10MB limit or invalid type)`, 'error');
     }
 
     const newFiles: MediaItem[] = validFiles.map(file => ({
@@ -456,6 +469,21 @@ export default function HomeDashboard() {
       showToast(`Required fields missing: ${missing.join(', ')}`, 'error');
       // Scroll to Inspection Details
       document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/i;
+    if (!vinRegex.test(report.inspectionDetails.vinNumber)) {
+      showToast('VIN must be exactly 17 alphanumeric characters (excluding I, O, Q).', 'error');
+      document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const year = Number(report.vehicleSummary.year);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(year) || year < 1900 || year > currentYear + 1) {
+      showToast(`Model Year must be between 1900 and ${currentYear + 1}.`, 'error');
+      document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
@@ -599,9 +627,17 @@ export default function HomeDashboard() {
                   placeholder="Select Odometer Status" 
                   options={odometerStatusOptions}
                   value={report.vehicleSummary.odometerStatus}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, odometerStatus: e.target.value }
-                  })}
+                  onChange={(e) => {
+                    const newStatus = e.target.value;
+                    const isTampered = newStatus === 'Tampered';
+                    updateReport({
+                      vehicleSummary: { 
+                        ...report.vehicleSummary, 
+                        odometerStatus: newStatus,
+                        ...( !isTampered && { tamperedReading: '' } )
+                      }
+                    });
+                  }}
                 />
 
                 {/* Spare Type Toggle */}
@@ -709,6 +745,7 @@ export default function HomeDashboard() {
                   label="Tampered Odometer Reading" 
                   placeholder="Reported tampered reading" 
                   value={report.vehicleSummary.tamperedReading}
+                  disabled={report.vehicleSummary.odometerStatus !== 'Tampered'}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, tamperedReading: e.target.value }
                   })}
@@ -780,7 +817,7 @@ export default function HomeDashboard() {
                       fail: String(calculatedStats.fail),
                     },
                   })}
-                  className="text-xs font-semibold text-[#9723FF] hover:underline flex items-center gap-1 w-fit"
+                  className="text-xs font-semibold text-[#9723FF] hover:underline flex items-center gap-1 w-fit focus-visible:ring-2 focus-visible:ring-[#9723FF] focus-visible:outline-none rounded"
                 >
                   <Sparkles size={13} />
                   Auto-calculate from points
