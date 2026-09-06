@@ -53,6 +53,7 @@ interface MediaItem {
   name: string;
   progress: number;
   status: 'uploading' | 'completed';
+  selected?: boolean;
 }
 
 export default function HomeDashboard() {
@@ -356,6 +357,33 @@ export default function HomeDashboard() {
     setMediaFiles(prev => [...newFiles, ...prev]);
     newFiles.forEach(f => simulateUpload(f.id));
     showToast(`${newFiles.length} image(s) uploading to gallery`, 'info');
+  };
+
+  const toggleMediaSelect = (id: string) => {
+    setMediaFiles(prev => prev.map(m => m.id === id ? { ...m, selected: !m.selected } : m));
+  };
+
+  const toggleSelectAllMedia = () => {
+    const allSelected = mediaFiles.length > 0 && mediaFiles.every(m => m.selected);
+    setMediaFiles(prev => prev.map(m => ({ ...m, selected: !allSelected })));
+  };
+
+  const deleteSelectedMedia = () => {
+    const selected = mediaFiles.filter(m => m.selected);
+    selected.forEach(item => {
+      if (item.url.startsWith('blob:')) {
+        URL.revokeObjectURL(item.url);
+      }
+      const activeInterval = activeUploadIntervals.current.get(item.id);
+      if (activeInterval) {
+        clearInterval(activeInterval);
+        activeUploadIntervals.current.delete(item.id);
+      }
+    });
+    setMediaFiles(prev => prev.filter(m => !m.selected));
+    if (selected.length > 0) {
+      showToast(`${selected.length} image(s) removed`, 'info');
+    }
   };
 
   const removeMedia = (id: string) => {
@@ -1016,6 +1044,8 @@ export default function HomeDashboard() {
     }
   };
 
+  const selectedMediaCount = mediaFiles.filter(m => m.selected).length;
+
   return (
     <div 
       className={`min-h-screen xl:h-screen bg-[#F8F9FB] bg-dot-pattern flex flex-col xl:flex-row p-2.5 sm:p-4 pl-2.5 sm:pl-4 md:pl-[106px] gap-3 sm:gap-4 overflow-x-hidden overflow-y-auto xl:overflow-hidden ${familjen.className}`}
@@ -1337,16 +1367,45 @@ export default function HomeDashboard() {
               >
                 <div className="w-full xl:w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-5 z-10 border border-slate-100 h-[400px] xl:h-full">
                   
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-[15px] font-bold text-[#1E1035] tracking-tight">Media Gallery ({mediaFiles.length})</h3>
-                    <button 
-                      onClick={() => galleryFileInputRef.current?.click()}
-                      className="w-8 h-8 rounded-xl bg-[#F4F5F8] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] transition-colors cursor-pointer"
-                      title="Add Media Files"
-                    >
-                      <Plus size={16} strokeWidth={2.5} />
-                    </button>
-                  </div>
+                  {mediaFiles.length > 0 && (
+                    <div className="flex justify-between items-center mb-4 shrink-0 h-[48px]">
+                      {selectedMediaCount > 0 ? (
+                        <>
+                          <div className="flex flex-col">
+                            <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">{selectedMediaCount} Media Selected</h3>
+                            <button 
+                              onClick={toggleSelectAllMedia}
+                              className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit"
+                            >
+                              <Check size={14} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                              <span className="text-[12px] font-bold leading-tight underline decoration-1 underline-offset-2">{mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}</span>
+                            </button>
+                          </div>
+                          <button 
+                            onClick={deleteSelectedMedia}
+                            className="w-[48px] h-[48px] rounded-[16px] bg-[#c50000] hover:bg-[#a00000] flex items-center justify-center text-white transition-colors cursor-pointer shadow-sm"
+                            title="Delete Selected"
+                          >
+                            <Trash2 size={20} strokeWidth={2} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex flex-col">
+                            <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">{mediaFiles.length} Media</h3>
+                            <p className="text-[#74768B] text-[12px] font-medium leading-tight mt-0.5">Click + to add more</p>
+                          </div>
+                          <button 
+                            onClick={() => galleryFileInputRef.current?.click()}
+                            className="w-[48px] h-[48px] rounded-[16px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer"
+                            title="Add Media Files"
+                          >
+                            <Plus size={20} strokeWidth={2.5} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   <motion.div 
                     animate={{
@@ -1355,7 +1414,7 @@ export default function HomeDashboard() {
                       borderColor: isDragging ? "#1E1035" : "rgba(226, 228, 235, 0.5)"
                     }}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    className="flex-1 flex flex-col relative rounded-[24px] border-2 border-dashed overflow-hidden"
+                    className={`flex-1 flex flex-col relative overflow-hidden ${mediaFiles.length === 0 ? 'rounded-[24px] border-2 border-dashed' : ''}`}
                     onDragEnter={handleDragEnter}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -1381,47 +1440,76 @@ export default function HomeDashboard() {
                         </div>
                         
                         <h2 className="text-[#1E1035] text-[20px] font-bold mb-1">It&apos;s empty in here.</h2>
-                        <p className="text-[#A0A4AB] text-[12px] mb-4">Drag and drop images or click below.</p>
+                        <p className="text-[#A0A4AB] text-[12px] mb-4">Add some media to bring this album to life.</p>
                         <button 
                           onClick={() => galleryFileInputRef.current?.click()}
-                          className="bg-[#1E1035] text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold hover:bg-[#281446] transition-colors shadow-sm"
+                          className="bg-[#3e045a] text-white px-8 py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm"
                         >
-                          Add Media <Plus size={14} />
+                          Add Media <Plus size={16} />
                         </button>
                       </div>
                     ) : (
                       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
-                        <div className="grid grid-cols-2 gap-2.5">
+                        <div className="grid grid-cols-2 gap-[10px]">
                           {mediaFiles.map((media) => (
                             <div 
                               key={media.id} 
-                              className="relative group rounded-2xl overflow-hidden aspect-square border border-slate-100 shadow-xs bg-slate-100"
+                              className="relative group rounded-[16px] overflow-hidden aspect-square border border-[#cfd2e0] bg-slate-100"
                             >
                               <img 
                                 src={media.url} 
                                 alt={media.name} 
-                                className={`w-full h-full object-cover transition-all ${media.status === 'uploading' ? 'scale-105 blur-xs' : 'scale-100'}`} 
+                                className={`w-full h-full object-cover transition-all ${media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100'}`} 
                               />
                               
                               {media.status === 'uploading' && (
-                                <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-2.5 z-10">
-                                  <span className="text-white text-[11px] font-bold mb-1">{media.progress}%</span>
-                                  <div className="h-1 bg-white/30 rounded-full overflow-hidden">
-                                    <div className="h-full bg-white rounded-full" style={{ width: `${media.progress}%` }} />
+                                <div className="absolute inset-0 bg-black/10 flex flex-col justify-between p-2 z-10">
+                                  <div className="flex justify-end w-full">
+                                    <button 
+                                      onClick={() => removeMedia(media.id)}
+                                      className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-[#cfd2e0]"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl backdrop-blur-[2px]">
+                                    <span className="text-white text-[11px] font-medium tracking-wide font-['Familjen_Grotesk']">Uploading.....</span>
+                                    <div className="flex items-center gap-1.5 w-full">
+                                      <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white rounded-full" style={{ width: `${media.progress}%` }} />
+                                      </div>
+                                      <span className="text-white text-[11px] font-medium font-['Familjen_Grotesk'] whitespace-nowrap">{media.progress} %</span>
+                                    </div>
                                   </div>
                                 </div>
                               )}
 
                               {media.status === 'completed' && (
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 gap-2">
-                                  <button 
-                                    onClick={() => removeMedia(media.id)}
-                                    className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-md"
-                                    title="Delete Image"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                                <>
+                                  {/* Top right delete button visible on hover */}
+                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                    <button 
+                                      onClick={() => removeMedia(media.id)}
+                                      className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-[#cfd2e0]"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                  
+                                  {/* Center checkmark toggle */}
+                                  <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    <button
+                                      onClick={() => toggleMediaSelect(media.id)}
+                                      className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
+                                        media.selected 
+                                          ? 'bg-white border-white scale-110 shadow-md' 
+                                          : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
+                                      } border`}
+                                    >
+                                      <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
+                                    </button>
+                                  </div>
+                                </>
                               )}
                             </div>
                           ))}
