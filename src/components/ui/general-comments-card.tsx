@@ -19,16 +19,25 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
       if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [imageUrl]);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setComments(val);
-    onCommentsChange?.(val);
+    
+    if (onCommentsChange) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        onCommentsChange(val);
+      }, 400);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

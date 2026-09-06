@@ -464,6 +464,10 @@ export default function HomeDashboard() {
     if (!report.inspectionDetails.inspectionType) missing.push('Inspection Type');
     if (!report.inspectionDetails.vinNumber) missing.push('VIN Number');
     if (!report.clientDetails.name) missing.push('Client Name');
+    if (!report.vehicleSummary.make) missing.push('Make');
+    if (!report.vehicleSummary.model) missing.push('Model');
+    if (!report.vehicleSummary.odometerReading) missing.push('Odometer Reading');
+    if (!report.vehicleSummary.fuelType) missing.push('Fuel Type');
 
     if (missing.length > 0) {
       showToast(`Required fields missing: ${missing.join(', ')}`, 'error');
@@ -476,6 +480,12 @@ export default function HomeDashboard() {
     if (!vinRegex.test(report.inspectionDetails.vinNumber)) {
       showToast('VIN must be exactly 17 alphanumeric characters (excluding I, O, Q).', 'error');
       document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (!report.vehicleSummary.year) {
+      showToast('Model Year is required.', 'error');
+      document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
@@ -498,11 +508,25 @@ export default function HomeDashboard() {
   };
 
   // Interactive Mouse Flashlight Effect
+  const animationFrameId = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    };
+  }, []);
+
   const handleAppMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     const rect = target.getBoundingClientRect();
-    target.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-    target.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    animationFrameId.current = requestAnimationFrame(() => {
+      target.style.setProperty('--mouse-x', `${x}px`);
+      target.style.setProperty('--mouse-y', `${y}px`);
+    });
   };
 
   const filteredSearchSections = SEARCHABLE_SECTIONS.filter(s =>
@@ -686,10 +710,10 @@ export default function HomeDashboard() {
                   })}
                   rightIcon={
                     <div className="flex flex-col items-center justify-center text-slate-400">
-                      <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5">
+                      <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5" aria-label="Increase number of keys">
                         <ChevronUp size={12} strokeWidth={3} />
                       </button>
-                      <button type="button" onClick={decrementKeys} className="hover:text-[#1E1035] p-0.5">
+                      <button type="button" onClick={decrementKeys} className="hover:text-[#1E1035] p-0.5" aria-label="Decrease number of keys">
                         <ChevronDown size={12} strokeWidth={3} />
                       </button>
                     </div>
@@ -1454,8 +1478,8 @@ export default function HomeDashboard() {
               >
                 <div 
                   style={{ 
-                    zoom: zoomLevel / 100, 
-                    transition: 'zoom 0.15s ease-out',
+                    transform: `scale(${zoomLevel / 100})`, 
+                    transition: 'transform 0.15s ease-out',
                     transformOrigin: 'top center'
                   }} 
                   className="w-full max-w-[900px] flex justify-center"
@@ -1481,6 +1505,7 @@ export default function HomeDashboard() {
                       onClick={handlePrevPage} 
                       disabled={previewPage <= 1}
                       title="Previous Page"
+                      aria-label="Previous Page"
                       className="w-[40px] h-[40px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       <ChevronUp size={22} strokeWidth={2.5} />
@@ -1494,6 +1519,7 @@ export default function HomeDashboard() {
                       onClick={handleNextPage} 
                       disabled={previewPage >= totalPreviewPages}
                       title="Next Page"
+                      aria-label="Next Page"
                       className="w-[40px] h-[40px] rounded-xl flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
                       <ChevronDown size={22} strokeWidth={2.5} />

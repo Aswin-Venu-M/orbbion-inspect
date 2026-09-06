@@ -274,7 +274,7 @@ export const INITIAL_REPORTS_LIST: ReportListItem[] = [
     },
     date: '02 Aug 2025',
     time: '03:15 PM',
-    inspectionType: 'Chassis & Drivetrain',
+    inspectionType: 'Chassis & Drivetrain Only',
     passPercentage: 95,
     failPercentage: 5,
     status: 'published',

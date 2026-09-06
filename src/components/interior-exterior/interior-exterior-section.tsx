@@ -38,19 +38,32 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const [seatsComments, setSeatsComments] = useState(initialComments);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setSeatsComments(initialComments);
   }, [initialComments]);
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
   const chunk3 = INTERIOR_EXTERIOR_POINTS.chunk3;
 
-  const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setSeatsComments(val);
-    onCommentsChange?.(val);
+    
+    if (onCommentsChange) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        onCommentsChange(val);
+      }, 400);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
