@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
+import { GalleryIcon } from '@/components/ui/gallery-icon';
 import { InputField } from '@/components/ui/input-field';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
@@ -1116,7 +1117,7 @@ export default function HomeDashboard() {
           onClick={() => setIsGalleryOpen(!isGalleryOpen)}
           className={`flex flex-col items-center justify-center gap-1.5 w-16 h-full transition-all ${isGalleryOpen ? 'text-[#9723FF] opacity-100' : 'text-[#180321] opacity-50 hover:opacity-100'}`}
         >
-          <ImageIcon size={22} strokeWidth={isGalleryOpen ? 2.5 : 2} className={isGalleryOpen ? 'drop-shadow-sm' : ''} />
+          <GalleryIcon size={22} className={isGalleryOpen ? 'drop-shadow-sm' : ''} />
           <span className="text-[10px] font-medium">Gallery</span>
         </button>
         <button 
@@ -1154,56 +1155,22 @@ export default function HomeDashboard() {
           </Link>
           
           <div className="flex flex-col gap-5 w-full mt-7">
-            {/* Dashboard / Home */}
-            <Link 
-              href="/"
-              title="Return to Main Dashboard"
-              className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
-            >
-              <div className="w-[46px] h-[46px] bg-[#F8F9FB] rounded-[14px] border border-[#E2E4EB] inline-flex justify-center items-center shadow-sm group-hover:bg-[#F3F4F6] transition-colors">
-                <LayoutDashboard size={20} className="text-[#645A6C] group-hover:text-[#1E1035] transition-colors" />
-              </div>
-              <span className="text-center text-[#463B4D] text-[10.5px] font-semibold">Dashboard</span>
-            </Link>
-
-            {/* Reports Directory */}
-            <Link 
-              href="/#reports-section"
-              title="All Reports Directory"
-              className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
-            >
-              <div className="w-[46px] h-[46px] bg-[#F8F9FB] rounded-[14px] border border-[#E2E4EB] inline-flex justify-center items-center shadow-sm group-hover:bg-[#F3F4F6] transition-colors">
-                <FileText size={20} className="text-[#645A6C] group-hover:text-[#1E1035] transition-colors" />
-              </div>
-              <span className="text-center text-[#463B4D] text-[10.5px] font-semibold">Reports</span>
-            </Link>
-
-            {/* Active Inspect Page Indicator / Toggle Active View */}
-            <button 
-              onClick={() => setActiveTab(prev => prev === 'edit' ? 'view' : 'edit')}
-              className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
-              title={activeTab === 'edit' ? 'Switch to Live PDF Preview' : 'Switch to Interactive Editor'}
-            >
-              <div className="w-[46px] h-[46px] bg-[#9723FF] text-white rounded-[14px] inline-flex justify-center items-center shadow-md shadow-purple-500/20 ring-2 ring-purple-300 transition-all">
-                {activeTab === 'edit' ? <Pencil size={20} /> : <Eye size={20} />}
-              </div>
-              <span className="text-center text-[#9723FF] text-[10.5px] font-bold">
-                {activeTab === 'edit' ? 'Edit Mode' : 'Preview'}
-              </span>
-            </button>
-
             {/* Gallery Drawer Toggle */}
             <button 
               onClick={() => setIsGalleryOpen(!isGalleryOpen)}
               className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
               title={isGalleryOpen ? 'Hide Media Gallery' : 'Show Media Gallery'}
             >
-              <div className={`w-[46px] h-[46px] bg-[#F8F9FB] rounded-[14px] border border-[#E2E4EB] inline-flex justify-center items-center shadow-sm transition-all ${isGalleryOpen ? 'bg-[#F3F4F6] ring-2 ring-[#1E1035]' : 'group-hover:bg-[#F3F4F6]'}`}>
-                <div className="w-[24px] h-[24px] bg-[#180321] rounded-[7px] flex items-center justify-center overflow-hidden">
-                  <ImageIcon size={14} strokeWidth={2.5} className="text-white" />
-                </div>
+              <div className={`w-[46px] h-[46px] rounded-[14px] inline-flex justify-center items-center shadow-sm transition-all ${
+                isGalleryOpen 
+                  ? 'bg-[#180321] text-white ring-2 ring-[#9723FF] ring-offset-1' 
+                  : 'bg-[#F8F9FB] border border-[#E2E4EB] text-[#645A6C] group-hover:bg-[#F3F4F6] group-hover:text-[#1E1035]'
+              }`}>
+                <GalleryIcon size={22} />
               </div>
-              <span className="text-center text-[#463B4D] text-[10.5px] font-semibold">Gallery</span>
+              <span className={`text-center text-[10.5px] font-semibold transition-colors ${isGalleryOpen ? 'text-[#9723FF]' : 'text-[#463B4D]'}`}>
+                Gallery
+              </span>
             </button>
           </div>
         </div>
@@ -1229,10 +1196,10 @@ export default function HomeDashboard() {
             <Link 
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1E1035] text-xs font-bold transition-all border border-slate-200/70 shrink-0"
-              title="Go back to Dashboard"
+              title="Go back"
             >
               <ArrowLeft size={14} strokeWidth={2.5} />
-              <span>Dashboard</span>
+              <span>Back</span>
             </Link>
             
             <div className="h-6 w-px bg-slate-200 hidden sm:block shrink-0" />
