@@ -46,6 +46,9 @@ interface InspectorSidebarTabsProps {
   countryCodeOptions: Array<{ value: string; label: string }>;
   locationOptions: Array<{ value: string; label: string }>;
   inspectorOptions: Array<{ value: string; label: string }>;
+  className?: string;
+  showTabs?: boolean;
+  initialTab?: SidebarTabId;
 }
 
 export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
@@ -59,8 +62,11 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
   countryCodeOptions,
   locationOptions,
   inspectorOptions,
+  className = '',
+  showTabs = true,
+  initialTab = 'sections',
 }) => {
-  const [internalTab, setInternalTab] = useState<SidebarTabId>('sections');
+  const [internalTab, setInternalTab] = useState<SidebarTabId>(initialTab);
   const [activeSectionId, setActiveSectionId] = useState<string>('section-inspection-details');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -109,20 +115,21 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-[28px] shadow-sm border border-slate-100 flex flex-col shrink-0 overflow-hidden">
+    <div className={`bg-white rounded-[28px] shadow-sm border border-slate-100 flex flex-col shrink-0 overflow-hidden ${className}`}>
       {/* 1. Sleek Segmented Tab Control */}
-      <div className="px-2.5 py-2 border-b border-slate-100 bg-[#FAF9FD]/70">
-        <div className="grid grid-cols-3 gap-1 p-0.5 bg-[#ECEEF2] rounded-xl">
-          {/* Tab 1: Sections */}
-          <button
-            type="button"
-            onClick={() => handleTabChange('sections')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              currentTab === 'sections'
-                ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
+      {showTabs && (
+        <div className="px-2.5 py-2 border-b border-slate-100 bg-[#FAF9FD]/70">
+          <div className="grid grid-cols-3 gap-1 p-0.5 bg-[#ECEEF2] rounded-xl">
+            {/* Tab 1: Sections */}
+            <button
+              type="button"
+              onClick={() => handleTabChange('sections')}
+              className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                currentTab === 'sections'
+                  ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
             <ListOrdered size={12} className={currentTab === 'sections' ? 'text-[#9723FF]' : ''} />
             <span>Sections</span>
             <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
@@ -161,6 +168,7 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
           </button>
         </div>
       </div>
+      )}
 
       {/* 2. Tab Content Panels */}
       <div className="p-1.5 sm:p-2">

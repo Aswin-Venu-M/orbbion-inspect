@@ -11,7 +11,7 @@ import {
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
-  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash
+  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash, ListOrdered
 } from 'lucide-react';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
@@ -72,7 +72,9 @@ export default function HomeDashboard() {
   // Tab & Gallery State
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('sections');
-  const [isGalleryOpen, setIsGalleryOpen] = useState(true);
+  const [activeLeftDrawer, setActiveLeftDrawer] = useState<'sections' | 'gallery' | null>('sections');
+  const isSectionsOpen = activeLeftDrawer === 'sections';
+  const isGalleryOpen = activeLeftDrawer === 'gallery';
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
 
@@ -1114,11 +1116,18 @@ export default function HomeDashboard() {
           <span className="text-[10px] font-medium">{activeTab === 'edit' ? 'View' : 'Edit'}</span>
         </button>
         <button 
-          onClick={() => setIsGalleryOpen(!isGalleryOpen)}
+          onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'gallery' ? null : 'gallery')}
           className={`flex flex-col items-center justify-center gap-1.5 w-16 h-full transition-all ${isGalleryOpen ? 'text-[#9723FF] opacity-100' : 'text-[#180321] opacity-50 hover:opacity-100'}`}
         >
           <GalleryIcon size={22} className={isGalleryOpen ? 'drop-shadow-sm' : ''} />
           <span className="text-[10px] font-medium">Gallery</span>
+        </button>
+        <button 
+          onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'sections' ? null : 'sections')}
+          className={`flex flex-col items-center justify-center gap-1.5 w-16 h-full transition-all ${isSectionsOpen ? 'text-[#9723FF] opacity-100' : 'text-[#180321] opacity-50 hover:opacity-100'}`}
+        >
+          <ListOrdered size={22} strokeWidth={2} />
+          <span className="text-[10px] font-medium">Sections</span>
         </button>
         <button 
           onClick={() => setIsSearchOpen(true)}
@@ -1154,10 +1163,10 @@ export default function HomeDashboard() {
             />
           </Link>
           
-          <div className="flex flex-col gap-5 w-full mt-7">
+          <div className="flex flex-col gap-4 w-full mt-7">
             {/* Gallery Drawer Toggle */}
             <button 
-              onClick={() => setIsGalleryOpen(!isGalleryOpen)}
+              onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'gallery' ? null : 'gallery')}
               className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
               title={isGalleryOpen ? 'Hide Media Gallery' : 'Show Media Gallery'}
             >
@@ -1170,6 +1179,24 @@ export default function HomeDashboard() {
               </div>
               <span className={`text-center text-[10.5px] font-semibold transition-colors ${isGalleryOpen ? 'text-[#9723FF]' : 'text-[#463B4D]'}`}>
                 Gallery
+              </span>
+            </button>
+
+            {/* Sections Drawer Toggle */}
+            <button 
+              onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'sections' ? null : 'sections')}
+              className="w-full flex flex-col justify-start items-center gap-1 group cursor-pointer"
+              title={isSectionsOpen ? 'Hide Sections Panel' : 'Show Sections Panel'}
+            >
+              <div className={`w-[46px] h-[46px] rounded-[14px] inline-flex justify-center items-center shadow-sm transition-all ${
+                isSectionsOpen 
+                  ? 'bg-[#180321] text-white ring-2 ring-[#9723FF] ring-offset-1' 
+                  : 'bg-[#F8F9FB] border border-[#E2E4EB] text-[#645A6C] group-hover:bg-[#F3F4F6] group-hover:text-[#1E1035]'
+              }`}>
+                <ListOrdered size={22} strokeWidth={2} />
+              </div>
+              <span className={`text-center text-[10.5px] font-semibold transition-colors ${isSectionsOpen ? 'text-[#9723FF]' : 'text-[#463B4D]'}`}>
+                Sections
               </span>
             </button>
           </div>
@@ -1346,12 +1373,40 @@ export default function HomeDashboard() {
           
           {activeTab === 'edit' ? (
             <>
+              {/* Sections Drawer (Collapsible) */}
+              <div 
+                className={`shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
+                  isSectionsOpen 
+                    ? 'max-h-[700px] xl:max-h-none w-full xl:max-w-[320px] opacity-100' 
+                    : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0 pointer-events-none'
+                }`}
+              >
+                <div className="w-full xl:w-[320px] h-full overflow-visible xl:overflow-y-auto custom-scrollbar">
+                  <InspectorSidebarTabs 
+                    activeTab={activeSidebarTab}
+                    onTabChange={setActiveSidebarTab}
+                    sectionOrder={sectionOrder}
+                    onSectionOrderChange={handleSectionOrderChange}
+                    report={report}
+                    onUpdateClientDetails={(details) => updateReport({
+                      clientDetails: { ...report.clientDetails, ...details }
+                    })}
+                    onUpdateTeamDetails={(details) => updateReport({
+                      teamDetails: { ...report.teamDetails, ...details }
+                    })}
+                    countryCodeOptions={countryCodeOptions}
+                    locationOptions={locationOptions}
+                    inspectorOptions={inspectorOptions}
+                  />
+                </div>
+              </div>
+
               {/* 2. Media Drawer */}
               <div 
                 className={`shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
                   isGalleryOpen 
                     ? 'max-h-[600px] xl:max-h-none w-full xl:max-w-[310px] opacity-100' 
-                    : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0'
+                    : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0 pointer-events-none'
                 }`}
               >
                 <div className="w-full xl:w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-5 z-10 border border-slate-100 h-[400px] xl:h-full">
@@ -1522,27 +1577,119 @@ export default function HomeDashboard() {
                 </div>
               </main>
 
-              {/* 4. Right Sidebar Container with Segmented Tabs */}
+              {/* 4. Right Sidebar Container with Client & Team Details */}
               <aside 
                 id="sidebar-inspector-controls"
                 className="w-full xl:w-[336px] flex flex-col gap-4 h-auto xl:h-full overflow-visible xl:overflow-y-auto custom-scrollbar shrink-0 z-10 pb-20 xl:pb-0"
               >
-                <InspectorSidebarTabs 
-                  activeTab={activeSidebarTab}
-                  onTabChange={setActiveSidebarTab}
-                  sectionOrder={sectionOrder}
-                  onSectionOrderChange={handleSectionOrderChange}
-                  report={report}
-                  onUpdateClientDetails={(details) => updateReport({
-                    clientDetails: { ...report.clientDetails, ...details }
-                  })}
-                  onUpdateTeamDetails={(details) => updateReport({
-                    teamDetails: { ...report.teamDetails, ...details }
-                  })}
-                  countryCodeOptions={countryCodeOptions}
-                  locationOptions={locationOptions}
-                  inspectorOptions={inspectorOptions}
-                />
+                {/* Client Details Card */}
+                <SidebarCard
+                  title="Client Details"
+                  description="Client contact & inspection address"
+                  isAccordion={true}
+                  defaultOpen={true}
+                  id="section-client-details"
+                  badge={
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-[#9723FF] border border-purple-200/60">
+                      Client
+                    </span>
+                  }
+                >
+                  <InputField 
+                    label="Client Name" 
+                    placeholder="Enter Client Name" 
+                    icon={<User size={16} fill="currentColor" strokeWidth={0} />} 
+                    value={report.clientDetails.name}
+                    onChange={(e) => updateReport({
+                      clientDetails: { ...report.clientDetails, name: e.target.value }
+                    })}
+                  />
+                  
+                  {/* WhatsApp Number with Country Code Dropdown */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-[#1E1035]">WhatsApp Number</label>
+                    <div className="relative flex items-center w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-3 focus-within:ring-2 focus-within:ring-[#1E1035]/20 transition-all">
+                      <div className="flex items-center gap-1 pr-1.5 border-r border-slate-200">
+                        <select
+                          value={report.clientDetails.countryCode}
+                          onChange={(e) => updateReport({
+                            clientDetails: { ...report.clientDetails, countryCode: e.target.value }
+                          })}
+                          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                        >
+                          {countryCodeOptions.map(c => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <input 
+                        type="tel" 
+                        placeholder="54 409 3009" 
+                        value={report.clientDetails.whatsappNumber}
+                        onChange={(e) => updateReport({
+                          clientDetails: { ...report.clientDetails, whatsappNumber: e.target.value }
+                        })}
+                        className="flex-1 min-w-0 bg-transparent text-sm text-[#190933] placeholder-slate-400 pl-2 focus:outline-none" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <InputField 
+                    label="Email Address" 
+                    placeholder="client@example.com" 
+                    type="email"
+                    icon={<Eye size={16} fill="currentColor" strokeWidth={0} />} 
+                    value={report.clientDetails.email}
+                    onChange={(e) => updateReport({
+                      clientDetails: { ...report.clientDetails, email: e.target.value }
+                    })}
+                  />
+
+                  <InputField 
+                    label="Vehicle Details" 
+                    placeholder="2025 Toyota Tundra TRD Pro" 
+                    value={report.clientDetails.vehicleDetails}
+                    onChange={(e) => updateReport({
+                      clientDetails: { ...report.clientDetails, vehicleDetails: e.target.value }
+                    })}
+                  />
+
+                  <SelectField 
+                    label="Location" 
+                    placeholder="Select Location" 
+                    options={locationOptions}
+                    icon={<MapPin size={16} fill="currentColor" strokeWidth={0} />} 
+                    value={report.clientDetails.location}
+                    onChange={(e) => updateReport({
+                      clientDetails: { ...report.clientDetails, location: String(e.target.value ?? '') }
+                    })}
+                  />
+                </SidebarCard>
+
+                {/* Team Details Card */}
+                <SidebarCard
+                  title="Our Team"
+                  description="Assigned inspector & QA details"
+                  isAccordion={true}
+                  defaultOpen={true}
+                  id="section-team-details"
+                  badge={
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-[#008751] border border-emerald-200/60">
+                      Assigned
+                    </span>
+                  }
+                >
+                  <SelectField 
+                    label="Inspector" 
+                    placeholder="Select Inspector" 
+                    options={inspectorOptions}
+                    icon={<User size={16} />} 
+                    value={report.teamDetails.inspector}
+                    onChange={(e) => updateReport({
+                      teamDetails: { ...report.teamDetails, inspector: String(e.target.value ?? '') }
+                    })}
+                  />
+                </SidebarCard>
               </aside>
             </>
           ) : (
