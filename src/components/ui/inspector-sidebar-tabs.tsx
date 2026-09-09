@@ -116,8 +116,8 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
 
   return (
     <div className={`bg-white rounded-[28px] shadow-sm border border-slate-100 flex flex-col shrink-0 overflow-hidden ${className}`}>
-      {/* 1. Sleek Segmented Tab Control */}
-      {showTabs && (
+      {/* 1. Sleek Segmented Tab Control or Section Header */}
+      {showTabs ? (
         <div className="px-2.5 py-2 border-b border-slate-100 bg-[#FAF9FD]/70">
           <div className="grid grid-cols-3 gap-1 p-0.5 bg-[#ECEEF2] rounded-xl">
             {/* Tab 1: Sections */}
@@ -130,48 +130,70 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-            <ListOrdered size={12} className={currentTab === 'sections' ? 'text-[#9723FF]' : ''} />
-            <span>Sections</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-              currentTab === 'sections' ? 'bg-[#9723FF]/10 text-[#9723FF]' : 'bg-slate-200/80 text-slate-500'
-            }`}>
+              <ListOrdered size={12} className={currentTab === 'sections' ? 'text-[#9723FF]' : ''} />
+              <span>Sections</span>
+              <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                currentTab === 'sections' ? 'bg-[#9723FF]/10 text-[#9723FF]' : 'bg-slate-200/80 text-slate-500'
+              }`}>
+                {orderedSections.length}
+              </span>
+            </button>
+
+            {/* Tab 2: Client */}
+            <button
+              type="button"
+              onClick={() => handleTabChange('client')}
+              className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                currentTab === 'client'
+                  ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <UserCheck size={12} className={currentTab === 'client' ? 'text-[#9723FF]' : ''} />
+              <span>Client</span>
+            </button>
+
+            {/* Tab 3: Team */}
+            <button
+              type="button"
+              onClick={() => handleTabChange('team')}
+              className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                currentTab === 'team'
+                  ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Users size={12} className={currentTab === 'team' ? 'text-[#9723FF]' : ''} />
+              <span>Team</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#FAF5FF] flex items-center justify-center text-[#9723FF]">
+              <ListOrdered size={15} strokeWidth={2.5} />
+            </div>
+            <h3 className="text-[14px] font-bold text-[#1E1035] tracking-tight">Sections</h3>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#9723FF]/10 text-[#9723FF]">
               {orderedSections.length}
             </span>
-          </button>
-
-          {/* Tab 2: Client */}
-          <button
-            type="button"
-            onClick={() => handleTabChange('client')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              currentTab === 'client'
-                ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <UserCheck size={12} className={currentTab === 'client' ? 'text-[#9723FF]' : ''} />
-            <span>Client</span>
-          </button>
-
-          {/* Tab 3: Team */}
-          <button
-            type="button"
-            onClick={() => handleTabChange('team')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              currentTab === 'team'
-                ? 'bg-white text-[#1E1035] shadow-xs border border-slate-200/60'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Users size={12} className={currentTab === 'team' ? 'text-[#9723FF]' : ''} />
-            <span>Team</span>
-          </button>
+          </div>
+          {isCustomOrder && (
+            <button
+              type="button"
+              onClick={handleResetOrder}
+              className="text-[10.5px] font-bold text-[#9723FF] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw size={10} />
+              Reset
+            </button>
+          )}
         </div>
-      </div>
       )}
 
       {/* 2. Tab Content Panels */}
-      <div className="p-1.5 sm:p-2">
+      <div className="flex-1 min-h-0 flex flex-col p-1.5 sm:p-2 overflow-hidden">
         <AnimatePresence mode="wait">
           {/* TAB 1: SECTIONS */}
           {currentTab === 'sections' && (
@@ -181,10 +203,10 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.16 }}
-              className="space-y-1"
+              className="flex-1 min-h-0 flex flex-col space-y-1 overflow-hidden"
             >
               {isCustomOrder && (
-                <div className="flex items-center justify-between pb-1 px-1.5">
+                <div className="flex items-center justify-between pb-1 px-1.5 shrink-0">
                   <span className="text-[10.5px] text-slate-400">Custom order active</span>
                   <button
                     type="button"
@@ -198,7 +220,7 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
               )}
 
               {/* Clean Section List with Native Drag & Drop */}
-              <div className="flex flex-col gap-1 max-h-[620px] overflow-y-auto custom-scrollbar">
+              <div className="flex-1 min-h-0 flex flex-col gap-1 overflow-y-auto custom-scrollbar pr-1">
                 {orderedSections.map((sec, index) => {
                   const isActive = activeSectionId === sec.id;
                   const isDragging = draggedIndex === index;

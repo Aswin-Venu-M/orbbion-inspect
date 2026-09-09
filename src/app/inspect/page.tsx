@@ -1381,10 +1381,10 @@ export default function HomeDashboard() {
                     : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0 pointer-events-none'
                 }`}
               >
-                <div className="w-full xl:w-[320px] h-full overflow-visible xl:overflow-y-auto custom-scrollbar">
+                <div className="w-full xl:w-[320px] h-full flex flex-col overflow-hidden">
                   <InspectorSidebarTabs 
-                    activeTab={activeSidebarTab}
-                    onTabChange={setActiveSidebarTab}
+                    className="h-full"
+                    showTabs={false}
                     sectionOrder={sectionOrder}
                     onSectionOrderChange={handleSectionOrderChange}
                     report={report}
