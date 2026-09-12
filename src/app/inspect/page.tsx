@@ -17,8 +17,8 @@ import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
 import { GalleryIcon } from '@/components/ui/gallery-icon';
 import { InputField } from '@/components/ui/input-field';
-import { DatePickerInput } from '@/components/ui/date-picker-input';
-import { TimePickerInput } from '@/components/ui/time-picker-input';
+import { DatePickerInput, parseDate } from '@/components/ui/date-picker-input';
+import { TimePickerInput, parseTimeString } from '@/components/ui/time-picker-input';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
@@ -509,6 +509,18 @@ export default function HomeDashboard() {
       return;
     }
 
+    if (report.inspectionDetails.date && !parseDate(report.inspectionDetails.date)) {
+      showToast('Please enter a valid date in DD-MM-YYYY format.', 'error');
+      document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (report.inspectionDetails.time && !parseTimeString(report.inspectionDetails.time)) {
+      showToast('Please enter a valid time (e.g. 09:00 AM).', 'error');
+      document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
     const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/i;
     if (!vinRegex.test(report.inspectionDetails.vinNumber)) {
       showToast('VIN must be exactly 17 alphanumeric characters (excluding I, O, Q).', 'error');
@@ -578,7 +590,7 @@ export default function HomeDashboard() {
                   label="Date" 
                   required 
                   placeholder="DD-MM-YYYY"
-                  monthFormat="short"
+                  dateFormat="DD-MM-YYYY"
                   value={report.inspectionDetails.date}
                   onChange={(dateVal) => updateReport({
                     inspectionDetails: { ...report.inspectionDetails, date: dateVal }
