@@ -17,6 +17,8 @@ import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
 import { GalleryIcon } from '@/components/ui/gallery-icon';
 import { InputField } from '@/components/ui/input-field';
+import { DatePickerInput } from '@/components/ui/date-picker-input';
+import { TimePickerInput } from '@/components/ui/time-picker-input';
 import { SelectField } from '@/components/ui/select-field';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
@@ -572,25 +574,26 @@ export default function HomeDashboard() {
           <div id="section-inspection-details" className="scroll-mt-6">
             <ReusableSection title="Inspection Details">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InputField 
+                <DatePickerInput 
                   label="Date" 
                   required 
-                  rightIcon={<Calendar size={18} />} 
                   placeholder="DD-MM-YYYY"
+                  monthFormat="short"
                   value={report.inspectionDetails.date}
-                  onChange={(e) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, date: e.target.value }
+                  onChange={(dateVal) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, date: dateVal }
                   })}
+                  className="w-full"
                 />
-                <InputField 
+                <TimePickerInput 
                   label="Time" 
                   required 
-                  rightIcon={<Clock size={18} />} 
-                  placeholder="HH:MM" 
+                  placeholder="09:00 AM" 
                   value={report.inspectionDetails.time}
-                  onChange={(e) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, time: e.target.value }
+                  onChange={(timeVal) => updateReport({
+                    inspectionDetails: { ...report.inspectionDetails, time: timeVal }
                   })}
+                  className="w-full"
                 />
                 <SelectField 
                   label="Inspection Type" 
