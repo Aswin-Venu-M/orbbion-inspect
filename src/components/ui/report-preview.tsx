@@ -594,7 +594,7 @@ export function ReportPreview({
 
       {/* PAGE 6: Chassis & Subframe */}
       {report?.chassisSubframePartStatuses && (
-        <PreviewPage id="preview-page-chassis" title="Chassis & Subframe">
+        <PreviewPage id="preview-page-6" title="Chassis & Subframe">
           {report.chassisSubframeComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
@@ -630,11 +630,11 @@ export function ReportPreview({
 
       {/* PAGE 7: Body */}
       {report?.bodyPartStatuses && (
-        <PreviewPage id="preview-page-body" title="Body">
-          {report.bodyComments && (
+        <PreviewPage id="preview-page-7" title="Body">
+          {(report.bodyGeneralComments || report.bodyComments) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.bodyComments}</p>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.bodyGeneralComments || report.bodyComments}</p>
             </div>
           )}
           {report.bodyImages && report.bodyImages.length > 0 && (
@@ -665,12 +665,12 @@ export function ReportPreview({
       )}
 
       {/* PAGE 8: Interior & Exterior */}
-      {(report?.seatsStatus || report?.interiorCustomHeadlines) && (
-        <PreviewPage id="preview-page-interior" title="Interior & Exterior">
-          {report.interiorComments && (
+      {(report?.seatsStatus || report?.interiorCustomHeadlines || report?.seatsComments || report?.interiorComments) && (
+        <PreviewPage id="preview-page-8" title="Interior & Exterior">
+          {report.seatsComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Seats Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.interiorComments}</p>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.seatsComments}</p>
             </div>
           )}
           {report.seatsStatus && (
@@ -678,10 +678,10 @@ export function ReportPreview({
                <GenericItemCard title="Seats Condition" status={report.seatsStatus} images={report.seatsImages?.map(i => i.url)} />
              </div>
           )}
-          {report.generalPhotosInteriorComments && (
+          {report.interiorComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">General Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.generalPhotosInteriorComments}</p>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.interiorComments}</p>
             </div>
           )}
           {report.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0 && (
@@ -699,7 +699,7 @@ export function ReportPreview({
 
       {/* PAGE 9: Engine */}
       {report?.engineItems && (
-        <PreviewPage id="preview-page-engine" title="Engine">
+        <PreviewPage id="preview-page-9" title="Engine">
           {report.engineComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
@@ -726,7 +726,7 @@ export function ReportPreview({
 
       {/* PAGE 10: Transmission */}
       {report?.transmissionItems && (
-        <PreviewPage id="preview-page-transmission" title="Transmission">
+        <PreviewPage id="preview-page-10" title="Transmission">
           {report.transmissionComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
@@ -753,7 +753,13 @@ export function ReportPreview({
 
       {/* PAGE 11: Electrical */}
       {report?.electricalItems && (
-        <PreviewPage id="preview-page-electrical" title="Electrical">
+        <PreviewPage id="preview-page-11" title="Electrical">
+          {report.electricalComments && (
+            <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
+              <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{report.electricalComments}</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(report.electricalItems).map(([key, data]) => (
               <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
@@ -773,8 +779,8 @@ export function ReportPreview({
       )}
 
       {/* PAGE 12: General Photos */}
-      {(report?.generalPhotosExteriorImages?.length || report?.generalPhotosInteriorImages?.length || report?.generalPhotosEngineImages?.length) ? (
-        <PreviewPage id="preview-page-general-photos" title="General Photos">
+      {(report?.generalPhotosExteriorImages?.length || report?.generalPhotosInteriorImages?.length || report?.generalPhotosEngineImages?.length || report?.generalPhotosExteriorComments || report?.generalPhotosInteriorComments || report?.generalPhotosEngineComments) ? (
+        <PreviewPage id="preview-page-12" title="General Photos">
           
           {/* Exterior */}
           {(report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) || report.generalPhotosExteriorComments ? (

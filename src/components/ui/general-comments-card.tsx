@@ -18,8 +18,15 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const [comments, setComments] = useState(initialComments);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputId = React.useId();
+  const pendingValueRef = useRef<string | null>(null);
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync with external initialComments changes (undo/redo, reset, parent update)
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
 
   useEffect(() => {
     return () => {
@@ -31,12 +38,26 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setComments(val);
+    pendingValueRef.current = val;
     
     if (onCommentsChange) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         onCommentsChange(val);
+        pendingValueRef.current = null;
+        debounceRef.current = null;
       }, 400);
+    }
+  };
+
+  const handleBlur = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+      if (pendingValueRef.current !== null && onCommentsChange) {
+        onCommentsChange(pendingValueRef.current);
+        pendingValueRef.current = null;
+      }
     }
   };
 
@@ -66,11 +87,12 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
       />
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <label htmlFor="general-comments-input" className="text-[14px] font-bold text-[#1E1035]">General Comments</label>
+          <label htmlFor={inputId} className="text-[14px] font-bold text-[#1E1035]">General Comments</label>
           <textarea 
-            id="general-comments-input"
+            id={inputId}
             value={comments}
             onChange={handleCommentChange}
+            onBlur={handleBlur}
             placeholder={placeholder}
             rows={3}
             className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 

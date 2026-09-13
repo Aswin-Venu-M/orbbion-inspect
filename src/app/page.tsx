@@ -269,6 +269,12 @@ export default function AppDashboardPage() {
           reports={reports} 
           activeTab={reportsActiveTab} 
           onActiveTabChange={setReportsActiveTab} 
+          globalSearch={globalSearch}
+          datePreset={datePreset}
+          onDeleteReport={(id) => {
+            setReports(prev => prev.filter(r => r.id !== id));
+            showToast('Report deleted successfully', 'success');
+          }}
         />
       </main>
 

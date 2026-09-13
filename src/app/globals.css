@@ -135,10 +135,7 @@ select {
   }
 
   /* Page break rules for preview pages */
-  #preview-page-1,
-  #preview-page-2,
-  #preview-page-3,
-  #preview-page-4 {
+  [id^="preview-page-"] {
     page-break-after: always !important;
     break-after: page !important;
     box-shadow: none !important;

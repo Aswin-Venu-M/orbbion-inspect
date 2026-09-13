@@ -48,6 +48,7 @@ import {
   inspectorOptions,
   countryCodeOptions,
   initialReportData,
+  initialReportsList,
 } from '@constants';
 
 interface MediaItem {
@@ -101,7 +102,6 @@ export default function HomeDashboard() {
   // Preview Navigation & Zoom
   const [zoomLevel, setZoomLevel] = useState(100);
   const [previewPage, setPreviewPage] = useState(1);
-  const totalPreviewPages = 4;
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
   // Dialogs & Modals
@@ -154,11 +154,11 @@ export default function HomeDashboard() {
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
     const allItems: (InspectionState | null)[] = [
-      ...Object.values(report.tyres).map(i => i.status),
-      ...Object.values(report.rims).map(i => i.status),
-      ...Object.values(report.brakes).map(i => i.status),
+      ...(report.tyres ? Object.values(report.tyres) : []).map(i => i?.status ?? null),
+      ...(report.rims ? Object.values(report.rims) : []).map(i => i?.status ?? null),
+      ...(report.brakes ? Object.values(report.brakes) : []).map(i => i?.status ?? null),
     ];
-    const total = allItems.filter(s => s !== 'na').length;
+    const total = allItems.filter(s => s !== null && s !== 'na').length;
     if (total === 0) return { pass: 55, fail: 45 };
 
     const passCount = allItems.filter(s => s === 'pass').length;
@@ -189,6 +189,84 @@ export default function HomeDashboard() {
     }
   }, [calculatedStats, report.reportOverview, updateReport]);
 
+  // Hydrate report by query param id if opened from dashboard
+  const hydratedFromUrlRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromUrlRef.current) return;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reportId = urlParams.get('id');
+      if (reportId && initialReportsList) {
+        const matchedItem = initialReportsList.find(r => r.id === reportId);
+        if (matchedItem) {
+          hydratedFromUrlRef.current = true;
+          updateReport({
+            id: matchedItem.id,
+            title: `${matchedItem.vehicle.year} ${matchedItem.vehicle.make} ${matchedItem.vehicle.model}`,
+            status: matchedItem.status,
+            inspectionDetails: {
+              ...report.inspectionDetails,
+              date: matchedItem.date,
+              time: matchedItem.time,
+              inspectionType: matchedItem.inspectionType,
+              vinNumber: matchedItem.vehicle.vin,
+            },
+            vehicleSummary: {
+              ...report.vehicleSummary,
+              make: matchedItem.vehicle.make,
+              model: matchedItem.vehicle.model,
+              year: String(matchedItem.vehicle.year),
+              vehicleType: matchedItem.vehicle.type,
+              externalColour: matchedItem.vehicle.color,
+              transmission: matchedItem.vehicle.transmission,
+              regionalSpecs: matchedItem.vehicle.specs,
+              odometerReading: matchedItem.vehicle.odometer.replace(/[^\d,]/g, '').trim(),
+              odometerStatus: matchedItem.vehicle.odometerStatus,
+            },
+            clientDetails: {
+              ...report.clientDetails,
+              name: matchedItem.client.name,
+              location: matchedItem.client.location,
+              email: matchedItem.client.email,
+              whatsappNumber: matchedItem.client.phone,
+              vehicleDetails: `${matchedItem.vehicle.year} ${matchedItem.vehicle.make} ${matchedItem.vehicle.model}`,
+            },
+            teamDetails: {
+              ...report.teamDetails,
+              inspector: matchedItem.inspector.name,
+            },
+            reportOverview: {
+              ...report.reportOverview,
+              pass: String(matchedItem.passPercentage),
+              fail: String(matchedItem.failPercentage),
+            },
+          }, false);
+        }
+      }
+    }
+  }, [report.inspectionDetails, report.vehicleSummary, report.clientDetails, report.teamDetails, report.reportOverview, updateReport]);
+
+  // Dynamic calculation of total preview pages (up to 12)
+  const totalPreviewPages = useMemo(() => {
+    let pages = 4; // Cover, Vehicle Summary, Tyres, Rims
+    if (report.brakes) pages++;
+    if (report.chassisSubframePartStatuses) pages++;
+    if (report.bodyPartStatuses) pages++;
+    if (report.seatsStatus || report.interiorCustomHeadlines || report.seatsComments || report.interiorComments) pages++;
+    if (report.engineItems) pages++;
+    if (report.transmissionItems) pages++;
+    if (report.electricalItems) pages++;
+    if (
+      report.generalPhotosExteriorImages?.length ||
+      report.generalPhotosInteriorImages?.length ||
+      report.generalPhotosEngineImages?.length ||
+      report.generalPhotosExteriorComments ||
+      report.generalPhotosInteriorComments ||
+      report.generalPhotosEngineComments
+    ) pages++;
+    return Math.max(1, pages);
+  }, [report]);
+
   // Zoom handlers
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 20, 200));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 20, 50));
@@ -215,14 +293,21 @@ export default function HomeDashboard() {
 
   const handlePreviewScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    const totalHeight = target.scrollHeight;
-    const pageHeight = totalHeight / totalPreviewPages;
-    const calculatedPage = Math.min(
-      totalPreviewPages,
-      Math.max(1, Math.floor((target.scrollTop + (pageHeight * 0.3)) / pageHeight) + 1)
-    );
-    if (calculatedPage !== previewPage) {
-      setPreviewPage(calculatedPage);
+    const pages = Array.from(target.querySelectorAll('[id^="preview-page-"]')) as HTMLElement[];
+    if (pages.length === 0) return;
+    const containerTop = target.scrollTop;
+    let activePage = 1;
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+      if (page.offsetTop - target.offsetTop <= containerTop + 150) {
+        const match = page.id.match(/preview-page-(\d+)/);
+        if (match) {
+          activePage = parseInt(match[1], 10);
+        }
+      }
+    }
+    if (activePage !== previewPage) {
+      setPreviewPage(activePage);
     }
   };
 
@@ -521,20 +606,23 @@ export default function HomeDashboard() {
       return;
     }
 
-    const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/i;
-    if (!vinRegex.test(report.inspectionDetails.vinNumber)) {
+    const rawVin = report.inspectionDetails.vinNumber || '';
+    const cleanVin = rawVin.trim().toUpperCase();
+    const vinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+    if (!vinRegex.test(cleanVin)) {
       showToast('VIN must be exactly 17 alphanumeric characters (excluding I, O, Q).', 'error');
       document.getElementById('section-inspection-details')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
-    if (!report.vehicleSummary.year) {
+    const yearStr = String(report.vehicleSummary.year || '').trim();
+    if (!yearStr) {
       showToast('Model Year is required.', 'error');
       document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
-    const year = Number(report.vehicleSummary.year);
+    const year = Number(yearStr);
     const currentYear = new Date().getFullYear();
     if (isNaN(year) || year < 1900 || year > currentYear + 1) {
       showToast(`Model Year must be between 1900 and ${currentYear + 1}.`, 'error');
@@ -542,7 +630,11 @@ export default function HomeDashboard() {
       return;
     }
 
-    updateReport({ status: 'published' });
+    updateReport({
+      inspectionDetails: { ...report.inspectionDetails, vinNumber: cleanVin },
+      vehicleSummary: { ...report.vehicleSummary, year: String(year) },
+      status: 'published'
+    });
     setIsPublishModalOpen(true);
   };
 
@@ -992,6 +1084,8 @@ export default function HomeDashboard() {
             <BodySection 
               initialComments={report.bodyComments}
               onCommentsChange={(c) => updateReport({ bodyComments: c }, false)}
+              generalComments={report.bodyGeneralComments || ''}
+              onGeneralCommentsChange={(c) => updateReport({ bodyGeneralComments: c }, false)}
               partStatuses={report.bodyPartStatuses as Record<string, string>}
               onPartStatusesChange={(s) => updateReport({ bodyPartStatuses: s }, false)}
               bodyImages={report.bodyImages}
@@ -1006,14 +1100,14 @@ export default function HomeDashboard() {
         return (
           <div key="section-interior-exterior" className="scroll-mt-6">
             <InteriorExteriorSection 
-              seatsComments={report.interiorComments}
-              onSeatsCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+              seatsComments={report.seatsComments || ''}
+              onSeatsCommentsChange={(c) => updateReport({ seatsComments: c }, false)}
               seatsStatus={report.seatsStatus}
               onSeatsStatusChange={(s) => updateReport({ seatsStatus: s }, false)}
               seatsImages={report.seatsImages}
               onSeatsImagesChange={(imgs) => updateReport({ seatsImages: imgs }, false)}
-              generalComments={report.generalPhotosInteriorComments}
-              onGeneralCommentsChange={(c) => updateReport({ generalPhotosInteriorComments: c }, false)}
+              generalComments={report.interiorComments || ''}
+              onGeneralCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
               customHeadlines={report.interiorCustomHeadlines}
               onCustomHeadlinesChange={(h) => updateReport({ interiorCustomHeadlines: h }, false)}
             />
@@ -1043,7 +1137,22 @@ export default function HomeDashboard() {
       case 'section-electrical':
         return (
           <div key="section-electrical" className="scroll-mt-6">
-            <ElectricalSection />
+            <ElectricalSection 
+              initialComments={report.electricalComments || ''}
+              onCommentsChange={(c) => updateReport({ electricalComments: c }, false)}
+              items={report.electricalItems as any}
+              onItemChange={(id, data) => {
+                const currentItems = report.electricalItems || {};
+                updateReport({
+                  electricalItems: {
+                    ...currentItems,
+                    [id]: { ...currentItems[id], ...data } as any
+                  }
+                }, false);
+              }}
+              customHeadlines={report.electricalCustomHeadlines || []}
+              onCustomHeadlinesChange={(h) => updateReport({ electricalCustomHeadlines: h }, false)}
+            />
           </div>
         );
 
@@ -1051,8 +1160,20 @@ export default function HomeDashboard() {
         return (
           <div key="section-engine" className="scroll-mt-6">
             <EngineSection 
-              initialComments={report.engineComments}
+              initialComments={report.engineComments || ''}
               onCommentsChange={(c) => updateReport({ engineComments: c }, false)}
+              items={report.engineItems as any}
+              onItemChange={(id, data) => {
+                const currentItems = report.engineItems || {};
+                updateReport({
+                  engineItems: {
+                    ...currentItems,
+                    [id]: { ...currentItems[id], ...data } as any
+                  }
+                }, false);
+              }}
+              customHeadlines={report.engineCustomHeadlines || []}
+              onCustomHeadlinesChange={(h) => updateReport({ engineCustomHeadlines: h }, false)}
             />
           </div>
         );
@@ -1073,8 +1194,8 @@ export default function HomeDashboard() {
                   }
                 }, false);
               }}
-              customHeadlines={report.customHeadlines}
-              onCustomHeadlinesChange={(headlines) => updateReport({ customHeadlines: headlines }, false)}
+              customHeadlines={report.transmissionCustomHeadlines || []}
+              onCustomHeadlinesChange={(headlines) => updateReport({ transmissionCustomHeadlines: headlines }, false)}
             />
           </div>
         );
@@ -1721,7 +1842,7 @@ export default function HomeDashboard() {
                     transition: 'transform 0.15s ease-out',
                     transformOrigin: 'top center'
                   }} 
-                  className="w-full max-w-[900px] flex justify-center"
+                  className="w-full max-w-[900px] flex justify-center print:transform-none print:w-full print:max-w-none"
                 >
                   <ReportPreview 
                     tyres={report.tyres} 

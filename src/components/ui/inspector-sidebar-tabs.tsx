@@ -7,6 +7,8 @@ import {
   UserCheck, 
   Users, 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   User, 
   MapPin, 
   Eye, 
@@ -293,8 +295,35 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                         </div>
                       </div>
 
-                      {/* Right Badge & Chevron */}
+                      {/* Reorder Buttons & Right Badge & Chevron */}
                       <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 max-sm:opacity-100 focus-within:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            aria-label={`Move ${sec.title} up`}
+                            disabled={index === 0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveSection(index, index - 1);
+                            }}
+                            className="p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-slate-200/60 transition-colors"
+                          >
+                            <ChevronUp size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Move ${sec.title} down`}
+                            disabled={index === orderedSections.length - 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveSection(index, index + 1);
+                            }}
+                            className="p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-slate-200/60 transition-colors"
+                          >
+                            <ChevronDown size={12} />
+                          </button>
+                        </div>
+
                         {sec.badgeText && (
                           <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md border ${sec.badgeColor}`}>
                             {sec.badgeText}

@@ -28,6 +28,7 @@ export const InputField = ({
   // Local state for immediate UI feedback
   const [localValue, setLocalValue] = useState(value ?? defaultValue ?? '');
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingEventRef = useRef<React.ChangeEvent<HTMLInputElement> | null>(null);
 
   // Sync with external value changes (e.g. form reset or parent override)
   useEffect(() => {
@@ -50,12 +51,27 @@ export const InputField = ({
         target: { ...e.target, value: newVal },
         currentTarget: { ...e.currentTarget, value: newVal }
       } as React.ChangeEvent<HTMLInputElement>;
+      pendingEventRef.current = syntheticEvent;
       
       debounceRef.current = setTimeout(() => {
         onChange(syntheticEvent);
+        pendingEventRef.current = null;
+        debounceRef.current = null;
       }, 400);
     }
   }, [onChange]);
+
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+      if (pendingEventRef.current && onChange) {
+        onChange(pendingEventRef.current);
+        pendingEventRef.current = null;
+      }
+    }
+    props.onBlur?.(e);
+  }, [onChange, props]);
 
   // Clean up timeout
   useEffect(() => {
@@ -81,6 +97,7 @@ export const InputField = ({
           defaultValue={defaultValue}
           value={localValue}
           onChange={handleChange}
+          onBlur={handleBlur}
           placeholder={placeholder}
           required={required}
           className={`w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] text-sm text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${

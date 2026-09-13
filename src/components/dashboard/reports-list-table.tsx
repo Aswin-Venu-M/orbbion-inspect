@@ -22,6 +22,8 @@ interface ReportsListTableProps {
   onDuplicateReport?: (report: ReportListItem) => void;
   activeTab?: TabFilter;
   onActiveTabChange?: (tab: TabFilter) => void;
+  globalSearch?: string;
+  datePreset?: 'today' | '7d' | '30d' | 'all';
 }
 
 export type TabFilter = 'all' | 'published' | 'draft' | 'tampered' | 'defects';
@@ -31,10 +33,13 @@ export function ReportsListTable({
   onDeleteReport,
   activeTab: externalActiveTab,
   onActiveTabChange,
+  globalSearch = '',
+  datePreset = 'all',
 }: ReportsListTableProps) {
   // State
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [internalActiveTab, setInternalActiveTab] = useState<TabFilter>('all');
+  const [reportToDelete, setReportToDelete] = useState<ReportListItem | null>(null);
   
   const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
   const setActiveTab = onActiveTabChange || setInternalActiveTab;
@@ -67,6 +72,15 @@ export function ReportsListTable({
 
   // Filtered & Sorted Reports
   const filteredReports = useMemo(() => {
+    const referenceTimestamp = (() => {
+      let maxTime = Date.now();
+      for (const r of reports) {
+        const t = new Date(r.date).getTime();
+        if (!isNaN(t) && t > maxTime) maxTime = t;
+      }
+      return maxTime;
+    })();
+
     return reports
       .filter((r) => {
         // Tab Filter
@@ -74,6 +88,17 @@ export function ReportsListTable({
         if (activeTab === 'draft' && r.status !== 'draft') return false;
         if (activeTab === 'tampered' && r.vehicle.odometerStatus !== 'Tampered' && r.flaggedDefectsCount < 4) return false;
         if (activeTab === 'defects' && r.failPercentage < 30) return false;
+
+        // Date Preset Filter
+        if (datePreset && datePreset !== 'all') {
+          const reportTime = new Date(r.date).getTime();
+          if (!isNaN(reportTime)) {
+            const diffMs = referenceTimestamp - reportTime;
+            if (datePreset === 'today' && diffMs > 24 * 3600 * 1000) return false;
+            if (datePreset === '7d' && diffMs > 7 * 24 * 3600 * 1000) return false;
+            if (datePreset === '30d' && diffMs > 30 * 24 * 3600 * 1000) return false;
+          }
+        }
 
         // Location Filter
         if (locationFilter !== 'all' && !r.client.location.toLowerCase().includes(locationFilter.toLowerCase())) {
@@ -85,9 +110,10 @@ export function ReportsListTable({
           return false;
         }
 
-        // Search Query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
+        // Combined Search Query
+        const combinedSearch = (globalSearch || searchQuery).trim();
+        if (combinedSearch) {
+          const q = combinedSearch.toLowerCase();
           const matchVin = r.vehicle.vin.toLowerCase().includes(q);
           const matchVehicle = `${r.vehicle.year} ${r.vehicle.make} ${r.vehicle.model}`.toLowerCase().includes(q);
           const matchClient = r.client.name.toLowerCase().includes(q) || (r.client.company || '').toLowerCase().includes(q);
@@ -104,7 +130,7 @@ export function ReportsListTable({
         if (sortBy === 'defects_desc') return b.flaggedDefectsCount - a.flaggedDefectsCount;
         return b.id.localeCompare(a.id); // default by ID / recency
       });
-  }, [reports, activeTab, locationFilter, vehicleTypeFilter, searchQuery, sortBy]);
+  }, [reports, activeTab, locationFilter, vehicleTypeFilter, searchQuery, globalSearch, datePreset, sortBy]);
 
   // Selection toggle
   const toggleSelectAll = () => {
@@ -356,7 +382,7 @@ export function ReportsListTable({
                         </div>
                         <div className="min-w-0">
                           <Link
-                            href="/inspect"
+                            href={`/inspect?id=${report.id}`}
                             className="font-bold text-[#1E1035] hover:text-[#9723FF] transition-colors flex items-center gap-1.5 truncate"
                           >
                             <span>{report.vehicle.year} {report.vehicle.make} {report.vehicle.model}</span>
@@ -499,13 +525,24 @@ export function ReportsListTable({
                     <td className="py-3.5 px-3 text-right pr-4">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
-                          href="/inspect"
+                          href={`/inspect?id=${report.id}`}
                           className="px-3 py-1 rounded-xl bg-[#180321] text-white hover:bg-[#9723FF] transition-all font-bold text-[11px] flex items-center gap-1 shadow-xs cursor-pointer"
                           title="Open Interactive Inspection Workspace"
                         >
                           <FileEdit size={12} />
                           <span>Open</span>
                         </Link>
+                        {onDeleteReport && (
+                          <button
+                            type="button"
+                            onClick={() => setReportToDelete(report)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete report"
+                            aria-label={`Delete report ${report.reportNumber}`}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -642,12 +679,23 @@ export function ReportsListTable({
                   {/* Card Actions */}
                   <div className="pt-2 flex items-center gap-2">
                     <Link
-                      href="/inspect"
+                      href={`/inspect?id=${report.id}`}
                       className="flex-1 py-2 rounded-xl bg-[#180321] text-white hover:bg-[#9723FF] font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
                     >
                       <FileEdit size={13} />
                       <span>Open Workspace</span>
                     </Link>
+                    {onDeleteReport && (
+                      <button
+                        type="button"
+                        onClick={() => setReportToDelete(report)}
+                        className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete report"
+                        aria-label={`Delete report ${report.reportNumber}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -666,6 +714,46 @@ export function ReportsListTable({
           <span className="text-[11px]">Auto-refreshed with enterprise sync</span>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {reportToDelete && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs" 
+            onClick={() => setReportToDelete(null)}
+          />
+          <div className="relative bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col gap-4 z-10">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <AlertTriangle size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-[#1E1035]">Delete Inspection Report?</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Are you sure you want to delete report <span className="font-bold text-slate-800">{reportToDelete.reportNumber}</span> ({reportToDelete.vehicle.year} {reportToDelete.vehicle.make} {reportToDelete.vehicle.model})? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setReportToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteReport) onDeleteReport(reportToDelete.id);
+                  setReportToDelete(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+              >
+                Yes, Delete Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

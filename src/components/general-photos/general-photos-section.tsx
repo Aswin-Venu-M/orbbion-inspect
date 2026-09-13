@@ -15,34 +15,39 @@ interface PhotoCategoryCardProps {
 
 const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange, images, onImagesChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorMessage(null);
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     if (images.length + files.length > 20) {
-      alert(`You can only upload up to 20 images at once.`);
+      setErrorMessage(`You can only upload up to 20 images at once.`);
+      if (e.target) e.target.value = '';
       return;
     }
 
-    const validFiles = Array.from(files).filter(f => {
+    const validFiles: File[] = [];
+    for (const f of Array.from(files)) {
       if (!f.type.startsWith('image/')) {
-        alert(`File ${f.name} is not a valid image.`);
-        return false;
+        setErrorMessage(`File "${f.name}" is not a valid image.`);
+        continue;
       }
       if (f.size > 5 * 1024 * 1024) {
-        alert(`File ${f.name} is too large. Maximum size is 5MB.`);
-        return false;
+        setErrorMessage(`File "${f.name}" is too large. Maximum size is 5MB.`);
+        continue;
       }
-      return true;
-    });
+      validFiles.push(f);
+    }
 
-    const newImages = validFiles.map(f => ({
-      id: crypto.randomUUID(),
-      url: URL.createObjectURL(f)
-    }));
-    
-    onImagesChange([...images, ...newImages]);
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map(f => ({
+        id: crypto.randomUUID(),
+        url: URL.createObjectURL(f)
+      }));
+      onImagesChange([...images, ...newImages]);
+    }
     if (e.target) e.target.value = '';
   };
 
@@ -73,6 +78,20 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
           className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
         />
       </div>
+
+      {errorMessage && (
+        <div className="flex items-center justify-between text-xs text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl">
+          <span>{errorMessage}</span>
+          <button 
+            type="button" 
+            onClick={() => setErrorMessage(null)} 
+            className="font-bold hover:text-rose-800 ml-2 text-sm leading-none"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-4 items-center mt-2">
         {images.map((img) => (

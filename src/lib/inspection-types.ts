@@ -55,7 +55,7 @@ export interface CustomHeadlineItem {
 export interface FullInspectionReport {
   id: string;
   title: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'published' | 'in_review';
   lastSavedAt: string;
   inspectionDetails: InspectionDetailsData;
   vehicleSummary: VehicleSummaryData;
@@ -76,8 +76,12 @@ export interface FullInspectionReport {
   chassisSubframeCustomHeadlines?: CustomHeadlineItem[];
 
   interiorComments?: string;
+  seatsComments?: string;
   interiorCustomHeadlines?: CustomHeadlineItem[];
 
+  bodyGeneralComments?: string;
+
+  electricalComments?: string;
   electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
   electricalCustomHeadlines?: CustomHeadlineItem[];
 

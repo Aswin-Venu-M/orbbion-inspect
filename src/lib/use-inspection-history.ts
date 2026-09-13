@@ -15,18 +15,65 @@ export function useInspectionHistory() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reportRef = useRef<FullInspectionReport>(report);
+  useEffect(() => {
+    reportRef.current = report;
+  }, [report]);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount with safe deep merge
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        setReport(prev => ({
-          ...prev,
-          ...parsed,
-          lastSavedAt: 'Loaded from local save',
-        }));
+        if (parsed && typeof parsed === 'object') {
+          setReport(prev => ({
+            ...initialReportData,
+            ...prev,
+            ...parsed,
+            inspectionDetails: {
+              ...initialReportData.inspectionDetails,
+              ...(prev.inspectionDetails || {}),
+              ...(parsed.inspectionDetails || {}),
+            },
+            vehicleSummary: {
+              ...initialReportData.vehicleSummary,
+              ...(prev.vehicleSummary || {}),
+              ...(parsed.vehicleSummary || {}),
+            },
+            reportOverview: {
+              ...initialReportData.reportOverview,
+              ...(prev.reportOverview || {}),
+              ...(parsed.reportOverview || {}),
+            },
+            clientDetails: {
+              ...initialReportData.clientDetails,
+              ...(prev.clientDetails || {}),
+              ...(parsed.clientDetails || {}),
+            },
+            teamDetails: {
+              ...initialReportData.teamDetails,
+              ...(prev.teamDetails || {}),
+              ...(parsed.teamDetails || {}),
+            },
+            tyres: {
+              ...initialReportData.tyres,
+              ...(prev.tyres || {}),
+              ...(parsed.tyres || {}),
+            },
+            rims: {
+              ...initialReportData.rims,
+              ...(prev.rims || {}),
+              ...(parsed.rims || {}),
+            },
+            brakes: {
+              ...initialReportData.brakes,
+              ...(prev.brakes || {}),
+              ...(parsed.brakes || {}),
+            },
+            lastSavedAt: 'Loaded from local save',
+          }));
+        }
       }
     } catch (e) {
       console.warn('Failed to load inspection report from localStorage:', e);
@@ -57,17 +104,16 @@ export function useInspectionHistory() {
     updater: Partial<FullInspectionReport> | ((prev: FullInspectionReport) => FullInspectionReport),
     addToHistory: boolean = true
   ) => {
-    setReport(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
-      
-      if (addToHistory) {
-        setPast(p => [...p.slice(-MAX_HISTORY + 1), prev]);
-        setFuture([]); // Clear future redo stack
-      }
+    const current = reportRef.current;
+    const next = typeof updater === 'function' ? updater(current) : { ...current, ...updater };
 
-      triggerAutoSave(next);
-      return next;
-    });
+    if (addToHistory) {
+      setPast(p => [...p.slice(-MAX_HISTORY + 1), current]);
+      setFuture([]); // Clear future redo stack
+    }
+
+    setReport(next);
+    triggerAutoSave(next);
   }, [triggerAutoSave]);
 
   const undo = useCallback(() => {

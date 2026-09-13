@@ -66,18 +66,66 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
     FL: { status: 'pass', year: '2025', comments: 'Front pads 7mm, rotor smooth', image: null },
     ST: { status: 'na', year: '2025', comments: 'Not applicable for spare', image: null },
   },
+  chassisSubframeComments: 'Chassis frame rails and cross-members intact. Underbody anti-corrosion coating in good condition with no structural deformation.',
+  chassisSubframeImages: [],
+  chassisSubframePartStatuses: {
+    1: 'checked', 2: 'checked', 3: 'checked', 4: 'checked', 5: 'checked',
+    6: 'checked', 7: 'checked', 8: 'checked', 9: 'checked', 10: 'checked',
+    11: 'checked', 12: 'checked', 13: 'checked', 14: 'checked', 15: 'checked',
+    16: 'checked', 17: 'checked', 18: 'checked', 19: 'checked', 20: 'checked',
+  },
+  chassisSubframeCustomHeadlines: [
+    { id: 'default-chassis', title: 'Chassis Details', comments: 'Underbody shielding securely mounted with OEM fasteners.' }
+  ],
   bodyComments: 'Minor hairline scratches on rear bumper. Paint depth uniform across all panels.',
-  interiorComments: 'Interior upholstery in clean condition. Minimal wear on steering wheel and driver bolster.',
-  electricalItems: {},
-  engineComments: 'Engine runs smoothly without vibrations or abnormal noises. Fluid levels are optimal and no leaks detected.',
-  engineItems: {},
-  transmissionComments: 'Transmission shifts smoothly through all gears without hesitation or slipping. Differential operates quietly with no leaks.',
-  transmissionItems: {},
-  customHeadlines: [],
+  bodyGeneralComments: 'Vehicle body panel alignment within OEM factory tolerances. Zero previous collision repairs found.',
+  bodyImages: [],
+  bodyPartStatuses: {
+    frontBumper: 'good',
+    hood: 'good',
+    roof: 'good',
+    trunk: 'good',
+    rearBumper: 'good',
+    leftFrontFender: 'good',
+    leftFrontDoor: 'good',
+    leftBackDoor: 'good',
+    leftRearFender: 'good',
+    rightFrontFender: 'good',
+    rightFrontDoor: 'good',
+    rightBackDoor: 'good',
+    rightRearFender: 'good',
+  },
+  bodyCustomHeadlines: [
+    { id: 'default-body', title: 'Underbody Shield & Chassis Frame', comments: 'Underbody aero covers intact and free from scrape damage.' }
+  ],
+  interiorComments: 'Dashboard, door cards, and trim panels in clean condition with no visible scuffs or fading.',
+  seatsComments: 'Interior upholstery in clean condition. Minimal wear on steering wheel and driver bolster.',
   seatsStatus: 'pass',
   seatsImages: [],
+  interiorCustomHeadlines: [
+    { id: 'default-interior', title: 'Dashboard & Infotainment Screen Trim', comments: 'Touchscreen responsive with no dead pixels or software lag.' }
+  ],
+  electricalComments: 'Battery health measured at 92%. Alternator output stable at 14.2V under full load. All control modules clear.',
+  electricalItems: {},
+  electricalCustomHeadlines: [
+    { id: 'default-electrical', title: 'OBD-II Diagnostic Scan & Fault Codes', comments: 'Zero active or pending DTC codes found across all electronic systems.' }
+  ],
+  engineComments: 'Engine runs smoothly without vibrations or abnormal noises. Fluid levels are optimal and no leaks detected.',
+  engineItems: {},
+  engineCustomHeadlines: [
+    { id: 'default-engine', title: 'Engine Compression & Fluid Diagnostics', comments: 'Clean oil condition, coolant freeze point -35°C, no belt degradation.' }
+  ],
+  transmissionComments: 'Transmission shifts smoothly through all gears without hesitation or slipping. Differential operates quietly with no leaks.',
+  transmissionItems: {},
+  transmissionCustomHeadlines: [
+    { id: 'default-transmission', title: 'Transmission & Drivetrain Diagnostics', comments: 'All gear engagements crisp, fluid level at factory mark.' }
+  ],
+  customHeadlines: [],
+  generalPhotosExteriorComments: 'Exterior 360 walkaround captured in natural daylight.',
   generalPhotosExteriorImages: [],
+  generalPhotosInteriorComments: 'Cabin photos captured from all passenger angles.',
   generalPhotosInteriorImages: [],
+  generalPhotosEngineComments: 'Engine bay photographed with decorative cover on and off.',
   generalPhotosEngineImages: [],
 };
 
