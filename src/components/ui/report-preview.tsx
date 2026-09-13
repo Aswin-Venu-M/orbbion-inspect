@@ -3,6 +3,7 @@ import React from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { ChassisVisualizer } from './chassis-visualizer';
 import { InspectionDetailState } from './inspection-detail-card';
+import { BODY_PART_LABELS, BodyPartId } from '@/constants/visualizers';
 import {
   InspectionDetailsData,
   VehicleSummaryData,
@@ -648,7 +649,11 @@ export function ReportPreview({
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(report.bodyPartStatuses).map(([key, status]) => (
-              <GenericItemCard key={key} title={key} status={status as string} />
+              <GenericItemCard 
+                key={key} 
+                title={BODY_PART_LABELS[key as BodyPartId] || key} 
+                status={status as string} 
+              />
             ))}
           </div>
           {report.bodyCustomHeadlines && report.bodyCustomHeadlines.length > 0 && (

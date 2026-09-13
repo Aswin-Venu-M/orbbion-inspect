@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { CarBodyVisualizer, BodyPartStatus, BodyPartId } from './car-body-visualizer';
 import { INITIAL_BODY_PART_STATUSES } from '@/constants/visualizers';
@@ -38,19 +38,33 @@ export const BodySection: React.FC<BodySectionProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Normalize statuses so every part has a defined value even if a sparse object is passed
+  const normalizedStatuses = useMemo(() => {
+    return {
+      ...INITIAL_BODY_PART_STATUSES,
+      ...(partStatuses || {})
+    };
+  }, [partStatuses]);
+
   const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
     { id: 'default-body', title: 'Underbody Shield & Chassis Frame', comments: '', imageUrl: undefined }
   ];
 
   const handlePartClick = (partId: BodyPartId) => {
-    const current = partStatuses[partId] || 'good';
+    const current = normalizedStatuses[partId] || 'good';
     const nextStatus = 
       current === 'good' ? 'repaired' :
       current === 'repaired' ? 'damaged' :
       current === 'damaged' ? 'checked' : 'good';
     
     if (onPartStatusesChange) {
-      onPartStatusesChange({ ...partStatuses, [partId]: nextStatus });
+      onPartStatusesChange({ ...normalizedStatuses, [partId]: nextStatus });
+    }
+  };
+
+  const handleBatchStatusChange = (newStatuses: BodyPartStatus) => {
+    if (onPartStatusesChange) {
+      onPartStatusesChange(newStatuses as Record<string, string>);
     }
   };
 
@@ -73,6 +87,14 @@ export const BodySection: React.FC<BodySectionProps> = ({
 
   const removeImage = (index: number) => {
     if (onBodyImagesChange) {
+      const removed = bodyImages[index];
+      if (removed && removed.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(removed);
+        } catch {
+          // ignore error
+        }
+      }
       const newImages = [...bodyImages];
       newImages.splice(index, 1);
       onBodyImagesChange(newImages);
@@ -81,7 +103,8 @@ export const BodySection: React.FC<BodySectionProps> = ({
 
   const addHeadline = () => {
     if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange([...defaultHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
+      const uniqueId = `body-h-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
+      onCustomHeadlinesChange([...defaultHeadlines, { id: uniqueId, title: '', comments: '' }]);
     }
   };
 
@@ -111,7 +134,11 @@ export const BodySection: React.FC<BodySectionProps> = ({
       <ReusableSection title="Body">
         <div className="flex flex-col gap-6">
           {/* Car Body Blueprint Visualizer */}
-          <CarBodyVisualizer statuses={partStatuses as BodyPartStatus} onPartClick={handlePartClick} />
+          <CarBodyVisualizer 
+            statuses={normalizedStatuses as BodyPartStatus} 
+            onPartClick={handlePartClick} 
+            onBatchStatusChange={handleBatchStatusChange}
+          />
 
           {/* Comments Section */}
           <div className="flex flex-col gap-2 mt-2">
@@ -133,13 +160,14 @@ export const BodySection: React.FC<BodySectionProps> = ({
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+                  title="Remove image"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            <div className="w-[180px]" onClick={() => fileInputRef.current?.click()}>
+            <div className="w-[180px] cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <ImageUploadBox status="empty" />
             </div>
           </div>
