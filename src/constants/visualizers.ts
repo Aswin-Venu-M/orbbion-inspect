@@ -46,10 +46,10 @@ export const CHASSIS_STATUS_LEGEND = [
 
 // 2. Car Body Blueprint Visualizer Constants
 export const BODY_STATUS_COLORS: Record<BodyPartStatusValue, string> = {
-  good: '#50E3C2',
-  repaired: '#4A90E2',
-  damaged: '#FF5A5F',
-  checked: '#71D64B',
+  good: '#7FD159',
+  repaired: '#FFED00',
+  damaged: '#FE8E4B',
+  checked: '#A0A4AB',
 } as const;
 
 export const INITIAL_BODY_PART_STATUSES: BodyPartStatus = {
@@ -91,8 +91,8 @@ export const BODY_STATUS_LABELS: Record<BodyPartStatusValue, { label: string; de
 };
 
 export const BODY_STATUS_LEGEND = [
-  { label: 'Good / Original', color: '#50E3C2', state: 'good' as BodyPartStatusValue },
-  { label: 'Repaired', color: '#4A90E2', state: 'repaired' as BodyPartStatusValue },
-  { label: 'Damaged', color: '#FF5A5F', state: 'damaged' as BodyPartStatusValue },
-  { label: 'Checked', color: '#71D64B', state: 'checked' as BodyPartStatusValue },
+  { label: 'Good / Original', color: '#7FD159', state: 'good' as BodyPartStatusValue },
+  { label: 'Repaired', color: '#FFED00', state: 'repaired' as BodyPartStatusValue },
+  { label: 'Damaged', color: '#FE8E4B', state: 'damaged' as BodyPartStatusValue },
+  { label: 'Checked', color: '#A0A4AB', state: 'checked' as BodyPartStatusValue },
 ] as const;

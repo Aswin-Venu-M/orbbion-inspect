@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
-import { CarBodyVisualizer, BodyPartStatus, BodyPartId } from './car-body-visualizer';
+import { CarBodyVisualizer, BodyPartStatus, BodyPartId, BodyPartStatusValue } from './car-body-visualizer';
 import { INITIAL_BODY_PART_STATUSES } from '@/constants/visualizers';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
@@ -50,16 +50,14 @@ export const BodySection: React.FC<BodySectionProps> = ({
     { id: 'default-body', title: 'Underbody Shield & Chassis Frame', comments: '', imageUrl: undefined }
   ];
 
-  const handlePartClick = (partId: BodyPartId) => {
-    const current = normalizedStatuses[partId] || 'good';
-    const nextStatus = 
-      current === 'good' ? 'repaired' :
-      current === 'repaired' ? 'damaged' :
-      current === 'damaged' ? 'checked' : 'good';
-    
+  const handlePartStatusSelect = (partId: BodyPartId, status: BodyPartStatusValue) => {
     if (onPartStatusesChange) {
-      onPartStatusesChange({ ...normalizedStatuses, [partId]: nextStatus });
+      onPartStatusesChange({ ...normalizedStatuses, [partId]: status });
     }
+  };
+
+  const handlePartClick = (partId: BodyPartId) => {
+    // Panel clicked - popup opens via CarBodyVisualizer
   };
 
   const handleBatchStatusChange = (newStatuses: BodyPartStatus) => {
@@ -137,6 +135,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
           <CarBodyVisualizer 
             statuses={normalizedStatuses as BodyPartStatus} 
             onPartClick={handlePartClick} 
+            onPartStatusSelect={handlePartStatusSelect}
             onBatchStatusChange={handleBatchStatusChange}
           />
 
