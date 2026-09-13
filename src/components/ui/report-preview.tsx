@@ -2,8 +2,10 @@
 import React from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { ChassisVisualizer } from './chassis-visualizer';
+import { CarBodyVisualizer } from '@/components/body/car-body-visualizer';
+import { SUBFRAME_PARTS } from '@/components/chassis/chassis-subframe-section';
 import { InspectionDetailState } from './inspection-detail-card';
-import { BODY_PART_LABELS, BodyPartId } from '@/constants/visualizers';
+import { BODY_PART_LABELS, BodyPartId, BodyPartStatus } from '@/constants/visualizers';
 import {
   InspectionDetailsData,
   VehicleSummaryData,
@@ -150,6 +152,7 @@ function GenericItemCard({
   const getBadgeStyle = () => {
     switch (status?.toLowerCase()) {
       case 'pass':
+      case 'good':
       case 'checked':
         return 'bg-[#5BC335] text-white';
       case 'fail':
@@ -169,6 +172,7 @@ function GenericItemCard({
   const getStatusText = () => {
     switch (status?.toLowerCase()) {
       case 'pass': return 'PASS';
+      case 'good': return 'GOOD';
       case 'fail': return 'FAIL';
       case 'weak': return 'WEAK';
       case 'na': return 'N/A';
@@ -375,7 +379,11 @@ export function ReportPreview({
           <div className="w-full sm:w-[55%] flex flex-col gap-4">
             <div className="bg-white rounded-3xl overflow-hidden aspect-[4/3] shadow-sm">
               <img 
-                src="https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&q=80&w=1000" 
+                src={
+                  report?.generalPhotosExteriorImages?.[0]?.url ||
+                  report?.bodyImages?.[0] ||
+                  "https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&q=80&w=1000"
+                } 
                 alt={`${vehicleData.make} ${vehicleData.model}`} 
                 className="w-full h-full object-cover"
               />
@@ -602,6 +610,52 @@ export function ReportPreview({
               <p className="text-xs text-slate-600 leading-relaxed">{report.chassisSubframeComments}</p>
             </div>
           )}
+
+          {/* Chassis & Subframe Diagram Visualizer Block */}
+          <div className="bg-white rounded-3xl p-6 mb-6 shadow-sm relative flex flex-col items-center justify-center">
+            <div className="w-full flex items-center justify-between mb-2">
+              <span className="text-[#A0A4AB] font-bold text-[14px]">Subframe Structural Points (20 Points)</span>
+              <div className="flex items-center gap-3 text-xs font-semibold">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#000000]"></span> Checked</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#4A72FF]"></span> Repaired</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F54752]"></span> Damaged</span>
+              </div>
+            </div>
+            
+            <div className="relative w-full max-w-[650px] aspect-[16/10] my-2 select-none pointer-events-none">
+              {/* SVG lines */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" style={{ overflow: 'visible' }}>
+                {SUBFRAME_PARTS.map((part) => (
+                  <g key={`preview-subframe-line-${part.id}`}>
+                    <line x1={`${part.bx}%`} y1={`${part.by}%`} x2={`${part.cx}%`} y2={`${part.cy}%`} stroke="#A0A4AB" strokeWidth="1.2" strokeDasharray="2,2" />
+                    <circle cx={`${part.cx}%`} cy={`${part.cy}%`} r="2.5" fill="#A0A4AB" />
+                  </g>
+                ))}
+              </svg>
+              <img src="/assets/car-perspective.png" alt="Chassis Subframe" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 opacity-90" />
+              <div className="absolute inset-0 z-20 pointer-events-none">
+                {SUBFRAME_PARTS.map((part) => {
+                  const status = report.chassisSubframePartStatuses?.[part.id] || 'checked';
+                  const bgColor = status === 'repaired' ? '#4A72FF' : status === 'damaged' ? '#F54752' : '#000000';
+                  return (
+                    <div
+                      key={`preview-bubble-${part.id}`}
+                      className="absolute flex items-center justify-center w-6 h-6 rounded-full text-white text-[10px] font-bold shadow-xs"
+                      style={{
+                        top: `${part.by}%`,
+                        left: `${part.bx}%`,
+                        transform: 'translate(-50%, -50%)',
+                        backgroundColor: bgColor,
+                      }}
+                    >
+                      {part.id}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {report.chassisSubframeImages && report.chassisSubframeImages.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {report.chassisSubframeImages.map((img, i) => (
@@ -611,11 +665,18 @@ export function ReportPreview({
               ))}
             </div>
           )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {Object.entries(report.chassisSubframePartStatuses).map(([key, status]) => (
-              <GenericItemCard key={key} title={`Point ${key}`} status={status} />
-            ))}
+            {Object.entries(report.chassisSubframePartStatuses).map(([key, status]) => {
+              const partId = Number(key);
+              const part = SUBFRAME_PARTS.find(p => p.id === partId);
+              const title = part ? `${partId}. ${part.label}` : `Point ${key}`;
+              return (
+                <GenericItemCard key={key} title={title} status={status} />
+              );
+            })}
           </div>
+
           {report.chassisSubframeCustomHeadlines && report.chassisSubframeCustomHeadlines.length > 0 && (
             <div className="mt-8">
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
@@ -638,6 +699,22 @@ export function ReportPreview({
               <p className="text-xs text-slate-600 leading-relaxed">{report.bodyGeneralComments || report.bodyComments}</p>
             </div>
           )}
+
+          {/* Car Body Blueprint Visualizer Block */}
+          <div className="bg-white rounded-3xl p-6 mb-6 shadow-sm relative flex flex-col items-center justify-center">
+            <div className="w-full flex items-center justify-between mb-4">
+              <span className="text-[#A0A4AB] font-bold text-[14px]">Vehicle Body Panels Blueprint (13 Panels)</span>
+              <span className="text-xs font-semibold text-slate-500">Certified Body Inspection</span>
+            </div>
+            <div className="w-full flex justify-center pointer-events-none scale-95 origin-center">
+              <CarBodyVisualizer 
+                statuses={report.bodyPartStatuses as BodyPartStatus} 
+                readOnly={true} 
+                hideToolbar={true} 
+              />
+            </div>
+          </div>
+
           {report.bodyImages && report.bodyImages.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {report.bodyImages.map((img, i) => (
@@ -647,6 +724,7 @@ export function ReportPreview({
               ))}
             </div>
           )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(report.bodyPartStatuses).map(([key, status]) => (
               <GenericItemCard 
@@ -656,6 +734,7 @@ export function ReportPreview({
               />
             ))}
           </div>
+
           {report.bodyCustomHeadlines && report.bodyCustomHeadlines.length > 0 && (
             <div className="mt-8">
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>

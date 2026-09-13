@@ -22,6 +22,8 @@ interface CarBodyVisualizerProps {
   onPartClick?: (partId: BodyPartId) => void;
   onPartStatusSelect?: (partId: BodyPartId, status: BodyPartStatusValue) => void;
   onBatchStatusChange?: (newStatuses: BodyPartStatus) => void;
+  readOnly?: boolean;
+  hideToolbar?: boolean;
 }
 
 // Precise hitbox polygons mapped directly to the SVG blueprint landmarks (269×182)
@@ -198,7 +200,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
           onSelect('checked');
           onClose();
         }}
-        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#D3D3D3] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#4A4A4A] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
+        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#A0A4AB] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-white hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
           currentStatus === 'checked' ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-95'
         }`}
       >
@@ -214,7 +216,9 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
   statuses = {},
   onPartClick,
   onPartStatusSelect,
-  onBatchStatusChange
+  onBatchStatusChange,
+  readOnly = false,
+  hideToolbar = false,
 }) => {
   const [hoveredPart, setHoveredPart] = useState<BodyPartId | null>(null);
   const [activePopupPart, setActivePopupPart] = useState<BodyPartId | null>(null);
@@ -262,6 +266,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
   };
 
   const handlePartHitboxClick = (id: BodyPartId) => {
+    if (readOnly) return;
     setActivePopupPart((prev) => (prev === id ? null : id));
     setHoveredPart(id);
     onPartClick?.(id);
@@ -284,7 +289,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
 
   // Bulk actions
   const handleMarkAll = (targetStatus: BodyPartStatusValue) => {
-    if (!onBatchStatusChange) return;
+    if (!onBatchStatusChange || readOnly) return;
     const next: BodyPartStatus = {};
     PART_IDS.forEach(id => {
       next[id] = targetStatus;
@@ -297,36 +302,38 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
   return (
     <div className="w-full flex flex-col items-center gap-4">
       {/* ── Active Part Info Banner / Tooltip ── */}
-      <div className="w-full max-w-[850px] min-h-[36px] flex items-center justify-between px-3 py-1.5 bg-[#F8F9FC] border border-[#E9EBEF] rounded-xl text-xs">
-        <div className="flex items-center gap-2">
-          <Info size={14} className="text-[#74768B] shrink-0" />
-          {activeDisplayPart ? (
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-[#1E1035]">{BODY_PART_LABELS[activeDisplayPart]}</span>
-              <span className="text-[#74768B]">•</span>
-              <span 
-                className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                style={{ backgroundColor: BODY_STATUS_COLORS[getPartStatus(activeDisplayPart)] }}
-              >
-                {BODY_STATUS_LABELS[getPartStatus(activeDisplayPart)]?.label}
+      {!hideToolbar && (
+        <div className="w-full max-w-[850px] min-h-[36px] flex items-center justify-between px-3 py-1.5 bg-[#F8F9FC] border border-[#E9EBEF] rounded-xl text-xs">
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-[#74768B] shrink-0" />
+            {activeDisplayPart ? (
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[#1E1035]">{BODY_PART_LABELS[activeDisplayPart]}</span>
+                <span className="text-[#74768B]">•</span>
+                <span 
+                  className="px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: BODY_STATUS_COLORS[getPartStatus(activeDisplayPart)] }}
+                >
+                  {BODY_STATUS_LABELS[getPartStatus(activeDisplayPart)]?.label}
+                </span>
+                <span className="text-[11px] text-[#74768B] hidden sm:inline">
+                  ({BODY_STATUS_LABELS[getPartStatus(activeDisplayPart)]?.description})
+                </span>
+              </div>
+            ) : (
+              <span className="text-[#74768B]">
+                Click any panel to select its inspection status (<span className="text-[#7FD159] font-semibold">Good</span>, <span className="text-[#FE8E4B] font-semibold">Damaged</span>, <span className="text-[#FFED00] font-semibold">Repaired</span>, or <span className="text-[#A0A4AB] font-semibold">Checked</span>).
               </span>
-              <span className="text-[11px] text-[#74768B] hidden sm:inline">
-                ({BODY_STATUS_LABELS[getPartStatus(activeDisplayPart)]?.description})
-              </span>
-            </div>
-          ) : (
-            <span className="text-[#74768B]">
-              Click any panel to select its inspection status (<span className="text-[#7FD159] font-semibold">Good</span>, <span className="text-[#FE8E4B] font-semibold">Damaged</span>, <span className="text-[#FFED00] font-semibold">Repaired</span>, or <span className="text-[#A0A4AB] font-semibold">Checked</span>).
+            )}
+          </div>
+
+          {activeDisplayPart && (
+            <span className="text-[11px] font-medium text-[#1E1035]/60 shrink-0 hidden md:inline">
+              {activePopupPart ? 'Select status from popup capsule' : 'Click panel to open status popup'}
             </span>
           )}
         </div>
-
-        {activeDisplayPart && (
-          <span className="text-[11px] font-medium text-[#1E1035]/60 shrink-0 hidden md:inline">
-            {activePopupPart ? 'Select status from popup capsule' : 'Click panel to open status popup'}
-          </span>
-        )}
-      </div>
+      )}
 
       {/* ── Main Interactive Blueprint SVG ── */}
       <div 
@@ -343,14 +350,14 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
           {/* ── Layer 1: Clickable hitbox zones (behind blueprint lines) ── */}
           {PART_IDS.map((id) => {
             const status = getPartStatus(id);
-            const active = isHighlighted(id);
-            const isOpen = activePopupPart === id;
+            const active = !readOnly && isHighlighted(id);
+            const isOpen = !readOnly && activePopupPart === id;
             return (
               <path
                 key={`hitbox-${id}`}
                 id={`body-part-${id}`}
-                role="button"
-                tabIndex={0}
+                role={readOnly ? undefined : "button"}
+                tabIndex={readOnly ? -1 : 0}
                 aria-label={`${BODY_PART_LABELS[id]}: ${BODY_STATUS_LABELS[status]?.label || status}`}
                 d={HITBOX_PATHS[id]}
                 fill={getPartFill(id)}
@@ -358,7 +365,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
                 stroke={isOpen ? '#1E1035' : active ? '#1E1035' : 'none'}
                 strokeWidth={isOpen ? 1.4 : active ? 0.8 : 0}
                 strokeLinejoin="round"
-                className="cursor-pointer transition-all duration-150 outline-none focus:stroke-[#1E1035] focus:stroke-[1.2px]"
+                className={readOnly ? "transition-all duration-150 outline-none" : "cursor-pointer transition-all duration-150 outline-none focus:stroke-[#1E1035] focus:stroke-[1.2px]"}
                 style={{ 
                   filter: isOpen
                     ? 'brightness(1.25) drop-shadow(0 0 5px rgba(30,16,53,0.35))'
@@ -366,13 +373,13 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
                     ? 'brightness(1.18) drop-shadow(0 0 3px rgba(30,16,53,0.25))' 
                     : 'none' 
                 }}
-                onMouseEnter={() => setHoveredPart(id)}
-                onMouseLeave={() => setHoveredPart(null)}
-                onFocus={() => setHoveredPart(id)}
-                onBlur={() => setHoveredPart(null)}
+                onMouseEnter={() => !readOnly && setHoveredPart(id)}
+                onMouseLeave={() => !readOnly && setHoveredPart(null)}
+                onFocus={() => !readOnly && setHoveredPart(id)}
+                onBlur={() => !readOnly && setHoveredPart(null)}
                 onClick={() => handlePartHitboxClick(id)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
+                  if (!readOnly && (e.key === 'Enter' || e.key === ' ')) {
                     e.preventDefault();
                     handlePartHitboxClick(id);
                   }
@@ -390,7 +397,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
 
         {/* ── Floating Action Popup Capsule (matches Tyres / Chassis section) ── */}
         <AnimatePresence>
-          {activePopupPart && (
+          {!readOnly && activePopupPart && (
             <BodyActionPopup
               partId={activePopupPart}
               currentStatus={getPartStatus(activePopupPart)}
@@ -423,7 +430,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
         </div>
 
         {/* Quick Batch Actions */}
-        {onBatchStatusChange && (
+        {!readOnly && onBatchStatusChange && (
           <div className="flex items-center gap-2">
             <button
               type="button"

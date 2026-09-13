@@ -25,7 +25,10 @@ import {
 } from '@constants';
 import { 
   ReportListItem,
-  DashboardKPIData 
+  DashboardKPIData,
+  getStoredReports,
+  deleteStoredReport,
+  calculateDynamicKPIs,
 } from '@/lib/reports-data';
 
 const familjen = Familjen_Grotesk({ subsets: ['latin'] });
@@ -34,6 +37,13 @@ export default function AppDashboardPage() {
   // Global Data State
   const [reports, setReports] = useState<ReportListItem[]>(initialReportsList);
   const [kpiData, setKpiData] = useState<DashboardKPIData>(initialDashboardKPI);
+
+  // Hydrate from localStorage on client mount
+  React.useEffect(() => {
+    const loaded = getStoredReports();
+    setReports(loaded);
+    setKpiData(calculateDynamicKPIs(loaded));
+  }, []);
   
   // Dashboard Filters & Search State
   const [globalSearch, setGlobalSearch] = useState('');
@@ -96,9 +106,12 @@ export default function AppDashboardPage() {
 
   const handleRefresh = () => {
     showToast('Syncing real-time inspection records with Dubai Hub...', 'info');
+    const loaded = getStoredReports();
+    setReports(loaded);
+    setKpiData(calculateDynamicKPIs(loaded));
     setTimeout(() => {
       showToast('All inspection records up to date', 'success');
-    }, 800);
+    }, 600);
   };
 
   const handleFilterDrafts = () => {
@@ -272,7 +285,9 @@ export default function AppDashboardPage() {
           globalSearch={globalSearch}
           datePreset={datePreset}
           onDeleteReport={(id) => {
-            setReports(prev => prev.filter(r => r.id !== id));
+            const updated = deleteStoredReport(id);
+            setReports(updated);
+            setKpiData(calculateDynamicKPIs(updated));
             showToast('Report deleted successfully', 'success');
           }}
         />

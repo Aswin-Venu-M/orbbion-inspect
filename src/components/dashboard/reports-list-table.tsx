@@ -8,7 +8,7 @@ import {
   AlertTriangle, ShieldCheck, Clock, CheckCircle2, ChevronRight, 
   Car, Eye, FileEdit, Trash2, Download, RefreshCw, X
 } from 'lucide-react';
-import { ReportListItem } from '@/lib/reports-data';
+import { ReportListItem, exportReportsToCsv } from '@/lib/reports-data';
 import { 
   REPORT_FILTER_TABS, 
   REPORT_LOCATION_FILTER_OPTIONS, 
@@ -286,11 +286,14 @@ export function ReportsListTable({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => alert(`Exporting ${selectedReportIds.length} reports to CSV...`)}
-              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors flex items-center gap-1.5"
+              onClick={() => {
+                const targetReports = reports.filter(r => selectedReportIds.includes(r.id));
+                exportReportsToCsv(targetReports.length > 0 ? targetReports : filteredReports);
+              }}
+              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Download size={13} />
-              Export CSV
+              Export CSV ({selectedReportIds.length})
             </button>
             <button
               onClick={() => setSelectedReportIds([])}
@@ -710,7 +713,17 @@ export function ReportsListTable({
           Showing <span className="font-bold text-[#1E1035]">{filteredReports.length}</span> of{' '}
           <span className="font-bold text-[#1E1035]">{reports.length}</span> total inspection files
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => exportReportsToCsv(filteredReports)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F4F5F8] hover:bg-[#E9EAF2] text-[#1E1035] text-xs font-bold border border-slate-200/80 transition-colors cursor-pointer"
+            title="Download current filtered table as CSV spreadsheet"
+          >
+            <Download size={13} />
+            <span>Export Table (CSV)</span>
+          </button>
+          <span className="text-[11px] hidden sm:inline text-slate-400">•</span>
           <span className="text-[11px]">Auto-refreshed with enterprise sync</span>
         </div>
       </div>

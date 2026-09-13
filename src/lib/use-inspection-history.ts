@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { FullInspectionReport } from './inspection-types';
 import { initialReportData } from './default-data';
+import { upsertStoredReport, convertFullReportToListItem } from './reports-data';
 
 const STORAGE_KEY = 'orbbion_inspection_report_v2';
 const MAX_HISTORY = 30;
@@ -91,6 +92,7 @@ export function useInspectionHistory() {
     saveTimeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        upsertStoredReport(convertFullReportToListItem(data));
         setSaveStatus('saved');
       } catch (e) {
         console.error('Failed to save to localStorage:', e);

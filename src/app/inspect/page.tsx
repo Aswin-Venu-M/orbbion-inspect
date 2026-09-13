@@ -35,6 +35,8 @@ import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { EngineSection } from '@/components/engine/engine-section';
 import { TransmissionSection } from '@/components/transmission/transmission-section';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
+import { FullInspectionReport } from '@/lib/inspection-types';
+import { getStoredReports, upsertStoredReport, convertFullReportToListItem } from '@/lib/reports-data';
 import { SupportBadge } from '@/components/ui/support-badge';
 import {
   SectionId,
@@ -150,6 +152,85 @@ export default function HomeDashboard() {
       intervals.clear();
     };
   }, []);
+
+  // Handle ?new=true or ?id=... from dashboard navigation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get('id');
+    const isNew = params.get('new') === 'true';
+
+    if (isNew) {
+      const newId = `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
+      const freshReport: FullInspectionReport = {
+        ...initialReportData,
+        id: newId,
+        title: `Report #${newId}`,
+        status: 'draft',
+        lastSavedAt: 'Created just now',
+        inspectionDetails: {
+          ...initialReportData.inspectionDetails,
+          date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        },
+      };
+      resetReport(freshReport);
+      upsertStoredReport(convertFullReportToListItem(freshReport));
+      window.history.replaceState({}, '', '/inspect');
+      showToast(`Started new inspection session (${newId})`, 'info');
+      return;
+    }
+
+    if (requestedId && requestedId !== report.id) {
+      const catalog = getStoredReports();
+      const match = catalog.find(r => r.id === requestedId || r.reportNumber === requestedId);
+      if (match) {
+        const loadedReport: FullInspectionReport = {
+          ...initialReportData,
+          id: match.id,
+          title: `Report #${match.reportNumber || match.id}`,
+          status: match.status,
+          lastSavedAt: 'Loaded from catalog',
+          inspectionDetails: {
+            ...initialReportData.inspectionDetails,
+            date: match.date || initialReportData.inspectionDetails.date,
+            time: match.time || initialReportData.inspectionDetails.time,
+            inspectionType: match.inspectionType || initialReportData.inspectionDetails.inspectionType,
+            vinNumber: match.vehicle?.vin || initialReportData.inspectionDetails.vinNumber,
+          },
+          vehicleSummary: {
+            ...initialReportData.vehicleSummary,
+            make: match.vehicle?.make || initialReportData.vehicleSummary.make,
+            model: match.vehicle?.model || initialReportData.vehicleSummary.model,
+            year: String(match.vehicle?.year || initialReportData.vehicleSummary.year),
+            vehicleType: match.vehicle?.type || initialReportData.vehicleSummary.vehicleType,
+            externalColour: match.vehicle?.color || initialReportData.vehicleSummary.externalColour,
+            transmission: match.vehicle?.transmission || initialReportData.vehicleSummary.transmission,
+            regionalSpecs: match.vehicle?.specs || initialReportData.vehicleSummary.regionalSpecs,
+            odometerStatus: match.vehicle?.odometerStatus || initialReportData.vehicleSummary.odometerStatus,
+            odometerReading: match.vehicle?.odometer ? match.vehicle.odometer.replace(/[^0-9]/g, '') : initialReportData.vehicleSummary.odometerReading,
+          },
+          clientDetails: {
+            ...initialReportData.clientDetails,
+            name: match.client?.name || initialReportData.clientDetails.name,
+            whatsappNumber: match.client?.phone || initialReportData.clientDetails.whatsappNumber,
+            email: match.client?.email || initialReportData.clientDetails.email,
+            location: match.client?.location || initialReportData.clientDetails.location,
+          },
+          teamDetails: {
+            inspector: match.inspector?.name || initialReportData.teamDetails.inspector,
+          },
+          reportOverview: {
+            ...initialReportData.reportOverview,
+            pass: String(match.passPercentage),
+            fail: String(match.failPercentage),
+          },
+        };
+        resetReport(loadedReport);
+        showToast(`Loaded ${match.vehicle.year} ${match.vehicle.make} ${match.vehicle.model} (${match.id})`, 'info');
+      }
+    }
+  }, [resetReport, showToast, report.id]);
 
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
@@ -630,12 +711,16 @@ export default function HomeDashboard() {
       return;
     }
 
-    updateReport({
+    const updatedReport: FullInspectionReport = {
+      ...report,
       inspectionDetails: { ...report.inspectionDetails, vinNumber: cleanVin },
       vehicleSummary: { ...report.vehicleSummary, year: String(year) },
       status: 'published'
-    });
+    };
+    updateReport(updatedReport);
+    upsertStoredReport(convertFullReportToListItem(updatedReport));
     setIsPublishModalOpen(true);
+    showToast('Inspection report published and certificate verified!', 'success');
   };
 
   const copyPublishLink = () => {
@@ -1378,9 +1463,20 @@ export default function HomeDashboard() {
                   <Info size={12} strokeWidth={3} />
                 </button>
                 {report.status === 'published' && (
-                  <span className="bg-[#E8F8EE] text-[#1E7E34] border border-[#B3EBC8] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    Published
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="bg-[#E8F8EE] text-[#1E7E34] border border-[#B3EBC8] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Published
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyPublishLink}
+                      title="Copy Public Certificate Link"
+                      className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#9723FF] hover:text-[#7915D4] bg-purple-50 hover:bg-purple-100 border border-purple-200/70 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
+                    >
+                      {isCopied ? <Check size={11} className="text-green-600" /> : <Share2 size={11} />}
+                      <span>{isCopied ? 'Copied' : 'Share'}</span>
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -2095,10 +2191,24 @@ export default function HomeDashboard() {
                 <button
                   type="button"
                   onClick={() => {
-                    resetReport(initialReportData);
+                    const newId = `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
+                    const cleanReport: FullInspectionReport = {
+                      ...initialReportData,
+                      id: newId,
+                      title: `Report #${newId}`,
+                      status: 'draft',
+                      lastSavedAt: 'Reset just now',
+                      inspectionDetails: {
+                        ...initialReportData.inspectionDetails,
+                        date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                      },
+                    };
+                    resetReport(cleanReport);
+                    upsertStoredReport(convertFullReportToListItem(cleanReport));
                     handleSectionOrderChange(DEFAULT_SECTION_ORDER);
                     setIsResetConfirmOpen(false);
-                    showToast('Report reset to clean defaults', 'info');
+                    showToast(`Inspection reset to new draft (${newId})`, 'success');
                   }}
                   className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors shadow-sm"
                 >

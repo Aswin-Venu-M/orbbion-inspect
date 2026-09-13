@@ -68,7 +68,7 @@ export function DashboardHeader({
           )}
 
           <Link
-            href="/inspect"
+            href="/inspect?new=true"
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#9723FF] to-[#7915D4] text-white font-bold text-xs sm:text-sm shadow-md shadow-purple-500/20 hover:opacity-95 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
           >
             <Plus size={16} strokeWidth={2.5} />
