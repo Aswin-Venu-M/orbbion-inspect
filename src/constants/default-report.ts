@@ -79,6 +79,7 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
   ],
   bodyComments: 'Minor hairline scratches on rear bumper. Paint depth uniform across all panels.',
   bodyGeneralComments: 'Vehicle body panel alignment within OEM factory tolerances. Zero previous collision repairs found.',
+  bodyGeneralImages: [],
   bodyImages: [],
   bodyPartStatuses: {
     frontBumper: 'good',
@@ -99,6 +100,7 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
     { id: 'default-body', title: 'Underbody Shield & Chassis Frame', comments: 'Underbody aero covers intact and free from scrape damage.' }
   ],
   interiorComments: 'Dashboard, door cards, and trim panels in clean condition with no visible scuffs or fading.',
+  interiorGeneralImages: [],
   seatsComments: 'Interior upholstery in clean condition. Minimal wear on steering wheel and driver bolster.',
   seatsStatus: 'pass',
   seatsImages: [],
@@ -106,16 +108,19 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
     { id: 'default-interior', title: 'Dashboard & Infotainment Screen Trim', comments: 'Touchscreen responsive with no dead pixels or software lag.' }
   ],
   electricalComments: 'Battery health measured at 92%. Alternator output stable at 14.2V under full load. All control modules clear.',
+  electricalGeneralImages: [],
   electricalItems: {},
   electricalCustomHeadlines: [
     { id: 'default-electrical', title: 'OBD-II Diagnostic Scan & Fault Codes', comments: 'Zero active or pending DTC codes found across all electronic systems.' }
   ],
   engineComments: 'Engine runs smoothly without vibrations or abnormal noises. Fluid levels are optimal and no leaks detected.',
+  engineGeneralImages: [],
   engineItems: {},
   engineCustomHeadlines: [
     { id: 'default-engine', title: 'Engine Compression & Fluid Diagnostics', comments: 'Clean oil condition, coolant freeze point -35°C, no belt degradation.' }
   ],
   transmissionComments: 'Transmission shifts smoothly through all gears without hesitation or slipping. Differential operates quietly with no leaks.',
+  transmissionGeneralImages: [],
   transmissionItems: {},
   transmissionCustomHeadlines: [
     { id: 'default-transmission', title: 'Transmission & Drivetrain Diagnostics', comments: 'All gear engagements crisp, fluid level at factory mark.' }

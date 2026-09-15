@@ -1171,6 +1171,8 @@ export default function HomeDashboard() {
               onCommentsChange={(c) => updateReport({ bodyComments: c }, false)}
               generalComments={report.bodyGeneralComments || ''}
               onGeneralCommentsChange={(c) => updateReport({ bodyGeneralComments: c }, false)}
+              generalImages={report.bodyGeneralImages || []}
+              onGeneralImagesChange={(imgs) => updateReport({ bodyGeneralImages: imgs }, false)}
               partStatuses={report.bodyPartStatuses as Record<string, string>}
               onPartStatusesChange={(s) => updateReport({ bodyPartStatuses: s }, false)}
               bodyImages={report.bodyImages}
@@ -1193,6 +1195,8 @@ export default function HomeDashboard() {
               onSeatsImagesChange={(imgs) => updateReport({ seatsImages: imgs }, false)}
               generalComments={report.interiorComments || ''}
               onGeneralCommentsChange={(c) => updateReport({ interiorComments: c }, false)}
+              generalImages={report.interiorGeneralImages || []}
+              onGeneralImagesChange={(imgs) => updateReport({ interiorGeneralImages: imgs }, false)}
               customHeadlines={report.interiorCustomHeadlines}
               onCustomHeadlinesChange={(h) => updateReport({ interiorCustomHeadlines: h }, false)}
             />
@@ -1225,6 +1229,8 @@ export default function HomeDashboard() {
             <ElectricalSection 
               initialComments={report.electricalComments || ''}
               onCommentsChange={(c) => updateReport({ electricalComments: c }, false)}
+              generalImages={report.electricalGeneralImages || []}
+              onGeneralImagesChange={(imgs) => updateReport({ electricalGeneralImages: imgs }, false)}
               items={report.electricalItems as any}
               onItemChange={(id, data) => {
                 const currentItems = report.electricalItems || {};
@@ -1247,6 +1253,8 @@ export default function HomeDashboard() {
             <EngineSection 
               initialComments={report.engineComments || ''}
               onCommentsChange={(c) => updateReport({ engineComments: c }, false)}
+              generalImages={report.engineGeneralImages || []}
+              onGeneralImagesChange={(imgs) => updateReport({ engineGeneralImages: imgs }, false)}
               items={report.engineItems as any}
               onItemChange={(id, data) => {
                 const currentItems = report.engineItems || {};
@@ -1269,6 +1277,8 @@ export default function HomeDashboard() {
             <TransmissionSection 
               initialComments={report.transmissionComments}
               onCommentsChange={(c) => updateReport({ transmissionComments: c }, false)}
+              generalImages={report.transmissionGeneralImages || []}
+              onGeneralImagesChange={(imgs) => updateReport({ transmissionGeneralImages: imgs }, false)}
               items={report.transmissionItems as Record<string, any>}
               onItemChange={(id, data) => {
                 const currentItems = report.transmissionItems || {};

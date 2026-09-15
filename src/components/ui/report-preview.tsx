@@ -701,10 +701,21 @@ export function ReportPreview({
       {/* PAGE 7: Body */}
       {report?.bodyPartStatuses && (
         <PreviewPage id="preview-page-7" title="Body">
-          {(report.bodyGeneralComments || report.bodyComments) && (
+          {(report.bodyGeneralComments || report.bodyComments || (report.bodyGeneralImages && report.bodyGeneralImages.length > 0)) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.bodyGeneralComments || report.bodyComments}</p>
+              {(report.bodyGeneralComments || report.bodyComments) && (
+                <p className="text-xs text-slate-600 leading-relaxed">{report.bodyGeneralComments || report.bodyComments}</p>
+              )}
+              {report.bodyGeneralImages && report.bodyGeneralImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {report.bodyGeneralImages.map((img, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-slate-100">
+                      <img src={img} alt="Body observation" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -757,7 +768,7 @@ export function ReportPreview({
       )}
 
       {/* PAGE 8: Interior & Exterior */}
-      {(report?.seatsStatus || report?.interiorCustomHeadlines || report?.seatsComments || report?.interiorComments) && (
+      {(report?.seatsStatus || report?.interiorCustomHeadlines || report?.seatsComments || report?.interiorComments || (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
         <PreviewPage id="preview-page-8" title="Interior & Exterior">
           {report.seatsComments && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
@@ -770,10 +781,21 @@ export function ReportPreview({
                <GenericItemCard title="Seats Condition" status={report.seatsStatus} images={report.seatsImages?.map(i => i.url)} />
              </div>
           )}
-          {report.interiorComments && (
+          {(report.interiorComments || (report.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">General Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.interiorComments}</p>
+              {report.interiorComments && (
+                <p className="text-xs text-slate-600 leading-relaxed">{report.interiorComments}</p>
+              )}
+              {report.interiorGeneralImages && report.interiorGeneralImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {report.interiorGeneralImages.map((img, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-slate-100">
+                      <img src={img} alt="Interior observation" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {report.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0 && (
@@ -792,10 +814,21 @@ export function ReportPreview({
       {/* PAGE 9: Engine */}
       {report?.engineItems && (
         <PreviewPage id="preview-page-9" title="Engine">
-          {report.engineComments && (
+          {(report.engineComments || (report.engineGeneralImages && report.engineGeneralImages.length > 0)) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.engineComments}</p>
+              {report.engineComments && (
+                <p className="text-xs text-slate-600 leading-relaxed">{report.engineComments}</p>
+              )}
+              {report.engineGeneralImages && report.engineGeneralImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {report.engineGeneralImages.map((img, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-slate-100">
+                      <img src={img} alt="Engine observation" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -819,10 +852,21 @@ export function ReportPreview({
       {/* PAGE 10: Transmission */}
       {report?.transmissionItems && (
         <PreviewPage id="preview-page-10" title="Transmission">
-          {report.transmissionComments && (
+          {(report.transmissionComments || (report.transmissionGeneralImages && report.transmissionGeneralImages.length > 0)) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.transmissionComments}</p>
+              {report.transmissionComments && (
+                <p className="text-xs text-slate-600 leading-relaxed">{report.transmissionComments}</p>
+              )}
+              {report.transmissionGeneralImages && report.transmissionGeneralImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {report.transmissionGeneralImages.map((img, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-slate-100">
+                      <img src={img} alt="Transmission observation" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -846,10 +890,21 @@ export function ReportPreview({
       {/* PAGE 11: Electrical */}
       {report?.electricalItems && (
         <PreviewPage id="preview-page-11" title="Electrical">
-          {report.electricalComments && (
+          {(report.electricalComments || (report.electricalGeneralImages && report.electricalGeneralImages.length > 0)) && (
             <div className="bg-white rounded-3xl p-5 mb-6 shadow-sm border border-slate-100">
               <h3 className="text-sm font-bold text-[#1E1035] mb-2">Inspector Comments</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{report.electricalComments}</p>
+              {report.electricalComments && (
+                <p className="text-xs text-slate-600 leading-relaxed">{report.electricalComments}</p>
+              )}
+              {report.electricalGeneralImages && report.electricalGeneralImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {report.electricalGeneralImages.map((img, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs border border-slate-100">
+                      <img src={img} alt="Electrical observation" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
-import { Trash2 } from 'lucide-react';
-import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
 import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
+import { Trash2, AlertCircle, X } from 'lucide-react';
+import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
 
 export type SubframePartStatus = 'repaired' | 'damaged' | 'checked' | 'unchecked';
 
@@ -43,10 +45,10 @@ export const SUBFRAME_PARTS: PartDef[] = [
 ];
 
 const STATUS_COLORS: Record<SubframePartStatus, string> = {
+  unchecked: '#E2E4EB',
+  checked: '#000000',
   repaired: '#4A72FF',
   damaged: '#F54752',
-  checked: '#000000',
-  unchecked: '#000000',
 };
 
 interface ChassisSubframeSectionProps {
@@ -58,6 +60,7 @@ interface ChassisSubframeSectionProps {
   onChassisImagesChange?: (images: string[]) => void;
   customHeadlines?: CustomHeadlineItem[];
   onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
+  maxImages?: number;
 }
 
 export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
@@ -68,9 +71,13 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
   chassisImages = [],
   onChassisImagesChange,
   customHeadlines = [],
-  onCustomHeadlinesChange
+  onCustomHeadlinesChange,
+  maxImages = DEFAULT_MAX_IMAGES,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
     { id: 'default-chassis', title: 'Chassis Details', comments: '', imageUrl: undefined }
@@ -106,29 +113,62 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    if (onChassisImagesChange) {
+  const addFiles = (files: FileList | File[]) => {
+    const { validFiles, errors } = validateImageFiles(files, {
+      currentCount: chassisImages.length,
+      maxImages,
+    });
+
+    if (errors.length > 0) {
+      setErrorMessage(errors.join(' '));
+    } else {
+      setErrorMessage(null);
+    }
+
+    if (validFiles.length > 0 && onChassisImagesChange) {
+      const newUrls = validFiles.map(f => URL.createObjectURL(f));
       onChassisImagesChange([...chassisImages, ...newUrls]);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
     if (e.target) e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const removeImage = (index: number) => {
     if (onChassisImagesChange) {
       const removed = chassisImages[index];
-      if (removed?.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(removed);
-        } catch {
-          // ignore
-        }
-      }
+      revokeBlobUrl(removed);
       const newImages = [...chassisImages];
       newImages.splice(index, 1);
       onChassisImagesChange(newImages);
+      setErrorMessage(null);
     }
   };
 
@@ -293,23 +333,62 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
           />
         </div>
 
+        {/* Error alert if validation fails */}
+        {errorMessage && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-xs font-medium animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="p-1 hover:bg-red-100 rounded-lg text-red-500 transition-colors cursor-pointer"
+              aria-label="Dismiss error"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* General Photos Image Upload Box */}
         <div className="flex flex-wrap gap-4 items-center mt-6">
           {chassisImages.map((imgUrl, i) => (
-            <div key={i} className="w-[180px] relative group">
-              <ImageUploadBox status="completed" url={imgUrl} />
+            <div key={i} className="w-[180px] relative group/img">
+              <ImageUploadBox 
+                status="completed" 
+                url={imgUrl} 
+                onPreview={() => setPreviewUrl(imgUrl)}
+              />
               <button
                 type="button"
-                onClick={() => removeImage(i)}
-                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage(i);
+                }}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/img:opacity-100"
+                title="Remove image"
               >
                 <Trash2 size={14} />
               </button>
             </div>
           ))}
-          <div className="w-[180px] cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-            <ImageUploadBox status="empty" />
-          </div>
+
+          {chassisImages.length < maxImages ? (
+            <div 
+              className="w-[180px] cursor-pointer" 
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <ImageUploadBox status="empty" isDragOver={isDragOver} />
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+              Maximum limit ({maxImages}) reached
+            </div>
+          )}
         </div>
       </ReusableSection>
       
@@ -332,6 +411,14 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
       {/* Add Headline Button */}
       <AddHeadlineButton onClick={addHeadline} label="Add Chassis Headline" />
+
+      {previewUrl && (
+        <ImageLightboxModal 
+          imageUrl={previewUrl} 
+          title="Chassis Subframe Photo" 
+          onClose={() => setPreviewUrl(null)} 
+        />
+      )}
     </div>
   );
 };

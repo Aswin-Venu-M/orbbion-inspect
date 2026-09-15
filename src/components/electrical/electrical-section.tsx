@@ -12,6 +12,8 @@ import { CustomHeadlineItem } from '@/lib/inspection-types';
 interface ElectricalSectionProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
+  generalImages?: string[];
+  onGeneralImagesChange?: (images: string[]) => void;
   items?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
   onItemChange?: (id: string, data: Partial<{ status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>) => void;
   customHeadlines?: CustomHeadlineItem[];
@@ -21,6 +23,8 @@ interface ElectricalSectionProps {
 export function ElectricalSection({ 
   initialComments = '', 
   onCommentsChange,
+  generalImages = [],
+  onGeneralImagesChange,
   items = {},
   onItemChange,
   customHeadlines = [],
@@ -75,6 +79,8 @@ export function ElectricalSection({
         placeholder="General comments on vehicle battery, fuses, wiring harness..." 
         initialComments={initialComments}
         onCommentsChange={onCommentsChange}
+        initialImages={generalImages}
+        onImagesChange={onGeneralImagesChange}
       />
 
       {/* Dynamically added headlines including the default one */}

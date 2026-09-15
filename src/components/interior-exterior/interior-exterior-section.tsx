@@ -4,12 +4,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
+import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
 import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlertCircle, X } from 'lucide-react';
 import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
 
 interface InteriorExteriorSectionProps {
   seatsComments?: string;
@@ -20,12 +22,12 @@ interface InteriorExteriorSectionProps {
   onSeatsImagesChange?: (images: { id: string; url: string }[]) => void;
   generalComments?: string;
   onGeneralCommentsChange?: (comments: string) => void;
+  generalImages?: string[];
+  onGeneralImagesChange?: (images: string[]) => void;
   customHeadlines?: CustomHeadlineItem[];
   onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
+  maxImages?: number;
 }
-
-const MAX_IMAGES = 20;
-const MAX_IMAGE_SIZE_MB = 5;
 
 export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = ({
   seatsComments = '',
@@ -36,18 +38,24 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   onSeatsImagesChange,
   generalComments = '',
   onGeneralCommentsChange,
+  generalImages = [],
+  onGeneralImagesChange,
   customHeadlines = [],
   onCustomHeadlinesChange,
+  maxImages = DEFAULT_MAX_IMAGES,
 }) => {
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      seatsImages.forEach((img) => revokeBlobUrl(img.url));
     };
-  }, []);
+  }, [seatsImages]);
 
   const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
@@ -67,40 +75,64 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUploadError(null);
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    if (seatsImages.length + files.length > MAX_IMAGES) {
-      setUploadError(`You can only upload up to ${MAX_IMAGES} images at once.`);
-      if (e.target) e.target.value = '';
-      return;
-    }
-
-    const validFiles = Array.from(files).filter(f => {
-      if (!f.type.startsWith('image/')) {
-        setUploadError(`File ${f.name} is not a valid image.`);
-        return false;
-      }
-      if (f.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-        setUploadError(`File ${f.name} is too large. Maximum size is ${MAX_IMAGE_SIZE_MB}MB.`);
-        return false;
-      }
-      return true;
+  const addFiles = (files: FileList | File[]) => {
+    const { validFiles, errors } = validateImageFiles(files, {
+      currentCount: seatsImages.length,
+      maxImages,
     });
 
-    const newImages = validFiles.map(f => ({
-      id: crypto.randomUUID(),
-      url: URL.createObjectURL(f)
-    }));
-    
-    onSeatsImagesChange?.([...seatsImages, ...newImages]);
+    if (errors.length > 0) {
+      setUploadError(errors.join(' '));
+    } else {
+      setUploadError(null);
+    }
+
+    if (validFiles.length > 0 && onSeatsImagesChange) {
+      const newImages = validFiles.map(f => ({
+        id: crypto.randomUUID(),
+        url: URL.createObjectURL(f)
+      }));
+      onSeatsImagesChange([...seatsImages, ...newImages]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
     if (e.target) e.target.value = '';
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
   const removeSeatsImage = (idToRemove: string) => {
+    const imgToRemove = seatsImages.find(i => i.id === idToRemove);
+    if (imgToRemove) {
+      revokeBlobUrl(imgToRemove.url);
+    }
     onSeatsImagesChange?.(seatsImages.filter(i => i.id !== idToRemove));
+    setUploadError(null);
   };
 
   const addHeadline = () => {
@@ -258,32 +290,59 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
           </div>
 
           {uploadError && (
-            <div className="text-red-500 text-sm font-semibold mt-1">
-              {uploadError}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-xs font-medium animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0 text-red-500" />
+                <span>{uploadError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUploadError(null)}
+                className="p-1 hover:bg-red-100 rounded-lg text-red-500 transition-colors cursor-pointer"
+                aria-label="Dismiss error"
+              >
+                <X size={14} />
+              </button>
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
             {seatsImages.map((img) => (
-              <div key={img.id} className="relative group">
-                <ImageUploadBox status="completed" url={img.url} />
+              <div key={img.id} className="relative group/img">
+                <ImageUploadBox 
+                  status="completed" 
+                  url={img.url} 
+                  onPreview={() => setPreviewUrl(img.url)}
+                />
                 <button
                   type="button"
-                  onClick={() => removeSeatsImage(img.id)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeSeatsImage(img.id);
+                  }}
+                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/img:opacity-100"
+                  title="Remove image"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            <button 
-              type="button" 
-              onClick={() => fileInputRef.current?.click()}
-              className="focus:outline-none focus:ring-2 focus:ring-[#1E1035] rounded-xl text-left"
-              aria-label="Upload Image"
-            >
-              <ImageUploadBox status="empty" />
-            </button>
+
+            {seatsImages.length < maxImages ? (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className="cursor-pointer"
+              >
+                <ImageUploadBox status="empty" isDragOver={isDragOver} />
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+                Maximum limit ({maxImages}) reached
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -293,6 +352,8 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
         placeholder="General interior & exterior comments..." 
         initialComments={generalComments}
         onCommentsChange={onGeneralCommentsChange}
+        initialImages={generalImages}
+        onImagesChange={onGeneralImagesChange}
       />
 
       {/* Dynamically added headlines */}
@@ -314,6 +375,14 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
 
       {/* Add Headline Button */}
       <AddHeadlineButton onClick={addHeadline} label="Add Interior Headline" />
+
+      {previewUrl && (
+        <ImageLightboxModal 
+          imageUrl={previewUrl} 
+          title="Interior & Exterior Photo" 
+          onClose={() => setPreviewUrl(null)} 
+        />
+      )}
     </div>
   );
 };

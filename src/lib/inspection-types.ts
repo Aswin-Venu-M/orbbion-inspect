@@ -77,20 +77,25 @@ export interface FullInspectionReport {
   chassisSubframeCustomHeadlines?: CustomHeadlineItem[];
 
   interiorComments?: string;
+  interiorGeneralImages?: string[];
   seatsComments?: string;
   interiorCustomHeadlines?: CustomHeadlineItem[];
 
   bodyGeneralComments?: string;
+  bodyGeneralImages?: string[];
 
   electricalComments?: string;
+  electricalGeneralImages?: string[];
   electricalItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
   electricalCustomHeadlines?: CustomHeadlineItem[];
 
   engineComments?: string;
+  engineGeneralImages?: string[];
   engineItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
   engineCustomHeadlines?: CustomHeadlineItem[];
 
   transmissionComments?: string;
+  transmissionGeneralImages?: string[];
   transmissionItems?: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }>;
   transmissionCustomHeadlines?: CustomHeadlineItem[];
 

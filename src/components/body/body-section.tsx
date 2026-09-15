@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { CarBodyVisualizer, BodyPartStatus, BodyPartId, BodyPartStatusValue } from './car-body-visualizer';
 import { INITIAL_BODY_PART_STATUSES } from '@/constants/visualizers';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
+import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
 import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
 
 interface BodySectionProps {
   initialComments?: string;
@@ -20,8 +22,11 @@ interface BodySectionProps {
   onBodyImagesChange?: (images: string[]) => void;
   generalComments?: string;
   onGeneralCommentsChange?: (comments: string) => void;
+  generalImages?: string[];
+  onGeneralImagesChange?: (images: string[]) => void;
   customHeadlines?: CustomHeadlineItem[];
   onCustomHeadlinesChange?: (headlines: CustomHeadlineItem[]) => void;
+  maxImages?: number;
 }
 
 export const BodySection: React.FC<BodySectionProps> = ({
@@ -33,10 +38,16 @@ export const BodySection: React.FC<BodySectionProps> = ({
   onBodyImagesChange,
   generalComments = '',
   onGeneralCommentsChange,
+  generalImages = [],
+  onGeneralImagesChange,
   customHeadlines = [],
-  onCustomHeadlinesChange
+  onCustomHeadlinesChange,
+  maxImages = DEFAULT_MAX_IMAGES,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Normalize statuses so every part has a defined value even if a sparse object is passed
   const normalizedStatuses = useMemo(() => {
@@ -73,29 +84,62 @@ export const BodySection: React.FC<BodySectionProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
-    if (onBodyImagesChange) {
+  const addFiles = (files: FileList | File[]) => {
+    const { validFiles, errors } = validateImageFiles(files, {
+      currentCount: bodyImages.length,
+      maxImages,
+    });
+
+    if (errors.length > 0) {
+      setErrorMessage(errors.join(' '));
+    } else {
+      setErrorMessage(null);
+    }
+
+    if (validFiles.length > 0 && onBodyImagesChange) {
+      const newUrls = validFiles.map(f => URL.createObjectURL(f));
       onBodyImagesChange([...bodyImages, ...newUrls]);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
     if (e.target) e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      addFiles(files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const removeImage = (index: number) => {
     if (onBodyImagesChange) {
       const removed = bodyImages[index];
-      if (removed && removed.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(removed);
-        } catch {
-          // ignore error
-        }
-      }
+      revokeBlobUrl(removed);
       const newImages = [...bodyImages];
       newImages.splice(index, 1);
       onBodyImagesChange(newImages);
+      setErrorMessage(null);
     }
   };
 
@@ -124,7 +168,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/*"
+        accept="image/jpeg, image/png, image/webp"
         multiple
         className="hidden"
       />
@@ -151,24 +195,62 @@ export const BodySection: React.FC<BodySectionProps> = ({
             />
           </div>
 
+          {/* Error alert if validation fails */}
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-xs font-medium animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="shrink-0 text-red-500" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMessage(null)}
+                className="p-1 hover:bg-red-100 rounded-lg text-red-500 transition-colors cursor-pointer"
+                aria-label="Dismiss error"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Image Upload Box */}
           <div className="flex flex-wrap gap-4 items-center">
             {bodyImages.map((url, i) => (
-              <div key={i} className="w-[180px] relative group">
-                <ImageUploadBox status="completed" url={url} />
+              <div key={i} className="w-[180px] relative group/img">
+                <ImageUploadBox 
+                  status="completed" 
+                  url={url} 
+                  onPreview={() => setPreviewUrl(url)}
+                />
                 <button
                   type="button"
-                  onClick={() => removeImage(i)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(i);
+                  }}
+                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-10 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/img:opacity-100"
                   title="Remove image"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            <div className="w-[180px] cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              <ImageUploadBox status="empty" />
-            </div>
+            
+            {bodyImages.length < maxImages ? (
+              <div 
+                className="w-[180px] cursor-pointer" 
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <ImageUploadBox status="empty" isDragOver={isDragOver} />
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+                Maximum limit ({maxImages}) reached
+              </div>
+            )}
           </div>
         </div>
       </ReusableSection>
@@ -178,6 +260,8 @@ export const BodySection: React.FC<BodySectionProps> = ({
         placeholder="General body comments and structural observations..." 
         initialComments={generalComments}
         onCommentsChange={onGeneralCommentsChange}
+        initialImages={generalImages}
+        onImagesChange={onGeneralImagesChange}
       />
 
       {/* Dynamically added headlines including the default one */}
@@ -199,6 +283,14 @@ export const BodySection: React.FC<BodySectionProps> = ({
 
       {/* Add Headline Button */}
       <AddHeadlineButton onClick={addHeadline} label="Add Body Headline" />
+
+      {previewUrl && (
+        <ImageLightboxModal 
+          imageUrl={previewUrl} 
+          title="Body Inspection Photo" 
+          onClose={() => setPreviewUrl(null)} 
+        />
+      )}
     </div>
   );
 };
