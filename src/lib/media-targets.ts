@@ -1,4 +1,9 @@
 import { FullInspectionReport, CustomHeadlineItem } from './inspection-types';
+import {
+  ELECTRICAL_INSPECTION_ITEMS,
+  ENGINE_INSPECTION_ITEMS,
+  TRANSMISSION_INSPECTION_ITEMS,
+} from '@/constants/inspection-points';
 
 export interface MediaTargetInfo {
   id: string;
@@ -14,6 +19,16 @@ export interface MediaUsageItem {
   targetId: string;
   section: string;
   label: string;
+}
+
+/**
+ * Safe unique ID generator that falls back gracefully if crypto.randomUUID is unavailable
+ */
+export function generateSafeId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9);
 }
 
 export const CANONICAL_MEDIA_TARGETS: Omit<MediaTargetInfo, 'currentCount'>[] = [
@@ -54,18 +69,18 @@ export const CANONICAL_MEDIA_TARGETS: Omit<MediaTargetInfo, 'currentCount'>[] = 
   { id: 'interior-seats-images', section: 'Interior & Exterior', category: 'Cabin', label: 'Seats & Upholstery Photos', type: 'multiple', maxCount: 20 },
   { id: 'interior-general-images', section: 'Interior & Exterior', category: 'Cabin', label: 'Interior Remarks Photos', type: 'multiple', maxCount: 20 },
 
-  // Electrical
+  // Electrical Remarks
   { id: 'electrical-general-images', section: 'Electrical System', category: 'Diagnostics', label: 'Electrical Remarks Photos', type: 'multiple', maxCount: 20 },
 
-  // Engine
+  // Engine Remarks
   { id: 'engine-general-images', section: 'Engine Diagnostics', category: 'Powertrain', label: 'Engine Remarks Photos', type: 'multiple', maxCount: 20 },
 
-  // Transmission
+  // Transmission Remarks
   { id: 'transmission-general-images', section: 'Transmission Diagnostics', category: 'Powertrain', label: 'Transmission Remarks Photos', type: 'multiple', maxCount: 20 },
 ];
 
 /**
- * Returns all available targets for a report, including custom headlines dynamically.
+ * Returns all available targets for a report, including subsystem item checkpoints and custom headlines dynamically.
  */
 export function getAvailableMediaTargets(report: FullInspectionReport): MediaTargetInfo[] {
   const list: MediaTargetInfo[] = CANONICAL_MEDIA_TARGETS.map(t => {
@@ -103,6 +118,48 @@ export function getAvailableMediaTargets(report: FullInspectionReport): MediaTar
       currentCount = report.transmissionGeneralImages?.length || 0;
     }
     return { ...t, currentCount };
+  });
+
+  // Diagnostic subsystem checkpoint cards: Electrical
+  ELECTRICAL_INSPECTION_ITEMS.forEach(item => {
+    const currentCount = report.electricalItems?.[item]?.images?.length || 0;
+    list.push({
+      id: `electrical-item-${item}`,
+      section: 'Electrical System',
+      category: 'Electrical Items',
+      label: `Electrical > ${item}`,
+      type: 'multiple',
+      maxCount: 20,
+      currentCount,
+    });
+  });
+
+  // Diagnostic subsystem checkpoint cards: Engine
+  ENGINE_INSPECTION_ITEMS.forEach(item => {
+    const currentCount = report.engineItems?.[item]?.images?.length || 0;
+    list.push({
+      id: `engine-item-${item}`,
+      section: 'Engine Diagnostics',
+      category: 'Engine Items',
+      label: `Engine > ${item}`,
+      type: 'multiple',
+      maxCount: 20,
+      currentCount,
+    });
+  });
+
+  // Diagnostic subsystem checkpoint cards: Transmission
+  TRANSMISSION_INSPECTION_ITEMS.forEach(item => {
+    const currentCount = report.transmissionItems?.[item]?.images?.length || 0;
+    list.push({
+      id: `transmission-item-${item}`,
+      section: 'Transmission Diagnostics',
+      category: 'Transmission Items',
+      label: `Transmission > ${item}`,
+      type: 'multiple',
+      maxCount: 20,
+      currentCount,
+    });
   });
 
   // Dynamically add custom headlines
@@ -268,7 +325,7 @@ export function attachMediaToReportTarget(
     const arr = existing ? [...existing] : [];
     for (const url of cleanUrls) {
       if (!arr.some(item => item.url === url) && arr.length < max) {
-        arr.push({ id: crypto.randomUUID(), url });
+        arr.push({ id: generateSafeId(), url });
         attachedCount++;
       }
     }
@@ -312,6 +369,37 @@ export function attachMediaToReportTarget(
       };
       attachedCount = 1;
     }
+    return { updatedReport: next, attachedCount };
+  }
+
+  // Diagnostic Subsystem Checkpoint Items
+  if (targetId.startsWith('electrical-item-')) {
+    const itemKey = targetId.replace('electrical-item-', '');
+    const currentItems = next.electricalItems ? { ...next.electricalItems } : {};
+    const currentItem = currentItems[itemKey] || { status: 'pass' as const, comments: '', images: [] };
+    const updatedImages = appendStringArray(currentItem.images);
+    currentItems[itemKey] = { ...currentItem, images: updatedImages };
+    next.electricalItems = currentItems;
+    return { updatedReport: next, attachedCount };
+  }
+
+  if (targetId.startsWith('engine-item-')) {
+    const itemKey = targetId.replace('engine-item-', '');
+    const currentItems = next.engineItems ? { ...next.engineItems } : {};
+    const currentItem = currentItems[itemKey] || { status: 'pass' as const, comments: '', images: [] };
+    const updatedImages = appendStringArray(currentItem.images);
+    currentItems[itemKey] = { ...currentItem, images: updatedImages };
+    next.engineItems = currentItems;
+    return { updatedReport: next, attachedCount };
+  }
+
+  if (targetId.startsWith('transmission-item-')) {
+    const itemKey = targetId.replace('transmission-item-', '');
+    const currentItems = next.transmissionItems ? { ...next.transmissionItems } : {};
+    const currentItem = currentItems[itemKey] || { status: 'pass' as const, comments: '', images: [] };
+    const updatedImages = appendStringArray(currentItem.images);
+    currentItems[itemKey] = { ...currentItem, images: updatedImages };
+    next.transmissionItems = currentItems;
     return { updatedReport: next, attachedCount };
   }
 
@@ -442,6 +530,27 @@ export function removeMediaFromReportEntirely(
   next.electricalGeneralImages = filterStr(next.electricalGeneralImages);
   next.engineGeneralImages = filterStr(next.engineGeneralImages);
   next.transmissionGeneralImages = filterStr(next.transmissionGeneralImages);
+
+  // Filter diagnostic subsystem checkpoint card items
+  const filterItemImages = (items: Record<string, { status: 'pass' | 'fail' | 'weak'; comments: string; images?: string[] }> | undefined) => {
+    if (!items) return items;
+    const updated = { ...items };
+    let hasChanges = false;
+    Object.keys(updated).forEach(k => {
+      if (updated[k]?.images?.includes(cleanUrl)) {
+        hasChanges = true;
+        updated[k] = {
+          ...updated[k],
+          images: updated[k].images?.filter(u => u !== cleanUrl),
+        };
+      }
+    });
+    return hasChanges ? updated : items;
+  };
+
+  if (next.electricalItems) next.electricalItems = filterItemImages(next.electricalItems);
+  if (next.engineItems) next.engineItems = filterItemImages(next.engineItems);
+  if (next.transmissionItems) next.transmissionItems = filterItemImages(next.transmissionItems);
 
   const filterHeadlines = (headlines: CustomHeadlineItem[] | undefined) => {
     if (!headlines) return headlines;

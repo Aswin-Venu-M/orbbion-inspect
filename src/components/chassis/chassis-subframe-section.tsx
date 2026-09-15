@@ -8,8 +8,9 @@ import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
-import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
+import { generateSafeId } from '@/lib/media-targets';
 
 export type SubframePartStatus = 'repaired' | 'damaged' | 'checked' | 'unchecked';
 
@@ -107,13 +108,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
   };
 
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -230,8 +225,6 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
   const removeImage = (index: number) => {
     if (onChassisImagesChange) {
-      const removed = chassisImages[index];
-      revokeBlobUrl(removed);
       const newImages = [...chassisImages];
       newImages.splice(index, 1);
       onChassisImagesChange(newImages);
@@ -241,7 +234,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
   const addHeadline = () => {
     if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange([...defaultHeadlines, { id: Math.random().toString(36).substring(7), title: '', comments: '' }]);
+      onCustomHeadlinesChange([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
     }
   };
 

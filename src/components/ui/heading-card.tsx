@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { ImageLightboxModal } from './image-lightbox-modal';
 import { Trash2, AlertCircle, X } from 'lucide-react';
-import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 interface HeadingCardProps {
   initialTitle?: string;
@@ -25,10 +25,10 @@ interface HeadingCardProps {
 export const HeadingCard: React.FC<HeadingCardProps> = ({
   initialTitle = '',
   initialComments = '',
-  initialImageUrl = null,
+  initialImageUrl,
   initialImages,
   onRemove,
-  isRemovable = false,
+  isRemovable = true,
   onChangeTitle,
   onChangeComments,
   onChangeImage,
@@ -38,28 +38,17 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
 }) => {
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
-  
-  const getInitialImages = (): string[] => {
-    if (initialImages && initialImages.length > 0) return initialImages;
+  const [images, setImages] = useState<string[]>(() => {
+    if (initialImages !== undefined) return initialImages;
     if (initialImageUrl) return [initialImageUrl];
     return [];
-  };
-
-  const [images, setImages] = useState<string[]>(getInitialImages);
+  });
   const [isDragOver, setIsDragOver] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Optional media context connection
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore if outside provider
-  }
+  const mediaContext = useMediaConnectionOptional();
   
   useEffect(() => {
     setHeading(initialTitle);
@@ -76,14 +65,6 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
       setImages(initialImageUrl ? [initialImageUrl] : []);
     }
   }, [initialImages, initialImageUrl]);
-
-  useEffect(() => {
-    return () => {
-      images.forEach((url) => {
-        revokeBlobUrl(url);
-      });
-    };
-  }, [images]);
 
   const addFiles = (files: FileList | File[]) => {
     const { validFiles, errors } = validateImageFiles(files, {
@@ -119,8 +100,6 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   };
 
   const handleRemoveImage = (index: number) => {
-    const removedUrl = images[index];
-    revokeBlobUrl(removedUrl);
     const nextImages = images.filter((_, i) => i !== index);
     setImages(nextImages);
     onChangeImages?.(nextImages);

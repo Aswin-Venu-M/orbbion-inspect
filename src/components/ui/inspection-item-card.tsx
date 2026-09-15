@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { Trash2 } from 'lucide-react';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 interface InspectionItemCardProps {
   title: string;
@@ -34,15 +34,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   const [comments, setComments] = useState<string>(initialComments);
   const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Optional media context
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   React.useEffect(() => {
     setStatus(initialStatus);
@@ -83,12 +75,22 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
     if (e.target) e.target.value = '';
   };
 
-  const handleRemoveImage = (index: number) => {
-    const urlToRemove = displayImageUrls[index];
-    if (urlToRemove?.startsWith('blob:')) {
-      URL.revokeObjectURL(urlToRemove);
+  const handleDropFiles = (files: FileList) => {
+    const valid = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (valid.length === 0) return;
+    const newUrls = valid.map(f => {
+      const url = URL.createObjectURL(f);
+      mediaContext?.addDirectUpload(f, f.name);
+      return url;
+    });
+    if (onImagesChange) {
+      onImagesChange([...displayImageUrls, ...newUrls]);
+    } else {
+      setLocalImageUrls(prev => [...prev, ...newUrls]);
     }
-    
+  };
+
+  const handleRemoveImage = (index: number) => {
     const newUrls = displayImageUrls.filter((_, i) => i !== index);
     if (onImagesChange) {
       onImagesChange(newUrls);
@@ -211,6 +213,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
               status="empty" 
               onChooseFromGallery={handleGallerySelect}
               onDropMediaUrl={handleAddMediaUrl}
+              onDropFiles={handleDropFiles}
             />
           </div>
         </div>

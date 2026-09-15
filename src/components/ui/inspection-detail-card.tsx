@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trash2, ImageOff } from 'lucide-react';
+import { Calendar, Trash2, ImageOff, Sparkles } from 'lucide-react';
 import { GalleryIcon } from './gallery-icon';
 import { InputField } from './input-field';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 export type InspectionDetailState = {
   status: 'pass' | 'fail' | 'weak' | 'na' | null;
@@ -29,6 +30,7 @@ export const InspectionDetailCard = ({
   const [localComments, setLocalComments] = useState(data.comments);
   const [imgError, setImgError] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const mediaContext = useMediaConnectionOptional();
 
   // Sync local comments with props if it changes externally
   useEffect(() => {
@@ -63,7 +65,7 @@ export const InspectionDetailCard = ({
     e.stopPropagation();
     setIsDragOver(false);
 
-    // Check for Media Bar dragged item
+    // 1. Check for Media Bar dragged item
     const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
     if (mediaJson) {
       try {
@@ -77,10 +79,23 @@ export const InspectionDetailCard = ({
       }
     }
 
+    // 2. Plain text url
     const textUrl = e.dataTransfer.getData('text/plain');
     if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http'))) {
       onChange({ image: { url: textUrl, progress: 100 } });
       return;
+    }
+
+    // 3. Fallback to OS files dropped from desktop
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        mediaContext?.addDirectUpload(file, file.name);
+        onChange({ image: { url, progress: 100 } });
+        return;
+      }
     }
   };
 
@@ -194,6 +209,14 @@ export const InspectionDetailCard = ({
                 <div className="w-full bg-white/30 rounded-full h-1.5">
                   <div className="bg-white h-1.5 rounded-full" style={{ width: `${data.image.progress}%` }}></div>
                 </div>
+              </div>
+            )}
+
+            {/* Visual drag-and-drop replace overlay */}
+            {isDragOver && (
+              <div className="absolute inset-0 z-20 bg-[#9723FF]/30 border-2 border-[#9723FF] backdrop-blur-[2px] flex flex-col items-center justify-center text-white pointer-events-none transition-all">
+                <Sparkles size={24} className="animate-pulse mb-1 text-white" />
+                <span className="text-[12px] font-bold drop-shadow">Drop to replace photo</span>
               </div>
             )}
             

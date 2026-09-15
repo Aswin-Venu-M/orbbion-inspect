@@ -11,8 +11,9 @@ import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
-import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
+import { generateSafeId } from '@/lib/media-targets';
 
 interface InteriorExteriorSectionProps {
   seatsComments?: string;
@@ -54,9 +55,8 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      seatsImages.forEach((img) => revokeBlobUrl(img.url));
     };
-  }, [seatsImages]);
+  }, []);
 
   const chunk1 = INTERIOR_EXTERIOR_POINTS.chunk1;
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
@@ -76,13 +76,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     }
   };
 
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   const addFiles = (files: FileList | File[]) => {
     const { validFiles, errors } = validateImageFiles(files, {
@@ -101,7 +95,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
         const url = URL.createObjectURL(f);
         mediaContext?.addDirectUpload(f, f.name);
         return {
-          id: crypto.randomUUID(),
+          id: generateSafeId(),
           url,
         };
       });
@@ -119,7 +113,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
       setUploadError(`Maximum photo limit (${maxImages}) reached for this section`);
       return;
     }
-    onSeatsImagesChange([...seatsImages, { id: crypto.randomUUID(), url }]);
+    onSeatsImagesChange([...seatsImages, { id: generateSafeId(), url }]);
     setUploadError(null);
   };
 
@@ -133,7 +127,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
           const toAdd = selectedUrls.filter(u => !seatsImages.some(i => i.url === u));
           const availableSlots = maxImages - seatsImages.length;
           const finalAdd = toAdd.slice(0, availableSlots).map(u => ({
-            id: crypto.randomUUID(),
+            id: generateSafeId(),
             url: u,
           }));
           if (finalAdd.length > 0) {
@@ -197,16 +191,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   };
 
   const removeSeatsImage = (idToRemove: string) => {
-    const imgToRemove = seatsImages.find(i => i.id === idToRemove);
-    if (imgToRemove) {
-      revokeBlobUrl(imgToRemove.url);
-    }
     onSeatsImagesChange?.(seatsImages.filter(i => i.id !== idToRemove));
     setUploadError(null);
   };
 
   const addHeadline = () => {
-    onCustomHeadlinesChange?.([...defaultHeadlines, { id: crypto.randomUUID(), title: '', comments: '' }]);
+    onCustomHeadlinesChange?.([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
   };
 
   const removeHeadline = (id: string) => {

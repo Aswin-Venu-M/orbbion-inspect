@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { ImageLightboxModal } from './image-lightbox-modal';
 import { Trash2, AlertCircle, X } from 'lucide-react';
-import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 interface GeneralCommentsCardProps {
   initialComments?: string;
@@ -36,15 +36,7 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const inputId = React.useId();
   const pendingValueRef = useRef<string | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Optional media context connection
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore if outside provider
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   // Sync with external initialComments changes (undo/redo, reset, parent update)
   useEffect(() => {
@@ -59,12 +51,9 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
 
   useEffect(() => {
     return () => {
-      images.forEach((url) => {
-        revokeBlobUrl(url);
-      });
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [images]);
+  }, []);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -124,8 +113,6 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   };
 
   const handleRemoveImage = (index: number) => {
-    const removedUrl = images[index];
-    revokeBlobUrl(removedUrl);
     const nextImages = images.filter((_, i) => i !== index);
     setImages(nextImages);
     onImagesChange?.(nextImages);

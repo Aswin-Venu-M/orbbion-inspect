@@ -12,6 +12,7 @@ interface ImageUploadBoxProps {
   onClick?: () => void;
   onChooseFromGallery?: () => void;
   onDropMediaUrl?: (url: string) => void;
+  onDropFiles?: (files: FileList) => void;
 }
 
 export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
@@ -23,6 +24,7 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
   onClick,
   onChooseFromGallery,
   onDropMediaUrl,
+  onDropFiles,
 }) => {
   const [hasError, setHasError] = useState(false);
   const [internalDragOver, setInternalDragOver] = useState(false);
@@ -65,9 +67,17 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
       }
     }
 
+    // 2. Direct string URL
     const textUrl = e.dataTransfer.getData('text/plain');
     if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http')) && onDropMediaUrl) {
       onDropMediaUrl(textUrl);
+      return;
+    }
+
+    // 3. Fallback to OS files dropped from desktop
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0 && onDropFiles) {
+      onDropFiles(files);
       return;
     }
   };
@@ -163,6 +173,14 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {/* Visual drag-and-drop replace overlay */}
+      {isHighlighted && (
+        <div className="absolute inset-0 z-20 bg-[#9723FF]/30 border-2 border-[#9723FF] backdrop-blur-[2px] flex flex-col items-center justify-center text-white pointer-events-none transition-all">
+          <Sparkles size={22} className="animate-pulse mb-1 text-white" />
+          <span className="text-[11.5px] font-bold drop-shadow">Drop to replace photo</span>
+        </div>
       )}
 
       {status === 'uploading' && (

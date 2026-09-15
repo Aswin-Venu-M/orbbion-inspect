@@ -39,8 +39,6 @@ export const MediaGalleryPickerModal: React.FC = () => {
     setFilter('all');
   }, [activePicker]);
 
-  if (!activePicker) return null;
-
   const toggleSelect = (url: string) => {
     if (!isMultiple) {
       // Single selection: toggle or set
@@ -57,7 +55,7 @@ export const MediaGalleryPickerModal: React.FC = () => {
       showToast('Please select at least one image', 'info');
       return;
     }
-    activePicker.onSelect(selectedUrls);
+    activePicker?.onSelect(selectedUrls);
     closeGalleryPicker();
   };
 
@@ -70,14 +68,16 @@ export const MediaGalleryPickerModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
-        >
+      {activePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <motion.div
+            key="gallery-picker-content"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+          >
           {/* Header */}
           <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
             <div>
@@ -241,6 +241,7 @@ export const MediaGalleryPickerModal: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 };

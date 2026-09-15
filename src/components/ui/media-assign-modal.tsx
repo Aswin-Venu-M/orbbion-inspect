@@ -45,8 +45,6 @@ export const MediaAssignModal: React.FC = () => {
     });
   }, [availableTargets, searchQuery, selectedCategory]);
 
-  if (!isAssignModalOpen) return null;
-
   const handleAssign = (target: MediaTargetInfo) => {
     const urls = selectedMedia.map(m => m.url);
     assignMediaToTarget(target.id, urls);
@@ -55,14 +53,16 @@ export const MediaAssignModal: React.FC = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
-        >
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <motion.div
+            key="assign-modal-content"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+          >
           {/* Header */}
           <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
             <div>
@@ -189,6 +189,7 @@ export const MediaAssignModal: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 };

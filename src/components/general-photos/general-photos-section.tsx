@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { Trash2 } from 'lucide-react';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
+import { generateSafeId } from '@/lib/media-targets';
 
 interface PhotoCategoryCardProps {
   title: string;
@@ -17,15 +18,7 @@ interface PhotoCategoryCardProps {
 const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange, images, onImagesChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Optional media context
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
@@ -56,7 +49,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
         const url = URL.createObjectURL(f);
         mediaContext?.addDirectUpload(f, f.name);
         return {
-          id: crypto.randomUUID(),
+          id: generateSafeId(),
           url,
         };
       });
@@ -66,8 +59,6 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
   };
 
   const removeImage = (idToRemove: string) => {
-    const img = images.find(i => i.id === idToRemove);
-    if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
     onImagesChange(images.filter(i => i.id !== idToRemove));
   };
 
@@ -80,7 +71,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
       setErrorMessage('Maximum photo limit (20) reached for this category');
       return;
     }
-    onImagesChange([...images, { id: crypto.randomUUID(), url }]);
+    onImagesChange([...images, { id: generateSafeId(), url }]);
   };
 
   const handleGallerySelect = () => {
@@ -92,7 +83,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
           const toAdd = selectedUrls.filter(u => !images.some(i => i.url === u));
           const availableSlots = 20 - images.length;
           const finalAdd = toAdd.slice(0, availableSlots).map(u => ({
-            id: crypto.randomUUID(),
+            id: generateSafeId(),
             url: u,
           }));
           if (finalAdd.length > 0) {

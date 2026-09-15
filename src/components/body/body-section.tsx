@@ -11,8 +11,9 @@ import { HeadingCard } from '@/components/ui/heading-card';
 import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
-import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
-import { useMediaConnection } from '@/lib/media-connection-context';
+import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnectionOptional } from '@/lib/media-connection-context';
+import { generateSafeId } from '@/lib/media-targets';
 
 interface BodySectionProps {
   initialComments?: string;
@@ -78,13 +79,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
     }
   };
 
-  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    mediaContext = useMediaConnection();
-  } catch {
-    // ignore
-  }
+  const mediaContext = useMediaConnectionOptional();
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -201,8 +196,6 @@ export const BodySection: React.FC<BodySectionProps> = ({
 
   const removeImage = (index: number) => {
     if (onBodyImagesChange) {
-      const removed = bodyImages[index];
-      revokeBlobUrl(removed);
       const newImages = [...bodyImages];
       newImages.splice(index, 1);
       onBodyImagesChange(newImages);
@@ -212,8 +205,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
 
   const addHeadline = () => {
     if (onCustomHeadlinesChange) {
-      const uniqueId = `body-h-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
-      onCustomHeadlinesChange([...defaultHeadlines, { id: uniqueId, title: '', comments: '' }]);
+      onCustomHeadlinesChange([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
     }
   };
 

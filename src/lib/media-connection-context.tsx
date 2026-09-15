@@ -10,6 +10,7 @@ import {
   removeMediaFromReportEntirely,
   getAvailableMediaTargets,
   MediaTargetInfo,
+  generateSafeId,
 } from './media-targets';
 
 export interface MediaItem {
@@ -67,6 +68,10 @@ export function useMediaConnection() {
   return context;
 }
 
+export function useMediaConnectionOptional() {
+  return useContext(MediaConnectionContext);
+}
+
 interface MediaConnectionProviderProps {
   children: React.ReactNode;
   report: FullInspectionReport;
@@ -87,7 +92,13 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+            // Filter out session-expired blob URLs that can no longer be loaded after refresh
+            const valid = parsed.filter(
+              (item: any) => item && typeof item.url === 'string' && !item.url.startsWith('blob:')
+            );
+            if (valid.length > 0) {
+              return valid;
+            }
           }
         }
       } catch {
@@ -188,7 +199,7 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
     }
 
     const newFiles: MediaItem[] = validFiles.map(file => ({
-      id: Math.random().toString(36).substring(7),
+      id: generateSafeId(),
       url: URL.createObjectURL(file),
       name: file.name,
       progress: 0,
@@ -217,7 +228,7 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
     }
 
     const newItem: MediaItem = {
-      id: Math.random().toString(36).substring(7),
+      id: generateSafeId(),
       url,
       name: fileName,
       progress: 100,
