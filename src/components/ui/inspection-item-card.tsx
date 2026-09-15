@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { Trash2 } from 'lucide-react';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 interface InspectionItemCardProps {
   title: string;
@@ -14,6 +15,7 @@ interface InspectionItemCardProps {
   onStatusChange?: (status: 'pass' | 'fail' | 'weak') => void;
   onCommentsChange?: (comments: string) => void;
   onImagesChange?: (urls: string[]) => void;
+  onChooseFromGallery?: () => void;
 }
 
 export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
@@ -26,11 +28,21 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   onStatusChange,
   onCommentsChange,
   onImagesChange,
+  onChooseFromGallery,
 }) => {
   const [status, setStatus] = useState<'pass' | 'fail' | 'weak'>(initialStatus);
   const [comments, setComments] = useState<string>(initialComments);
   const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Optional media context
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore
+  }
 
   React.useEffect(() => {
     setStatus(initialStatus);
@@ -56,7 +68,11 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const newUrls = Array.from(files).map(f => URL.createObjectURL(f));
+    const newUrls = Array.from(files).map(f => {
+      const url = URL.createObjectURL(f);
+      mediaContext?.addDirectUpload(f, f.name);
+      return url;
+    });
     
     if (onImagesChange) {
       onImagesChange([...displayImageUrls, ...newUrls]);
@@ -78,6 +94,41 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
       onImagesChange(newUrls);
     } else {
       setLocalImageUrls(newUrls);
+    }
+  };
+
+  const handleAddMediaUrl = (url: string) => {
+    if (displayImageUrls.includes(url)) {
+      mediaContext?.showToast('Photo is already attached to this item', 'info');
+      return;
+    }
+    const nextUrls = [...displayImageUrls, url];
+    if (onImagesChange) {
+      onImagesChange(nextUrls);
+    } else {
+      setLocalImageUrls(nextUrls);
+    }
+  };
+
+  const handleGallerySelect = () => {
+    if (onChooseFromGallery) {
+      onChooseFromGallery();
+    } else if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: `Choose Photos for ${title}`,
+        multiple: hasMultipleImages,
+        onSelect: (selectedUrls) => {
+          const toAdd = selectedUrls.filter(u => !displayImageUrls.includes(u));
+          if (toAdd.length > 0) {
+            const next = [...displayImageUrls, ...toAdd];
+            if (onImagesChange) {
+              onImagesChange(next);
+            } else {
+              setLocalImageUrls(next);
+            }
+          }
+        },
+      });
     }
   };
 
@@ -156,7 +207,11 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
             className="w-[180px] sm:w-[200px] cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
           >
-            <ImageUploadBox status="empty" />
+            <ImageUploadBox 
+              status="empty" 
+              onChooseFromGallery={handleGallerySelect}
+              onDropMediaUrl={handleAddMediaUrl}
+            />
           </div>
         </div>
       </div>

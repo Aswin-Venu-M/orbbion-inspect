@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
-import { ImageOff, ZoomIn } from 'lucide-react';
+import { ImageOff, ZoomIn, Images, Sparkles } from 'lucide-react';
+import { GalleryIcon } from './gallery-icon';
 
 interface ImageUploadBoxProps {
   status: 'empty' | 'uploading' | 'completed';
@@ -9,22 +10,67 @@ interface ImageUploadBoxProps {
   isDragOver?: boolean;
   onPreview?: () => void;
   onClick?: () => void;
+  onChooseFromGallery?: () => void;
+  onDropMediaUrl?: (url: string) => void;
 }
 
 export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
   status,
   progress,
   url,
-  isDragOver = false,
+  isDragOver: externalDragOver = false,
   onPreview,
   onClick,
+  onChooseFromGallery,
+  onDropMediaUrl,
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [internalDragOver, setInternalDragOver] = useState(false);
 
   // Reset error state if url changes
   React.useEffect(() => {
     setHasError(false);
   }, [url]);
+
+  const isHighlighted = externalDragOver || internalDragOver;
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInternalDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInternalDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInternalDragOver(false);
+
+    // 1. Check for Media Bar dragged item
+    const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
+    if (mediaJson) {
+      try {
+        const parsed = JSON.parse(mediaJson);
+        if (parsed.url && onDropMediaUrl) {
+          onDropMediaUrl(parsed.url);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const textUrl = e.dataTransfer.getData('text/plain');
+    if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http')) && onDropMediaUrl) {
+      onDropMediaUrl(textUrl);
+      return;
+    }
+  };
 
   if (status === 'empty') {
     return (
@@ -32,6 +78,9 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
         role="button"
         tabIndex={0}
         onClick={onClick}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -39,28 +88,44 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
           }
         }}
         className={`w-full aspect-[4/3] rounded-[20px] border flex flex-col items-center justify-center cursor-pointer transition-all duration-200 relative p-4 group select-none ${
-          isDragOver
-            ? 'bg-[#EBF0FF] border-[#5368FF] ring-2 ring-[#5368FF]/40 scale-[1.02]'
+          isHighlighted
+            ? 'bg-[#F4E8FF] border-[#9723FF] ring-2 ring-[#9723FF]/40 scale-[1.02]'
             : 'bg-[#F4F5F8] border-[#E2E4EB] hover:bg-[#EDEFF4] hover:border-[#D0D4E0]'
         }`}
       >
         <img
           src="/assets/img-drop.png"
           alt="Drag and drop illustration"
-          className={`w-[88px] h-auto object-contain mb-3 select-none pointer-events-none transition-transform duration-200 ${
-            isDragOver ? 'scale-110' : 'group-hover:scale-105'
+          className={`w-[84px] h-auto object-contain mb-2.5 select-none pointer-events-none transition-transform duration-200 ${
+            isHighlighted ? 'scale-110' : 'group-hover:scale-105'
           }`}
         />
-        <p className="text-[12px] font-medium text-[#74768B] text-center leading-[1.5] pointer-events-none">
-          {isDragOver ? (
-            <span className="text-[#5368FF] font-bold">Drop image here</span>
+        <p className="text-[12px] font-medium text-[#74768B] text-center leading-[1.4] pointer-events-none">
+          {isHighlighted ? (
+            <span className="text-[#9723FF] font-bold">Drop photo from gallery here</span>
           ) : (
             <>
               Drag &amp; drop, or <br />
-              <span className="text-[#5368FF] font-semibold underline">click to add</span> images
+              <span className="text-[#5368FF] font-semibold underline">click to add</span> photo
             </>
           )}
         </p>
+
+        {/* Gallery Pick Shortcut Button */}
+        {onChooseFromGallery && !isHighlighted && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChooseFromGallery();
+            }}
+            className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#D0D4E0] hover:border-[#9723FF] hover:bg-[#FAF6FF] text-[11px] font-bold text-[#1E1035] hover:text-[#9723FF] shadow-xs transition-all cursor-pointer"
+            title="Pick from photos in Media Gallery"
+          >
+            <GalleryIcon size={12} className="text-[#9723FF]" />
+            <span>Choose from Gallery</span>
+          </button>
+        )}
       </div>
     );
   }
@@ -69,6 +134,9 @@ export const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
     <div
       className="relative w-full aspect-[4/3] rounded-[16px] overflow-hidden shadow-sm group border border-[#E2E4EB] bg-slate-50"
       onClick={onPreview}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {hasError ? (
         <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-3 text-slate-400 bg-slate-100/80">

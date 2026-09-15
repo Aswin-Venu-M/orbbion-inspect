@@ -12,6 +12,7 @@ import { Trash2, AlertCircle, X } from 'lucide-react';
 import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
 import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 interface InteriorExteriorSectionProps {
   seatsComments?: string;
@@ -75,6 +76,14 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     }
   };
 
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore
+  }
+
   const addFiles = (files: FileList | File[]) => {
     const { validFiles, errors } = validateImageFiles(files, {
       currentCount: seatsImages.length,
@@ -88,11 +97,50 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     }
 
     if (validFiles.length > 0 && onSeatsImagesChange) {
-      const newImages = validFiles.map(f => ({
-        id: crypto.randomUUID(),
-        url: URL.createObjectURL(f)
-      }));
+      const newImages = validFiles.map(f => {
+        const url = URL.createObjectURL(f);
+        mediaContext?.addDirectUpload(f, f.name);
+        return {
+          id: crypto.randomUUID(),
+          url,
+        };
+      });
       onSeatsImagesChange([...seatsImages, ...newImages]);
+    }
+  };
+
+  const handleAddMediaUrl = (url: string) => {
+    if (!onSeatsImagesChange) return;
+    if (seatsImages.some(i => i.url === url)) {
+      setUploadError('This photo is already attached to this section');
+      return;
+    }
+    if (seatsImages.length >= maxImages) {
+      setUploadError(`Maximum photo limit (${maxImages}) reached for this section`);
+      return;
+    }
+    onSeatsImagesChange([...seatsImages, { id: crypto.randomUUID(), url }]);
+    setUploadError(null);
+  };
+
+  const handleGallerySelect = () => {
+    if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: 'Add Photos to Seats & Trim',
+        multiple: true,
+        onSelect: (selectedUrls) => {
+          if (!onSeatsImagesChange) return;
+          const toAdd = selectedUrls.filter(u => !seatsImages.some(i => i.url === u));
+          const availableSlots = maxImages - seatsImages.length;
+          const finalAdd = toAdd.slice(0, availableSlots).map(u => ({
+            id: crypto.randomUUID(),
+            url: u,
+          }));
+          if (finalAdd.length > 0) {
+            onSeatsImagesChange([...seatsImages, ...finalAdd]);
+          }
+        },
+      });
     }
   };
 
@@ -108,6 +156,28 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    // 1. Check for Media Bar dragged item
+    const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
+    if (mediaJson) {
+      try {
+        const parsed = JSON.parse(mediaJson);
+        if (parsed.url) {
+          handleAddMediaUrl(parsed.url);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const textUrl = e.dataTransfer.getData('text/plain');
+    if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http'))) {
+      handleAddMediaUrl(textUrl);
+      return;
+    }
+
+    // 2. Fallback to OS files
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       addFiles(files);
@@ -336,7 +406,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
                 onDrop={handleDrop}
                 className="cursor-pointer"
               >
-                <ImageUploadBox status="empty" isDragOver={isDragOver} />
+                <ImageUploadBox 
+                  status="empty" 
+                  isDragOver={isDragOver} 
+                  onChooseFromGallery={handleGallerySelect}
+                  onDropMediaUrl={handleAddMediaUrl}
+                />
               </div>
             ) : (
               <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">

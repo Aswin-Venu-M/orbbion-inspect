@@ -11,8 +11,12 @@ import {
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
-  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash, ListOrdered
+  ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash, ListOrdered,
+  ArrowRightLeft,
 } from 'lucide-react';
+import { MediaConnectionProvider, useMediaConnection } from '@/lib/media-connection-context';
+import { MediaAssignModal } from '@/components/ui/media-assign-modal';
+import { MediaGalleryPickerModal } from '@/components/ui/media-gallery-picker-modal';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
 import { GalleryIcon } from '@/components/ui/gallery-icon';
@@ -62,7 +66,15 @@ interface MediaItem {
   selected?: boolean;
 }
 
-export default function HomeDashboard() {
+function InspectDashboardContent({
+  history,
+  toastMessage,
+  showToast,
+}: {
+  history: ReturnType<typeof useInspectionHistory>;
+  toastMessage: { text: string; type: 'success' | 'error' | 'info' } | null;
+  showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
+}) {
   const {
     report,
     updateReport,
@@ -72,7 +84,26 @@ export default function HomeDashboard() {
     canUndo,
     canRedo,
     saveStatus,
-  } = useInspectionHistory();
+  } = history;
+
+  const {
+    mediaFiles,
+    filter,
+    setFilter,
+    filteredMediaFiles,
+    selectedMediaCount,
+    toggleMediaSelect,
+    toggleSelectAllMedia,
+    getMediaUsage,
+    addDirectUpload,
+    addMediaFiles,
+    removeMedia,
+    deleteSelectedMedia,
+    startDraggingMedia,
+    endDraggingMedia,
+    openGalleryPicker,
+    openAssignModal,
+  } = useMediaConnection();
 
   // Tab & Gallery State
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
@@ -114,14 +145,6 @@ export default function HomeDashboard() {
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Toast Notification
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
-
-  const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3500);
-  }, []);
-
   const handleSectionOrderChange = useCallback((newOrder: SectionId[]) => {
     setSectionOrder(newOrder);
     if (typeof window !== 'undefined') {
@@ -138,20 +161,6 @@ export default function HomeDashboard() {
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const [cardUploadTarget, setCardUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake'; id: string } | null>(null);
-
-  // Media Gallery files state
-  const [mediaFiles, setMediaFiles] = useState<MediaItem[]>(INITIAL_MEDIA_FILES);
-
-  const activeUploadIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map());
-
-  // Cleanup active intervals on unmount
-  useEffect(() => {
-    const intervals = activeUploadIntervals.current;
-    return () => {
-      intervals.forEach(intId => clearInterval(intId));
-      intervals.clear();
-    };
-  }, []);
 
   // Handle ?new=true or ?id=... from dashboard navigation
   useEffect(() => {
@@ -447,7 +456,7 @@ export default function HomeDashboard() {
     cardFileInputRef.current?.click();
   };
 
-  // Dedicated Card File Upload Handler
+  // Dedicated Card File Upload Handler - synchronized with central media album
   const handleCardFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !cardUploadTarget) {
@@ -468,7 +477,8 @@ export default function HomeDashboard() {
       return;
     }
 
-    const url = URL.createObjectURL(file);
+    // Automatically sync direct card upload into central media album
+    const url = addDirectUpload(file, file.name);
     const { type, id } = cardUploadTarget;
 
     if (type === 'tyre') {
@@ -484,91 +494,72 @@ export default function HomeDashboard() {
     if (e.target) e.target.value = '';
   };
 
-  // Media Gallery Upload Simulator
-  const simulateUpload = (id: string) => {
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += Math.floor(Math.random() * 20) + 15;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-        activeUploadIntervals.current.delete(id);
-        setMediaFiles(prev => prev.map(m => m.id === id ? { ...m, progress: 100, status: 'completed' } : m));
-      } else {
-        setMediaFiles(prev => prev.map(m => m.id === id ? { ...m, progress: currentProgress } : m));
-      }
-    }, 300);
-
-    activeUploadIntervals.current.set(id, interval);
-  };
-
-  const handleGalleryFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    const allFiles = Array.from(files);
-    const validFiles = allFiles.filter(f => f.type.startsWith('image/') && f.size <= 10 * 1024 * 1024);
-    
-    if (validFiles.length === 0) {
-      showToast('No valid images found (Max 10MB per file)', 'error');
-      return;
-    }
-
-    if (validFiles.length < allFiles.length) {
-      showToast(`${allFiles.length - validFiles.length} file(s) skipped (exceeded 10MB limit or invalid type)`, 'error');
-    }
-
-    const newFiles: MediaItem[] = validFiles.map(file => ({
-      id: Math.random().toString(36).substring(7),
-      url: URL.createObjectURL(file),
-      name: file.name,
-      progress: 0,
-      status: 'uploading',
-    }));
-
-    setMediaFiles(prev => [...newFiles, ...prev]);
-    newFiles.forEach(f => simulateUpload(f.id));
-    showToast(`${newFiles.length} image(s) uploading to gallery`, 'info');
-  };
-
-  const toggleMediaSelect = (id: string) => {
-    setMediaFiles(prev => prev.map(m => m.id === id ? { ...m, selected: !m.selected } : m));
-  };
-
-  const toggleSelectAllMedia = () => {
-    const allSelected = mediaFiles.length > 0 && mediaFiles.every(m => m.selected);
-    setMediaFiles(prev => prev.map(m => ({ ...m, selected: !allSelected })));
-  };
-
-  const deleteSelectedMedia = () => {
-    const selected = mediaFiles.filter(m => m.selected);
-    selected.forEach(item => {
-      if (item.url.startsWith('blob:')) {
-        URL.revokeObjectURL(item.url);
-      }
-      const activeInterval = activeUploadIntervals.current.get(item.id);
-      if (activeInterval) {
-        clearInterval(activeInterval);
-        activeUploadIntervals.current.delete(item.id);
+  // Dedicated Choose Wheel Image From Gallery
+  const handleChooseWheelImageFromGallery = (type: 'tyre' | 'rim' | 'brake', id: string, title: string) => {
+    openGalleryPicker({
+      title: `Select Photo for ${title}`,
+      multiple: false,
+      onSelect: (urls) => {
+        if (urls.length > 0) {
+          if (type === 'tyre') updateTyreData(id, { image: { url: urls[0], progress: 100 } });
+          if (type === 'rim') updateRimData(id, { image: { url: urls[0], progress: 100 } });
+          if (type === 'brake') updateBrakeData(id, { image: { url: urls[0], progress: 100 } });
+          showToast(`Photo attached to ${title}`, 'success');
+        }
       }
     });
-    setMediaFiles(prev => prev.filter(m => !m.selected));
-    if (selected.length > 0) {
-      showToast(`${selected.length} image(s) removed`, 'info');
+  };
+
+  // Safe Deletion Confirmation State for in-use photos
+  interface DeleteConfirmState {
+    type: 'single' | 'selected';
+    id?: string;
+    count: number;
+    usageCount: number;
+    usedTargets: string[];
+  }
+
+  const [deleteConfirmState, setDeleteConfirmState] = useState<DeleteConfirmState | null>(null);
+
+  const handleRequestDeleteSingle = (media: MediaItem) => {
+    const usage = getMediaUsage(media.url);
+    if (usage.length > 0) {
+      setDeleteConfirmState({
+        type: 'single',
+        id: media.id,
+        count: 1,
+        usageCount: usage.length,
+        usedTargets: usage.map(u => `${u.label} (${u.section})`),
+      });
+    } else {
+      removeMedia(media.id, false);
     }
   };
 
-  const removeMedia = (id: string) => {
-    const item = mediaFiles.find(m => m.id === id);
-    if (item?.url.startsWith('blob:')) {
-      URL.revokeObjectURL(item.url);
+  const handleRequestDeleteSelected = () => {
+    const selected = mediaFiles.filter(m => m.selected);
+    if (selected.length === 0) return;
+
+    const inUseList: string[] = [];
+    let inUseCount = 0;
+    selected.forEach(m => {
+      const usage = getMediaUsage(m.url);
+      if (usage.length > 0) {
+        inUseCount++;
+        usage.forEach(u => inUseList.push(`${u.label} (${u.section})`));
+      }
+    });
+
+    if (inUseCount > 0) {
+      setDeleteConfirmState({
+        type: 'selected',
+        count: selected.length,
+        usageCount: inUseCount,
+        usedTargets: Array.from(new Set(inUseList)),
+      });
+    } else {
+      deleteSelectedMedia(false);
     }
-    const activeInterval = activeUploadIntervals.current.get(id);
-    if (activeInterval) {
-      clearInterval(activeInterval);
-      activeUploadIntervals.current.delete(id);
-    }
-    setMediaFiles(prev => prev.filter(m => m.id !== id));
-    showToast('Image removed from gallery', 'info');
   };
 
   // Drag & Drop for Media Gallery
@@ -594,7 +585,9 @@ export default function HomeDashboard() {
     e.preventDefault();
     dragCounterRef.current = 0;
     setIsDragging(false);
-    handleGalleryFiles(e.dataTransfer.files);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addMediaFiles(e.dataTransfer.files);
+    }
   };
 
   // Stepper for Keys
@@ -1106,11 +1099,41 @@ export default function HomeDashboard() {
               <ChassisVisualizer items={report.tyres} setItemStatus={setTyreStatus} />
             </ReusableSection>
             <div className="flex flex-col gap-2">
-              <InspectionDetailCard title="Rear Right (RR)" data={report.tyres.RR} onChange={(d) => updateTyreData('RR', d)} onImageClick={() => handleTyreImageClick('RR')} />
-              <InspectionDetailCard title="Rear Left (RL)" data={report.tyres.RL} onChange={(d) => updateTyreData('RL', d)} onImageClick={() => handleTyreImageClick('RL')} />
-              <InspectionDetailCard title="Front Right (FR)" data={report.tyres.FR} onChange={(d) => updateTyreData('FR', d)} onImageClick={() => handleTyreImageClick('FR')} />
-              <InspectionDetailCard title="Front Left (FL)" data={report.tyres.FL} onChange={(d) => updateTyreData('FL', d)} onImageClick={() => handleTyreImageClick('FL')} />
-              <InspectionDetailCard title="Spare tyre (ST)" data={report.tyres.ST} onChange={(d) => updateTyreData('ST', d)} onImageClick={() => handleTyreImageClick('ST')} />
+              <InspectionDetailCard 
+                title="Rear Right (RR)" 
+                data={report.tyres.RR} 
+                onChange={(d) => updateTyreData('RR', d)} 
+                onImageClick={() => handleTyreImageClick('RR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'RR', 'Tyre Rear Right (RR)')}
+              />
+              <InspectionDetailCard 
+                title="Rear Left (RL)" 
+                data={report.tyres.RL} 
+                onChange={(d) => updateTyreData('RL', d)} 
+                onImageClick={() => handleTyreImageClick('RL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'RL', 'Tyre Rear Left (RL)')}
+              />
+              <InspectionDetailCard 
+                title="Front Right (FR)" 
+                data={report.tyres.FR} 
+                onChange={(d) => updateTyreData('FR', d)} 
+                onImageClick={() => handleTyreImageClick('FR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'FR', 'Tyre Front Right (FR)')}
+              />
+              <InspectionDetailCard 
+                title="Front Left (FL)" 
+                data={report.tyres.FL} 
+                onChange={(d) => updateTyreData('FL', d)} 
+                onImageClick={() => handleTyreImageClick('FL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'FL', 'Tyre Front Left (FL)')}
+              />
+              <InspectionDetailCard 
+                title="Spare tyre (ST)" 
+                data={report.tyres.ST} 
+                onChange={(d) => updateTyreData('ST', d)} 
+                onImageClick={() => handleTyreImageClick('ST')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'ST', 'Spare Tyre (ST)')}
+              />
             </div>
           </div>
         );
@@ -1122,11 +1145,41 @@ export default function HomeDashboard() {
               <ChassisVisualizer items={report.rims} setItemStatus={setRimStatus} />
             </ReusableSection>
             <div className="flex flex-col gap-2">
-              <InspectionDetailCard title="Rear Right (RR)" data={report.rims.RR} onChange={(d) => updateRimData('RR', d)} onImageClick={() => handleRimImageClick('RR')} />
-              <InspectionDetailCard title="Rear Left (RL)" data={report.rims.RL} onChange={(d) => updateRimData('RL', d)} onImageClick={() => handleRimImageClick('RL')} />
-              <InspectionDetailCard title="Front Right (FR)" data={report.rims.FR} onChange={(d) => updateRimData('FR', d)} onImageClick={() => handleRimImageClick('FR')} />
-              <InspectionDetailCard title="Front Left (FL)" data={report.rims.FL} onChange={(d) => updateRimData('FL', d)} onImageClick={() => handleRimImageClick('FL')} />
-              <InspectionDetailCard title="Spare tyre (ST)" data={report.rims.ST} onChange={(d) => updateRimData('ST', d)} onImageClick={() => handleRimImageClick('ST')} />
+              <InspectionDetailCard 
+                title="Rear Right (RR)" 
+                data={report.rims.RR} 
+                onChange={(d) => updateRimData('RR', d)} 
+                onImageClick={() => handleRimImageClick('RR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'RR', 'Rim Rear Right (RR)')}
+              />
+              <InspectionDetailCard 
+                title="Rear Left (RL)" 
+                data={report.rims.RL} 
+                onChange={(d) => updateRimData('RL', d)} 
+                onImageClick={() => handleRimImageClick('RL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'RL', 'Rim Rear Left (RL)')}
+              />
+              <InspectionDetailCard 
+                title="Front Right (FR)" 
+                data={report.rims.FR} 
+                onChange={(d) => updateRimData('FR', d)} 
+                onImageClick={() => handleRimImageClick('FR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'FR', 'Rim Front Right (FR)')}
+              />
+              <InspectionDetailCard 
+                title="Front Left (FL)" 
+                data={report.rims.FL} 
+                onChange={(d) => updateRimData('FL', d)} 
+                onImageClick={() => handleRimImageClick('FL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'FL', 'Rim Front Left (FL)')}
+              />
+              <InspectionDetailCard 
+                title="Spare tyre (ST)" 
+                data={report.rims.ST} 
+                onChange={(d) => updateRimData('ST', d)} 
+                onImageClick={() => handleRimImageClick('ST')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'ST', 'Rim Spare Tyre (ST)')}
+              />
             </div>
           </div>
         );
@@ -1138,11 +1191,41 @@ export default function HomeDashboard() {
               <ChassisVisualizer items={report.brakes} setItemStatus={setBrakeStatus} />
             </ReusableSection>
             <div className="flex flex-col gap-2">
-              <InspectionDetailCard title="Rear Right (RR)" data={report.brakes.RR} onChange={(d) => updateBrakeData('RR', d)} onImageClick={() => handleBrakeImageClick('RR')} />
-              <InspectionDetailCard title="Rear Left (RL)" data={report.brakes.RL} onChange={(d) => updateBrakeData('RL', d)} onImageClick={() => handleBrakeImageClick('RL')} />
-              <InspectionDetailCard title="Front Right (FR)" data={report.brakes.FR} onChange={(d) => updateBrakeData('FR', d)} onImageClick={() => handleBrakeImageClick('FR')} />
-              <InspectionDetailCard title="Front Left (FL)" data={report.brakes.FL} onChange={(d) => updateBrakeData('FL', d)} onImageClick={() => handleBrakeImageClick('FL')} />
-              <InspectionDetailCard title="Spare tyre (ST)" data={report.brakes.ST} onChange={(d) => updateBrakeData('ST', d)} onImageClick={() => handleBrakeImageClick('ST')} />
+              <InspectionDetailCard 
+                title="Rear Right (RR)" 
+                data={report.brakes.RR} 
+                onChange={(d) => updateBrakeData('RR', d)} 
+                onImageClick={() => handleBrakeImageClick('RR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'RR', 'Brake Rear Right (RR)')}
+              />
+              <InspectionDetailCard 
+                title="Rear Left (RL)" 
+                data={report.brakes.RL} 
+                onChange={(d) => updateBrakeData('RL', d)} 
+                onImageClick={() => handleBrakeImageClick('RL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'RL', 'Brake Rear Left (RL)')}
+              />
+              <InspectionDetailCard 
+                title="Front Right (FR)" 
+                data={report.brakes.FR} 
+                onChange={(d) => updateBrakeData('FR', d)} 
+                onImageClick={() => handleBrakeImageClick('FR')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'FR', 'Brake Front Right (FR)')}
+              />
+              <InspectionDetailCard 
+                title="Front Left (FL)" 
+                data={report.brakes.FL} 
+                onChange={(d) => updateBrakeData('FL', d)} 
+                onImageClick={() => handleBrakeImageClick('FL')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'FL', 'Brake Front Left (FL)')}
+              />
+              <InspectionDetailCard 
+                title="Spare tyre (ST)" 
+                data={report.brakes.ST} 
+                onChange={(d) => updateBrakeData('ST', d)} 
+                onImageClick={() => handleBrakeImageClick('ST')} 
+                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'ST', 'Brake Spare Tyre (ST)')}
+              />
             </div>
           </div>
         );
@@ -1299,8 +1382,6 @@ export default function HomeDashboard() {
         return null;
     }
   };
-
-  const selectedMediaCount = mediaFiles.filter(m => m.selected).length;
 
   return (
     <div 
@@ -1654,43 +1735,108 @@ export default function HomeDashboard() {
                 <div className="w-full xl:w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-5 z-10 border border-slate-100 h-[400px] xl:h-full">
                   
                   {mediaFiles.length > 0 && (
-                    <div className="flex justify-between items-center mb-4 shrink-0 h-[48px]">
-                      {selectedMediaCount > 0 ? (
-                        <>
-                          <div className="flex flex-col">
-                            <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">{selectedMediaCount} Media Selected</h3>
+                    <>
+                      <div className="flex justify-between items-center mb-3 shrink-0 min-h-[48px] gap-2">
+                        {selectedMediaCount > 0 ? (
+                          <>
+                            <div className="flex flex-col min-w-0">
+                              <h3 className="text-[#1E1035] text-[15px] font-bold tracking-tight leading-tight truncate">
+                                {selectedMediaCount} Selected
+                              </h3>
+                              <button 
+                                onClick={toggleSelectAllMedia}
+                                className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit cursor-pointer"
+                              >
+                                <Check size={13} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                                <span className="text-[11.5px] font-bold leading-tight underline decoration-1 underline-offset-2">
+                                  {mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}
+                                </span>
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button 
+                                type="button"
+                                onClick={openAssignModal}
+                                className="h-[38px] px-3 rounded-[12px] bg-[#9723FF] hover:bg-[#8213e4] text-white flex items-center gap-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                                title="Assign selected photos to report field"
+                              >
+                                <ArrowRightLeft size={14} />
+                                <span>Assign</span>
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={handleRequestDeleteSelected}
+                                className="w-[38px] h-[38px] rounded-[12px] bg-[#fae5e6] hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer border border-red-200 shadow-xs"
+                                title="Delete Selected"
+                              >
+                                <Trash2 size={16} strokeWidth={2} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex flex-col">
+                              <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">
+                                {mediaFiles.length} Media
+                              </h3>
+                              <p className="text-[#74768B] text-[12px] font-medium leading-tight mt-0.5">
+                                Drag to field or click +
+                              </p>
+                            </div>
                             <button 
-                              onClick={toggleSelectAllMedia}
-                              className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit"
+                              onClick={() => galleryFileInputRef.current?.click()}
+                              className="w-[42px] h-[42px] rounded-[14px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer shadow-xs"
+                              title="Add Media Files"
                             >
-                              <Check size={14} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                              <span className="text-[12px] font-bold leading-tight underline decoration-1 underline-offset-2">{mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}</span>
+                              <Plus size={20} strokeWidth={2.5} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Filter Tabs */}
+                      {(() => {
+                        const assignedCount = mediaFiles.filter(m => getMediaUsage(m.url).length > 0).length;
+                        const unassignedCount = mediaFiles.length - assignedCount;
+                        return (
+                          <div className="flex items-center gap-1 p-1 bg-[#F4F5F8] rounded-xl mb-3 text-[11px] font-semibold shrink-0 border border-slate-200/50">
+                            <button
+                              type="button"
+                              onClick={() => setFilter('all')}
+                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
+                                filter === 'all' 
+                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              All ({mediaFiles.length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFilter('unassigned')}
+                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
+                                filter === 'unassigned' 
+                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              Unassigned ({unassignedCount})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFilter('assigned')}
+                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
+                                filter === 'assigned' 
+                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              In Report ({assignedCount})
                             </button>
                           </div>
-                          <button 
-                            onClick={deleteSelectedMedia}
-                            className="w-[48px] h-[48px] rounded-[16px] bg-[#c50000] hover:bg-[#a00000] flex items-center justify-center text-white transition-colors cursor-pointer shadow-sm"
-                            title="Delete Selected"
-                          >
-                            <Trash2 size={20} strokeWidth={2} />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex flex-col">
-                            <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">{mediaFiles.length} Media</h3>
-                            <p className="text-[#74768B] text-[12px] font-medium leading-tight mt-0.5">Click + to add more</p>
-                          </div>
-                          <button 
-                            onClick={() => galleryFileInputRef.current?.click()}
-                            className="w-[48px] h-[48px] rounded-[16px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer"
-                            title="Add Media Files"
-                          >
-                            <Plus size={20} strokeWidth={2.5} />
-                          </button>
-                        </>
-                      )}
-                    </div>
+                        );
+                      })()}
+                    </>
                   )}
 
                   <motion.div 
@@ -1709,7 +1855,10 @@ export default function HomeDashboard() {
                     <input 
                       type="file" 
                       ref={galleryFileInputRef} 
-                      onChange={(e) => handleGalleryFiles(e.target.files)} 
+                      onChange={(e) => {
+                        if (e.target.files) addMediaFiles(e.target.files);
+                        if (e.target) e.target.value = '';
+                      }} 
                       multiple 
                       accept="image/*" 
                       className="hidden" 
@@ -1729,76 +1878,131 @@ export default function HomeDashboard() {
                         <p className="text-[#A0A4AB] text-[12px] mb-4">Add some media to bring this album to life.</p>
                         <button 
                           onClick={() => galleryFileInputRef.current?.click()}
-                          className="bg-[#3e045a] text-white px-8 py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm"
+                          className="bg-[#3e045a] text-white px-8 py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm cursor-pointer"
                         >
                           Add Media <Plus size={16} />
+                        </button>
+                      </div>
+                    ) : filteredMediaFiles.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
+                        <ImageIcon size={32} className="mb-2 opacity-40 text-[#1E1035]" />
+                        <p className="text-xs font-semibold text-slate-600">
+                          No {filter === 'assigned' ? 'assigned' : 'unassigned'} photos found
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setFilter('all')}
+                          className="mt-2 text-xs font-bold text-[#9723FF] hover:underline cursor-pointer"
+                        >
+                          View all ({mediaFiles.length})
                         </button>
                       </div>
                     ) : (
                       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
                         <div className="grid grid-cols-2 gap-[10px]">
-                          {mediaFiles.map((media) => (
-                            <div 
-                              key={media.id} 
-                              className="relative group rounded-[16px] overflow-hidden aspect-square border border-[#cfd2e0] bg-slate-100"
-                            >
-                              <img 
-                                src={media.url} 
-                                alt={media.name} 
-                                className={`w-full h-full object-cover transition-all ${media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100'}`} 
-                              />
-                              
-                              {media.status === 'uploading' && (
-                                <div className="absolute inset-0 bg-black/10 flex flex-col justify-between p-2 z-10">
-                                  <div className="flex justify-end w-full">
-                                    <button 
-                                      onClick={() => removeMedia(media.id)}
-                                      className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-[#cfd2e0]"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
+                          {filteredMediaFiles.map((media) => {
+                            const usage = getMediaUsage(media.url);
+                            const isInReport = usage.length > 0;
+                            return (
+                              <div 
+                                key={media.id} 
+                                draggable={media.status === 'completed'}
+                                onDragStart={(e) => startDraggingMedia(media, e)}
+                                onDragEnd={endDraggingMedia}
+                                className={`relative group rounded-[16px] overflow-hidden aspect-square border transition-all ${
+                                  media.selected 
+                                    ? 'border-[#9723FF] ring-2 ring-[#9723FF]/40 shadow-sm' 
+                                    : isInReport 
+                                      ? 'border-emerald-400 ring-1 ring-emerald-400/40' 
+                                      : 'border-[#cfd2e0]'
+                                } ${media.status === 'completed' ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-default'} bg-slate-100 select-none`}
+                              >
+                                <img 
+                                  src={media.url} 
+                                  alt={media.name} 
+                                  className={`w-full h-full object-cover transition-all duration-300 ${
+                                    media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100 group-hover:scale-105'
+                                  }`} 
+                                />
+
+                                {/* Usage badge in bottom left */}
+                                {media.status === 'completed' && isInReport && (
+                                  <div 
+                                    title={`Attached in:\n${usage.map(u => `• ${u.label} (${u.section})`).join('\n')}`}
+                                    className="absolute bottom-1.5 left-1.5 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#1E1035]/85 backdrop-blur-xs text-[9.5px] font-bold text-white shadow-xs pointer-events-auto cursor-help"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    <span>{usage.length > 1 ? `${usage.length} in report` : 'in report'}</span>
                                   </div>
-                                  <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl backdrop-blur-[2px]">
-                                    <span className="text-white text-[11px] font-medium tracking-wide font-['Familjen_Grotesk']">Uploading.....</span>
-                                    <div className="flex items-center gap-1.5 w-full">
-                                      <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white rounded-full" style={{ width: `${media.progress}%` }} />
+                                )}
+
+                                {/* Drag hint on hover */}
+                                {media.status === 'completed' && !isInReport && (
+                                  <div className="absolute bottom-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 text-[9px] bg-black/60 text-white font-medium px-1.5 py-0.5 rounded backdrop-blur-xs pointer-events-none">
+                                    Drag
+                                  </div>
+                                )}
+
+                                {media.status === 'uploading' && (
+                                  <div className="absolute inset-0 bg-black/30 flex flex-col justify-between p-2 z-10">
+                                    <div className="flex justify-end w-full">
+                                      <button 
+                                        onClick={() => removeMedia(media.id)}
+                                        className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-red-200 shadow-xs"
+                                      >
+                                        <Trash2 size={15} />
+                                      </button>
+                                    </div>
+                                    <div className="flex flex-col gap-1 w-full bg-black/60 p-2 rounded-xl backdrop-blur-xs">
+                                      <span className="text-white text-[10.5px] font-medium tracking-wide">Uploading...</span>
+                                      <div className="flex items-center gap-1.5 w-full">
+                                        <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
+                                          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${media.progress}%` }} />
+                                        </div>
+                                        <span className="text-white text-[10px] font-medium whitespace-nowrap">{media.progress}%</span>
                                       </div>
-                                      <span className="text-white text-[11px] font-medium font-['Familjen_Grotesk'] whitespace-nowrap">{media.progress} %</span>
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
 
-                              {media.status === 'completed' && (
-                                <>
-                                  {/* Top right delete button visible on hover */}
-                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                    <button 
-                                      onClick={() => removeMedia(media.id)}
-                                      className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-[#cfd2e0]"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </div>
-                                  
-                                  {/* Center checkmark toggle */}
-                                  <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    <button
-                                      onClick={() => toggleMediaSelect(media.id)}
-                                      className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
-                                        media.selected 
-                                          ? 'bg-white border-white scale-110 shadow-md' 
-                                          : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
-                                      } border`}
-                                    >
-                                      <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          ))}
+                                {media.status === 'completed' && (
+                                  <>
+                                    {/* Top right delete button visible on hover */}
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRequestDeleteSingle(media);
+                                        }}
+                                        className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-red-200"
+                                        title={isInReport ? 'Delete photo (attached to report)' : 'Delete photo'}
+                                      >
+                                        <Trash2 size={15} />
+                                      </button>
+                                    </div>
+                                    
+                                    {/* Center checkmark toggle */}
+                                    <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleMediaSelect(media.id);
+                                        }}
+                                        className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
+                                          media.selected 
+                                            ? 'bg-white border-white scale-110 shadow-md' 
+                                            : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
+                                        } border cursor-pointer`}
+                                        title={media.selected ? 'Deselect photo' : 'Select photo'}
+                                      >
+                                        <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -2290,9 +2494,123 @@ export default function HomeDashboard() {
         )}
       </AnimatePresence>
 
+      {/* MODAL 5: Safe Media Deletion Confirmation */}
+      <AnimatePresence>
+        {deleteConfirmState && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-[460px] bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-4 text-center"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
+                <AlertCircle size={26} strokeWidth={2.5} />
+              </div>
+
+              <div>
+                <h3 className="text-[18px] font-bold text-[#1E1035]">Photo Attached to Report</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  {deleteConfirmState.type === 'single'
+                    ? `This photo is currently attached to ${deleteConfirmState.usageCount} field(s) in this inspection report.`
+                    : `${deleteConfirmState.usageCount} of the selected photos are currently attached to fields in this inspection report.`}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-3 max-h-[140px] overflow-y-auto custom-scrollbar border border-slate-200/60 text-left">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Currently Attached To:
+                </span>
+                <ul className="space-y-1">
+                  {deleteConfirmState.usedTargets.map((target, idx) => (
+                    <li key={idx} className="text-xs font-semibold text-[#1E1035] flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#9723FF] shrink-0" />
+                      <span className="truncate">{target}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                Choose how you would like to proceed with deletion:
+              </p>
+
+              <div className="flex flex-col gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (deleteConfirmState.type === 'single' && deleteConfirmState.id) {
+                      removeMedia(deleteConfirmState.id, true);
+                    } else {
+                      deleteSelectedMedia(true);
+                    }
+                    setDeleteConfirmState(null);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Trash2 size={15} />
+                  <span>Delete & Remove from Report Fields</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (deleteConfirmState.type === 'single' && deleteConfirmState.id) {
+                      removeMedia(deleteConfirmState.id, false);
+                    } else {
+                      deleteSelectedMedia(false);
+                    }
+                    setDeleteConfirmState(null);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all flex items-center justify-center cursor-pointer"
+                >
+                  Delete from Gallery Only (Keep in Report)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmState(null)}
+                  className="w-full py-2 px-4 text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Media Connection Modals */}
+      <MediaAssignModal />
+      <MediaGalleryPickerModal />
+
       {/* Persistent Bottom-Right Support Badge */}
       <SupportBadge />
 
     </div>
+  );
+}
+
+export default function HomeDashboard() {
+  const history = useInspectionHistory();
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  }, []);
+
+  return (
+    <MediaConnectionProvider
+      report={history.report}
+      updateReport={history.updateReport}
+      showToast={showToast}
+    >
+      <InspectDashboardContent
+        history={history}
+        toastMessage={toastMessage}
+        showToast={showToast}
+      />
+    </MediaConnectionProvider>
   );
 }

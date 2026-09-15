@@ -5,6 +5,7 @@ import { ImageUploadBox } from './image-upload-box';
 import { ImageLightboxModal } from './image-lightbox-modal';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 interface HeadingCardProps {
   initialTitle?: string;
@@ -17,6 +18,7 @@ interface HeadingCardProps {
   onChangeComments?: (comments: string) => void;
   onChangeImage?: (url: string | null) => void;
   onChangeImages?: (urls: string[]) => void;
+  onChooseFromGallery?: () => void;
   maxImages?: number;
 }
 
@@ -31,6 +33,7 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   onChangeComments,
   onChangeImage,
   onChangeImages,
+  onChooseFromGallery,
   maxImages = DEFAULT_MAX_IMAGES,
 }) => {
   const [heading, setHeading] = useState(initialTitle);
@@ -48,6 +51,15 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Optional media context connection
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore if outside provider
+  }
   
   useEffect(() => {
     setHeading(initialTitle);
@@ -86,7 +98,11 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
     }
 
     if (validFiles.length > 0) {
-      const newUrls = validFiles.map((f) => URL.createObjectURL(f));
+      const newUrls = validFiles.map((f) => {
+        const url = URL.createObjectURL(f);
+        mediaContext?.addDirectUpload(f, f.name);
+        return url;
+      });
       const nextImages = [...images, ...newUrls];
       setImages(nextImages);
       onChangeImages?.(nextImages);
@@ -112,10 +128,48 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
     setErrorMessage(null);
   };
 
+  const handleAddMediaUrl = (url: string) => {
+    if (images.includes(url)) {
+      setErrorMessage('This photo is already attached to this section');
+      return;
+    }
+    if (images.length >= maxImages) {
+      setErrorMessage(`Maximum photo limit (${maxImages}) reached for this section`);
+      return;
+    }
+    const nextImages = [...images, url];
+    setImages(nextImages);
+    onChangeImages?.(nextImages);
+    onChangeImage?.(nextImages[0] || null);
+    setErrorMessage(null);
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    // 1. Check for Media Bar dragged item
+    const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
+    if (mediaJson) {
+      try {
+        const parsed = JSON.parse(mediaJson);
+        if (parsed.url) {
+          handleAddMediaUrl(parsed.url);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const textUrl = e.dataTransfer.getData('text/plain');
+    if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http'))) {
+      handleAddMediaUrl(textUrl);
+      return;
+    }
+
+    // 2. Fallback to OS files
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       addFiles(files);
@@ -134,6 +188,28 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
     setIsDragOver(false);
   };
 
+  const handleGallerySelect = () => {
+    if (onChooseFromGallery) {
+      onChooseFromGallery();
+    } else if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: `Add Photos to ${heading || 'Custom Section'}`,
+        multiple: true,
+        onSelect: (selectedUrls) => {
+          const toAdd = selectedUrls.filter(u => !images.includes(u));
+          const availableSlots = maxImages - images.length;
+          const finalAdd = toAdd.slice(0, availableSlots);
+          if (finalAdd.length > 0) {
+            const next = [...images, ...finalAdd];
+            setImages(next);
+            onChangeImages?.(next);
+            onChangeImage?.(next[0] || null);
+          }
+        },
+      });
+    }
+  };
+
   const isMaxReached = images.length >= maxImages;
 
   return (
@@ -150,39 +226,37 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         <button
           type="button"
           onClick={onRemove}
-          className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center shadow-xs cursor-pointer"
-          title="Delete headline"
+          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+          title="Remove Section"
         >
-          <Trash2 size={16} />
+          <Trash2 size={18} />
         </button>
       )}
 
-      {/* Error alert if validation fails */}
-      {errorMessage && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-xs font-medium animate-in fade-in duration-200">
-          <div className="flex items-center gap-2">
-            <AlertCircle size={16} className="shrink-0 text-red-500" />
-            <span>{errorMessage}</span>
+      <div className="flex flex-col gap-4">
+        {errorMessage && (
+          <div className="flex items-center justify-between gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="text-red-400 hover:text-red-600 p-0.5"
+            >
+              <X size={14} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setErrorMessage(null)}
-            className="p-1 hover:bg-red-100 rounded-lg text-red-500 transition-colors cursor-pointer"
-            aria-label="Dismiss error"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
+        )}
 
-      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <label htmlFor={`headline-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Headline</label>
+          <label htmlFor={`heading-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Custom Section Heading</label>
           <input 
-            id={`headline-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`}
+            id={`heading-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`}
             type="text" 
             value={heading}
-            maxLength={1000}
+            maxLength={100}
             onChange={(e) => {
               setHeading(e.target.value);
               onChangeTitle?.(e.target.value);
@@ -193,7 +267,7 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor={`remarks-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Remarks & Observations</label>
+          <label htmlFor={`remarks-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`} className="text-[14px] font-bold text-[#1E1035]">Remarks &amp; Observations</label>
           <textarea 
             id={`remarks-input-${initialTitle.replace(/\s+/g, '-').toLowerCase()}`}
             value={comments}
@@ -239,7 +313,12 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <ImageUploadBox status="empty" isDragOver={isDragOver} />
+              <ImageUploadBox 
+                status="empty" 
+                isDragOver={isDragOver} 
+                onChooseFromGallery={handleGallerySelect}
+                onDropMediaUrl={handleAddMediaUrl}
+              />
             </div>
           ) : (
             <div className="text-xs text-slate-400 font-medium px-2 py-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">

@@ -9,6 +9,7 @@ import { AddHeadlineButton } from '@/components/ui/add-headline-button';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
 import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 export type SubframePartStatus = 'repaired' | 'damaged' | 'checked' | 'unchecked';
 
@@ -106,6 +107,14 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
   };
 
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore
+  }
+
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (onCommentsChange) {
@@ -126,8 +135,44 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
 
     if (validFiles.length > 0 && onChassisImagesChange) {
-      const newUrls = validFiles.map(f => URL.createObjectURL(f));
+      const newUrls = validFiles.map(f => {
+        const url = URL.createObjectURL(f);
+        mediaContext?.addDirectUpload(f, f.name);
+        return url;
+      });
       onChassisImagesChange([...chassisImages, ...newUrls]);
+    }
+  };
+
+  const handleAddMediaUrl = (url: string) => {
+    if (!onChassisImagesChange) return;
+    if (chassisImages.includes(url)) {
+      setErrorMessage('This photo is already attached to this section');
+      return;
+    }
+    if (chassisImages.length >= maxImages) {
+      setErrorMessage(`Maximum photo limit (${maxImages}) reached for this section`);
+      return;
+    }
+    onChassisImagesChange([...chassisImages, url]);
+    setErrorMessage(null);
+  };
+
+  const handleGallerySelect = () => {
+    if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: 'Add Photos to Chassis & Subframe',
+        multiple: true,
+        onSelect: (selectedUrls) => {
+          if (!onChassisImagesChange) return;
+          const toAdd = selectedUrls.filter(u => !chassisImages.includes(u));
+          const availableSlots = maxImages - chassisImages.length;
+          const finalAdd = toAdd.slice(0, availableSlots);
+          if (finalAdd.length > 0) {
+            onChassisImagesChange([...chassisImages, ...finalAdd]);
+          }
+        },
+      });
     }
   };
 
@@ -143,6 +188,28 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    // 1. Check for Media Bar dragged item
+    const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
+    if (mediaJson) {
+      try {
+        const parsed = JSON.parse(mediaJson);
+        if (parsed.url) {
+          handleAddMediaUrl(parsed.url);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const textUrl = e.dataTransfer.getData('text/plain');
+    if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http'))) {
+      handleAddMediaUrl(textUrl);
+      return;
+    }
+
+    // 2. Fallback to local files
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       addFiles(files);
@@ -382,7 +449,12 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <ImageUploadBox status="empty" isDragOver={isDragOver} />
+              <ImageUploadBox 
+                status="empty" 
+                isDragOver={isDragOver} 
+                onChooseFromGallery={handleGallerySelect}
+                onDropMediaUrl={handleAddMediaUrl}
+              />
             </div>
           ) : (
             <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">

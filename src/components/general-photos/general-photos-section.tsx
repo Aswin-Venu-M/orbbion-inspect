@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { Trash2 } from 'lucide-react';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 interface PhotoCategoryCardProps {
   title: string;
@@ -16,6 +17,15 @@ interface PhotoCategoryCardProps {
 const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, onCommentsChange, images, onImagesChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Optional media context
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
@@ -34,18 +44,22 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
         setErrorMessage(`File "${f.name}" is not a valid image.`);
         continue;
       }
-      if (f.size > 5 * 1024 * 1024) {
-        setErrorMessage(`File "${f.name}" is too large. Maximum size is 5MB.`);
+      if (f.size > 10 * 1024 * 1024) {
+        setErrorMessage(`File "${f.name}" is too large. Maximum size is 10MB.`);
         continue;
       }
       validFiles.push(f);
     }
 
     if (validFiles.length > 0) {
-      const newImages = validFiles.map(f => ({
-        id: crypto.randomUUID(),
-        url: URL.createObjectURL(f)
-      }));
+      const newImages = validFiles.map(f => {
+        const url = URL.createObjectURL(f);
+        mediaContext?.addDirectUpload(f, f.name);
+        return {
+          id: crypto.randomUUID(),
+          url,
+        };
+      });
       onImagesChange([...images, ...newImages]);
     }
     if (e.target) e.target.value = '';
@@ -55,6 +69,38 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
     const img = images.find(i => i.id === idToRemove);
     if (img?.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
     onImagesChange(images.filter(i => i.id !== idToRemove));
+  };
+
+  const handleAddMediaUrl = (url: string) => {
+    if (images.some(i => i.url === url)) {
+      setErrorMessage('This photo is already attached to this category');
+      return;
+    }
+    if (images.length >= 20) {
+      setErrorMessage('Maximum photo limit (20) reached for this category');
+      return;
+    }
+    onImagesChange([...images, { id: crypto.randomUUID(), url }]);
+  };
+
+  const handleGallerySelect = () => {
+    if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: `Add Photos to ${title}`,
+        multiple: true,
+        onSelect: (selectedUrls) => {
+          const toAdd = selectedUrls.filter(u => !images.some(i => i.url === u));
+          const availableSlots = 20 - images.length;
+          const finalAdd = toAdd.slice(0, availableSlots).map(u => ({
+            id: crypto.randomUUID(),
+            url: u,
+          }));
+          if (finalAdd.length > 0) {
+            onImagesChange([...images, ...finalAdd]);
+          }
+        },
+      });
+    }
   };
 
   const imagesRef = useRef(images);
@@ -100,7 +146,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
             <button
               type="button"
               onClick={() => removeImage(img.id)}
-              className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
             >
               <Trash2 size={14} />
             </button>
@@ -115,7 +161,11 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
             multiple
             className="hidden"
           />
-          <ImageUploadBox status="empty" />
+          <ImageUploadBox 
+            status="empty" 
+            onChooseFromGallery={handleGallerySelect}
+            onDropMediaUrl={handleAddMediaUrl}
+          />
         </div>
       </div>
     </div>
@@ -143,52 +193,68 @@ export const GeneralPhotosSection: React.FC<GeneralPhotosSectionProps> = ({
   exteriorComments = '',
   interiorComments = '',
   engineComments = '',
+  inspectorComments = '',
   exteriorImages = [],
   interiorImages = [],
   engineImages = [],
-  onExteriorCommentsChange,
-  onInteriorCommentsChange,
-  onEngineCommentsChange,
-  onExteriorImagesChange,
-  onInteriorImagesChange,
-  onEngineImagesChange,
+  onExteriorCommentsChange = () => {},
+  onInteriorCommentsChange = () => {},
+  onEngineCommentsChange = () => {},
+  onInspectorCommentsChange = () => {},
+  onExteriorImagesChange = () => {},
+  onInteriorImagesChange = () => {},
+  onEngineImagesChange = () => {},
 }) => {
   return (
-    <div id="section-general-photos" className="flex flex-col gap-2 w-full scroll-mt-6">
-      <SectionHeader title="General Photos" />
-      
-      {/* Exterior - Separate white card */}
-      <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100">
+    <div className="flex flex-col gap-6">
+      <SectionHeader 
+        title="General Photos" 
+      />
+
+      <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-100 flex flex-col gap-8">
         <PhotoCategoryCard 
           title="Exterior" 
-          comments={exteriorComments} 
-          onCommentsChange={onExteriorCommentsChange || (() => {})} 
+          comments={exteriorComments}
+          onCommentsChange={onExteriorCommentsChange}
           images={exteriorImages}
-          onImagesChange={onExteriorImagesChange || (() => {})}
+          onImagesChange={onExteriorImagesChange}
         />
-      </section>
-      
-      {/* Interior - Separate white card */}
-      <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100">
+
+        <hr className="border-slate-100" />
+
         <PhotoCategoryCard 
           title="Interior" 
-          comments={interiorComments} 
-          onCommentsChange={onInteriorCommentsChange || (() => {})} 
+          comments={interiorComments}
+          onCommentsChange={onInteriorCommentsChange}
           images={interiorImages}
-          onImagesChange={onInteriorImagesChange || (() => {})}
+          onImagesChange={onInteriorImagesChange}
         />
-      </section>
-      
-      {/* Engine Bay & Undercarriage - Separate white card */}
-      <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100">
+
+        <hr className="border-slate-100" />
+
         <PhotoCategoryCard 
-          title="Engine Bay & Undercarriage" 
-          comments={engineComments} 
-          onCommentsChange={onEngineCommentsChange || (() => {})} 
+          title="Engine" 
+          comments={engineComments}
+          onCommentsChange={onEngineCommentsChange}
           images={engineImages}
-          onImagesChange={onEngineImagesChange || (() => {})}
+          onImagesChange={onEngineImagesChange}
         />
-      </section>
+
+        <hr className="border-slate-100" />
+
+        <div className="flex flex-col gap-2 w-full">
+          <label htmlFor="inspector-general-comments" className="text-[14px] font-bold text-[#1E1035]">Inspector General Remarks</label>
+          <textarea 
+            id="inspector-general-comments"
+            value={inspectorComments}
+            onChange={(e) => onInspectorCommentsChange(e.target.value)}
+            maxLength={1000}
+            rows={4}
+            placeholder="Enter overall inspector conclusion and notes about general vehicle condition" 
+            className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
+          />
+        </div>
+      </div>
     </div>
   );
 };

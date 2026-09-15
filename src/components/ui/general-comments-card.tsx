@@ -5,6 +5,7 @@ import { ImageUploadBox } from './image-upload-box';
 import { ImageLightboxModal } from './image-lightbox-modal';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { validateImageFiles, revokeBlobUrl, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
+import { useMediaConnection } from '@/lib/media-connection-context';
 
 interface GeneralCommentsCardProps {
   initialComments?: string;
@@ -12,6 +13,7 @@ interface GeneralCommentsCardProps {
   placeholder?: string;
   initialImages?: string[];
   onImagesChange?: (urls: string[]) => void;
+  onChooseFromGallery?: () => void;
   maxImages?: number;
 }
 
@@ -21,6 +23,7 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   placeholder = 'Enter general inspection comments and technical recommendations...',
   initialImages = [],
   onImagesChange,
+  onChooseFromGallery,
   maxImages = DEFAULT_MAX_IMAGES,
 }) => {
   const [comments, setComments] = useState(initialComments);
@@ -33,6 +36,15 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   const inputId = React.useId();
   const pendingValueRef = useRef<string | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Optional media context connection
+  let mediaContext: ReturnType<typeof useMediaConnection> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    mediaContext = useMediaConnection();
+  } catch {
+    // ignore if outside provider
+  }
 
   // Sync with external initialComments changes (undo/redo, reset, parent update)
   useEffect(() => {
@@ -58,15 +70,14 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
     const val = e.target.value;
     setComments(val);
     pendingValueRef.current = val;
-    
-    if (onCommentsChange) {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (onCommentsChange) {
         onCommentsChange(val);
         pendingValueRef.current = null;
-        debounceRef.current = null;
-      }, 400);
-    }
+      }
+    }, 400);
   };
 
   const handleBlur = () => {
@@ -93,7 +104,11 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
     }
 
     if (validFiles.length > 0) {
-      const newUrls = validFiles.map((f) => URL.createObjectURL(f));
+      const newUrls = validFiles.map((f) => {
+        const url = URL.createObjectURL(f);
+        mediaContext?.addDirectUpload(f, f.name);
+        return url;
+      });
       const nextImages = [...images, ...newUrls];
       setImages(nextImages);
       onImagesChange?.(nextImages);
@@ -117,10 +132,47 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
     setErrorMessage(null);
   };
 
+  const handleAddMediaUrl = (url: string) => {
+    if (images.includes(url)) {
+      setErrorMessage('This photo is already attached to this section');
+      return;
+    }
+    if (images.length >= maxImages) {
+      setErrorMessage(`Maximum photo limit (${maxImages}) reached for this section`);
+      return;
+    }
+    const nextImages = [...images, url];
+    setImages(nextImages);
+    onImagesChange?.(nextImages);
+    setErrorMessage(null);
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    // 1. Check for Media Bar dragged item
+    const mediaJson = e.dataTransfer.getData('application/x-orbbion-media');
+    if (mediaJson) {
+      try {
+        const parsed = JSON.parse(mediaJson);
+        if (parsed.url) {
+          handleAddMediaUrl(parsed.url);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const textUrl = e.dataTransfer.getData('text/plain');
+    if (textUrl && (textUrl.startsWith('blob:') || textUrl.startsWith('http'))) {
+      handleAddMediaUrl(textUrl);
+      return;
+    }
+
+    // 2. Fallback to OS files
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       addFiles(files);
@@ -139,10 +191,64 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
     setIsDragOver(false);
   };
 
+  const handleGallerySelect = () => {
+    if (onChooseFromGallery) {
+      onChooseFromGallery();
+    } else if (mediaContext) {
+      mediaContext.openGalleryPicker({
+        title: 'Add Photos to Remarks & Observations',
+        multiple: true,
+        onSelect: (selectedUrls) => {
+          const toAdd = selectedUrls.filter(u => !images.includes(u));
+          const availableSlots = maxImages - images.length;
+          const finalAdd = toAdd.slice(0, availableSlots);
+          if (finalAdd.length > 0) {
+            const next = [...images, ...finalAdd];
+            setImages(next);
+            onImagesChange?.(next);
+          }
+        },
+      });
+    }
+  };
+
   const isMaxReached = images.length >= maxImages;
 
   return (
-    <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100">
+    <section className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm border border-slate-100 flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <label htmlFor={inputId} className="text-[14px] font-bold text-[#1E1035]">
+          Remarks &amp; Observations
+        </label>
+        
+        {errorMessage && (
+          <div className="flex items-center justify-between gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="shrink-0 text-red-500" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="text-red-400 hover:text-red-600 p-0.5"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        <textarea 
+          id={inputId}
+          value={comments}
+          maxLength={1000}
+          rows={3}
+          onChange={handleCommentChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
+        />
+      </div>
+
       <input
         type="file"
         ref={fileInputRef}
@@ -152,83 +258,55 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
         className="hidden"
       />
 
-      {/* Error alert if validation fails */}
-      {errorMessage && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-red-700 text-xs font-medium animate-in fade-in duration-200">
-          <div className="flex items-center gap-2">
-            <AlertCircle size={16} className="shrink-0 text-red-500" />
-            <span>{errorMessage}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setErrorMessage(null)}
-            className="p-1 hover:bg-red-100 rounded-lg text-red-500 transition-colors cursor-pointer"
-            aria-label="Dismiss error"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <label htmlFor={inputId} className="text-[14px] font-bold text-[#1E1035]">General Comments</label>
-          <textarea 
-            id={inputId}
-            value={comments}
-            onChange={handleCommentChange}
-            onBlur={handleBlur}
-            placeholder={placeholder}
-            rows={3}
-            className="w-full bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 py-3 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all resize-y" 
-          />
-        </div>
-
-        {/* Photos List + Upload Option */}
-        <div className="flex flex-wrap gap-4 items-center mt-1">
-          {images.map((url, i) => (
-            <div key={`${url}-${i}`} className="w-[180px] sm:w-[220px] relative group/img">
-              <ImageUploadBox 
-                status="completed" 
-                url={url} 
-                onPreview={() => setPreviewUrl(url)}
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveImage(i);
-                }}
-                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/img:opacity-100"
-                title="Remove image"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
-
-          {!isMaxReached ? (
-            <div 
-              className="w-[180px] sm:w-[220px] cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+      {/* Photos List + Upload Option */}
+      <div className="flex flex-wrap gap-4 items-center mt-1">
+        {images.map((url, index) => (
+          <div key={`${url}-${index}`} className="w-[180px] sm:w-[220px] relative group/img">
+            <ImageUploadBox 
+              status="completed" 
+              url={url} 
+              onPreview={() => setPreviewUrl(url)} 
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveImage(index);
+              }}
+              className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30 cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/img:opacity-100"
+              title="Remove image"
             >
-              <ImageUploadBox status="empty" isDragOver={isDragOver} />
-            </div>
-          ) : (
-            <div className="text-xs text-slate-400 font-medium px-2 py-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
-              Maximum photo limit ({maxImages}) reached
-            </div>
-          )}
-        </div>
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+
+        {!isMaxReached ? (
+          <div 
+            className="w-[180px] sm:w-[220px] cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <ImageUploadBox 
+              status="empty" 
+              isDragOver={isDragOver} 
+              onChooseFromGallery={handleGallerySelect}
+              onDropMediaUrl={handleAddMediaUrl}
+            />
+          </div>
+        ) : (
+          <div className="text-xs text-slate-400 font-medium px-2 py-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+            Maximum photo limit ({maxImages}) reached
+          </div>
+        )}
       </div>
 
       {previewUrl && (
         <ImageLightboxModal 
           imageUrl={previewUrl} 
-          title="General Comments Photo" 
+          title="Remarks &amp; Observations Photo" 
           onClose={() => setPreviewUrl(null)} 
         />
       )}
