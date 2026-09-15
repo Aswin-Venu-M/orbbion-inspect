@@ -84,11 +84,13 @@ export function TransmissionSection({
           initialTitle={h.title}
           initialComments={h.comments}
           initialImageUrl={h.imageUrl}
+          initialImages={h.images || (h.imageUrl ? [h.imageUrl] : [])}
           isRemovable={index !== 0} // Make the first one non-removable
           onRemove={() => removeHeadline(h.id)}
           onChangeTitle={(title) => updateHeadline(h.id, { title })}
           onChangeComments={(comments) => updateHeadline(h.id, { comments })}
           onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
+          onChangeImages={(images) => updateHeadline(h.id, { images, imageUrl: images[0] || undefined })}
         />
       ))}
 

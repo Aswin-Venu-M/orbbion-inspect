@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { ImageUploadBox } from './image-upload-box';
+import { Trash2 } from 'lucide-react';
 
 interface InspectionItemCardProps {
   title: string;
@@ -17,7 +18,7 @@ interface InspectionItemCardProps {
 
 export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   title,
-  hasMultipleImages = false,
+  hasMultipleImages = true,
   showToggle = true,
   initialStatus = 'pass',
   initialComments = '',
@@ -137,44 +138,27 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
           />
         </div>
 
-        {hasMultipleImages ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-            {displayImageUrls.map((url, i) => (
-              <div key={i} className="relative group">
-                <ImageUploadBox status="completed" url={url} />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(i)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <div onClick={() => fileInputRef.current?.click()}>
-              <ImageUploadBox status="empty" />
+        <div className="flex flex-wrap gap-4 items-center mt-2">
+          {displayImageUrls.map((url, i) => (
+            <div key={`${url}-${i}`} className="w-[180px] sm:w-[200px] relative group">
+              <ImageUploadBox status="completed" url={url} />
+              <button
+                type="button"
+                onClick={() => handleRemoveImage(i)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30 cursor-pointer"
+                title="Remove image"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
+          ))}
+          <div 
+            className="w-[180px] sm:w-[200px] cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImageUploadBox status="empty" />
           </div>
-        ) : (
-          <div className="w-full sm:w-[220px] mt-1">
-            {displayImageUrls.length > 0 ? (
-              <div className="relative group">
-                <ImageUploadBox status="completed" url={displayImageUrls[0]} />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(0)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ✕
-                </button>
-              </div>
-            ) : (
-              <div onClick={() => fileInputRef.current?.click()}>
-                <ImageUploadBox status="empty" />
-              </div>
-            )}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

@@ -8,27 +8,37 @@ interface HeadingCardProps {
   initialTitle?: string;
   initialComments?: string;
   initialImageUrl?: string;
+  initialImages?: string[];
   onRemove?: () => void;
   isRemovable?: boolean;
   onChangeTitle?: (title: string) => void;
   onChangeComments?: (comments: string) => void;
   onChangeImage?: (url: string | null) => void;
+  onChangeImages?: (urls: string[]) => void;
 }
 
 export const HeadingCard: React.FC<HeadingCardProps> = ({
   initialTitle = '',
   initialComments = '',
   initialImageUrl = null,
+  initialImages,
   onRemove,
   isRemovable = false,
   onChangeTitle,
   onChangeComments,
   onChangeImage,
+  onChangeImages,
 }) => {
   const [heading, setHeading] = useState(initialTitle);
   const [comments, setComments] = useState(initialComments);
-  const [localImageUrl, setLocalImageUrl] = useState<string | null>(initialImageUrl);
-  const imageUrl = onChangeImage ? initialImageUrl : localImageUrl;
+  
+  const getInitialImages = (): string[] => {
+    if (initialImages && initialImages.length > 0) return initialImages;
+    if (initialImageUrl) return [initialImageUrl];
+    return [];
+  };
+
+  const [images, setImages] = useState<string[]>(getInitialImages);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
@@ -40,33 +50,64 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   }, [initialComments]);
 
   useEffect(() => {
+    if (initialImages !== undefined) {
+      setImages(initialImages);
+    } else if (initialImageUrl !== undefined) {
+      setImages(initialImageUrl ? [initialImageUrl] : []);
+    }
+  }, [initialImages, initialImageUrl]);
+
+  useEffect(() => {
     return () => {
-      if (imageUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(imageUrl);
-      }
+      images.forEach((url) => {
+        if (url?.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
-  }, [imageUrl]);
+  }, [images]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      if (onChangeImage) {
-        onChangeImage(url);
-      } else {
-        setLocalImageUrl(url);
-      }
-    }
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const nextImages = [...images, ...newUrls];
+    setImages(nextImages);
+    onChangeImages?.(nextImages);
+    onChangeImage?.(nextImages[0] || null);
     if (e.target) e.target.value = '';
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onChangeImage) {
-      onChangeImage(null);
-    } else {
-      setLocalImageUrl(null);
+  const handleRemoveImage = (index: number) => {
+    const removedUrl = images[index];
+    if (removedUrl?.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(removedUrl);
+      } catch {
+        // ignore
+      }
     }
+    const nextImages = images.filter((_, i) => i !== index);
+    setImages(nextImages);
+    onChangeImages?.(nextImages);
+    onChangeImage?.(nextImages[0] || null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const nextImages = [...images, ...newUrls];
+    setImages(nextImages);
+    onChangeImages?.(nextImages);
+    onChangeImage?.(nextImages[0] || null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   return (
@@ -76,13 +117,14 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/jpeg, image/png, image/webp"
+        multiple
         className="hidden"
       />
       {isRemovable && onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center shadow-xs"
+          className="absolute top-4 right-4 w-8 h-8 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center shadow-xs cursor-pointer"
           title="Delete headline"
         >
           <Trash2 size={16} />
@@ -121,23 +163,32 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
           />
         </div>
 
-        <div className="w-full sm:w-[220px] mt-1">
-          {imageUrl ? (
-            <div className="relative group/img">
-              <ImageUploadBox status="completed" url={imageUrl} />
+        {/* Photos List + Upload Option */}
+        <div className="flex flex-wrap gap-4 items-center mt-1">
+          {images.map((url, index) => (
+            <div key={`${url}-${index}`} className="w-[180px] sm:w-[220px] relative group/img">
+              <ImageUploadBox status="completed" url={url} />
               <button
                 type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveImage(index);
+                }}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30 cursor-pointer"
+                title="Remove image"
               >
                 <Trash2 size={14} />
               </button>
             </div>
-          ) : (
-            <div onClick={() => fileInputRef.current?.click()}>
-              <ImageUploadBox status="empty" />
-            </div>
-          )}
+          ))}
+          <div 
+            className="w-[180px] sm:w-[220px] cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <ImageUploadBox status="empty" />
+          </div>
         </div>
       </div>
     </section>

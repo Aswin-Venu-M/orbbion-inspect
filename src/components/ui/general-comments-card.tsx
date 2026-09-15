@@ -8,15 +8,19 @@ interface GeneralCommentsCardProps {
   initialComments?: string;
   onCommentsChange?: (comments: string) => void;
   placeholder?: string;
+  initialImages?: string[];
+  onImagesChange?: (urls: string[]) => void;
 }
 
 export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   initialComments = '',
   onCommentsChange,
   placeholder = 'Enter general inspection comments and technical recommendations...',
+  initialImages = [],
+  onImagesChange,
 }) => {
   const [comments, setComments] = useState(initialComments);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>(initialImages);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputId = React.useId();
   const pendingValueRef = useRef<string | null>(null);
@@ -29,11 +33,19 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   }, [initialComments]);
 
   useEffect(() => {
+    if (initialImages) {
+      setImages(initialImages);
+    }
+  }, [initialImages]);
+
+  useEffect(() => {
     return () => {
-      if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
+      images.forEach((url) => {
+        if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [imageUrl]);
+  }, [images]);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -62,18 +74,43 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
-      setImageUrl(URL.createObjectURL(file));
-    }
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const nextImages = [...images, ...newUrls];
+    setImages(nextImages);
+    onImagesChange?.(nextImages);
     if (e.target) e.target.value = '';
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
+  const handleRemoveImage = (index: number) => {
+    const removedUrl = images[index];
+    if (removedUrl?.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(removedUrl);
+      } catch {
+        // ignore
+      }
+    }
+    const nextImages = images.filter((_, i) => i !== index);
+    setImages(nextImages);
+    onImagesChange?.(nextImages);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (imageUrl?.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
-    setImageUrl(null);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const nextImages = [...images, ...newUrls];
+    setImages(nextImages);
+    onImagesChange?.(nextImages);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   return (
@@ -83,6 +120,7 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/jpeg, image/png, image/webp"
+        multiple
         className="hidden"
       />
       <div className="flex flex-col gap-5">
@@ -99,23 +137,29 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
           />
         </div>
 
-        <div className="w-full sm:w-[220px] mt-1">
-          {imageUrl ? (
-            <div className="relative group">
-              <ImageUploadBox status="completed" url={imageUrl} />
+        {/* Photos List + Upload Option */}
+        <div className="flex flex-wrap gap-4 items-center mt-1">
+          {images.map((url, i) => (
+            <div key={`${url}-${i}`} className="w-[180px] sm:w-[220px] relative group">
+              <ImageUploadBox status="completed" url={url} />
               <button
                 type="button"
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30"
+                onClick={() => handleRemoveImage(i)}
+                className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-md hover:bg-red-600 transition-colors z-30 cursor-pointer"
+                title="Remove image"
               >
                 <Trash2 size={14} />
               </button>
             </div>
-          ) : (
-            <div onClick={() => fileInputRef.current?.click()}>
-              <ImageUploadBox status="empty" />
-            </div>
-          )}
+          ))}
+          <div 
+            className="w-[180px] sm:w-[220px] cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <ImageUploadBox status="empty" />
+          </div>
         </div>
       </div>
     </section>

@@ -302,11 +302,13 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
           initialTitle={h.title}
           initialComments={h.comments}
           initialImageUrl={h.imageUrl}
+          initialImages={h.images || (h.imageUrl ? [h.imageUrl] : [])}
           isRemovable={defaultHeadlines.length > 1}
           onRemove={() => removeHeadline(h.id)}
           onChangeTitle={(title) => updateHeadline(h.id, { title })}
           onChangeComments={(comments) => updateHeadline(h.id, { comments })}
           onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
+          onChangeImages={(images) => updateHeadline(h.id, { images, imageUrl: images[0] || undefined })}
         />
       ))}
 

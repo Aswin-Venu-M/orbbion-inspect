@@ -118,6 +118,14 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
   const removeImage = (index: number) => {
     if (onChassisImagesChange) {
+      const removed = chassisImages[index];
+      if (removed?.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(removed);
+        } catch {
+          // ignore
+        }
+      }
       const newImages = [...chassisImages];
       newImages.splice(index, 1);
       onChassisImagesChange(newImages);
@@ -149,6 +157,14 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
   return (
     <div id="section-chassis-subframe" className="flex flex-col gap-2 w-full scroll-mt-6">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg, image/png, image/webp"
+        multiple
+        className="hidden"
+      />
       <ReusableSection title="Chassis & Subframe">
         <div className="flex flex-col gap-8 items-center bg-white rounded-[20px] p-6 sm:p-8">
           
@@ -291,7 +307,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
               </button>
             </div>
           ))}
-          <div className="w-[180px]" onClick={() => fileInputRef.current?.click()}>
+          <div className="w-[180px] cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             <ImageUploadBox status="empty" />
           </div>
         </div>
@@ -304,11 +320,13 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
           initialTitle={headline.title}
           initialComments={headline.comments}
           initialImageUrl={headline.imageUrl}
+          initialImages={headline.images || (headline.imageUrl ? [headline.imageUrl] : [])}
           isRemovable={defaultHeadlines.length > 1}
           onRemove={() => removeHeadline(headline.id)}
           onChangeTitle={(title) => updateHeadline(headline.id, { title })}
           onChangeComments={(comments) => updateHeadline(headline.id, { comments })}
           onChangeImage={(imageUrl) => updateHeadline(headline.id, { imageUrl: imageUrl || undefined })}
+          onChangeImages={(images) => updateHeadline(headline.id, { images, imageUrl: images[0] || undefined })}
         />
       ))}
 

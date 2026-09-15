@@ -195,7 +195,15 @@ function GenericItemCard({
         )}
       </div>
 
-      {images.length > 0 ? (
+      {images.length > 1 ? (
+        <div className={`grid ${images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mb-3 mt-auto`}>
+          {images.map((img, idx) => (
+            <div key={idx} className="rounded-xl overflow-hidden aspect-[4/3] bg-slate-100 border border-slate-200">
+              <img src={img} alt={`${title} ${idx + 1}`} className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+      ) : images.length === 1 ? (
         <div className="rounded-2xl overflow-hidden aspect-[4/3] mb-3 mt-auto bg-slate-100 border border-slate-200">
           <img
             src={images[0]}
@@ -682,7 +690,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.chassisSubframeCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>
@@ -740,7 +748,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.bodyCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>
@@ -773,7 +781,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.interiorCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>
@@ -800,7 +808,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.engineCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>
@@ -827,7 +835,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.transmissionCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>
@@ -854,7 +862,7 @@ export function ReportPreview({
               <h3 className="text-lg font-bold text-[#1E1035] mb-4">Additional Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {report.electricalCustomHeadlines.map(h => (
-                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.imageUrl ? [h.imageUrl] : []} />
+                  <GenericItemCard key={h.id} title={h.title} comments={h.comments} images={h.images && h.images.length > 0 ? h.images : (h.imageUrl ? [h.imageUrl] : [])} />
                 ))}
               </div>
             </div>

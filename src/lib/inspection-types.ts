@@ -50,6 +50,7 @@ export interface CustomHeadlineItem {
   title: string;
   comments: string;
   imageUrl?: string;
+  images?: string[];
 }
 
 export interface FullInspectionReport {
