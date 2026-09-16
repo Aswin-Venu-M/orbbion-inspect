@@ -84,23 +84,35 @@ const VisualizerButton = ({ id, label, top, left, state, activePopup, setActiveP
   );
 };
 
-export const ChassisVisualizer = ({ items, setItemStatus }: { items: Record<string, InspectionDetailState>, setItemStatus: (id: string, s: InspectionState) => void }) => {
+export const ChassisVisualizer = ({ 
+  items, 
+  setItemStatus, 
+  hideLegend = false, 
+  compact = false 
+}: { 
+  items: Record<string, InspectionDetailState>; 
+  setItemStatus: (id: string, s: InspectionState) => void;
+  hideLegend?: boolean;
+  compact?: boolean;
+}) => {
   const [activePopup, setActivePopup] = useState<string | null>(null);
 
   return (
-    <div className="w-full flex flex-col pt-2 pb-6">
+    <div className={`w-full flex flex-col ${compact ? 'py-0' : 'pt-2 pb-6'}`}>
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 px-2 mb-6">
-        {CHASSIS_STATUS_LEGEND.map((leg) => (
-          <div key={leg.label} className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-md" style={{ backgroundColor: leg.color }} />
-            <span className="text-xs font-semibold text-slate-500">{leg.label}</span>
-          </div>
-        ))}
-      </div>
+      {!hideLegend && (
+        <div className="flex flex-wrap items-center gap-4 px-2 mb-6">
+          {CHASSIS_STATUS_LEGEND.map((leg) => (
+            <div key={leg.label} className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-md" style={{ backgroundColor: leg.color }} />
+              <span className="text-xs font-semibold text-slate-500">{leg.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Chassis View */}
-      <div className="relative w-full max-w-[700px] mx-auto aspect-[4/3] flex items-center justify-center">
+      <div className={`relative w-full ${compact ? 'max-w-[500px]' : 'max-w-[700px]'} mx-auto aspect-[4/3] flex items-center justify-center`}>
         {/* Texts */}
         <div className="absolute top-[20%] right-[15%] text-[#A0A4AB] font-bold text-xl tracking-wide">Front</div>
         <div className="absolute bottom-[10%] left-[15%] text-[#A0A4AB] font-bold text-xl tracking-wide">Back</div>

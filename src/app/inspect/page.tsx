@@ -162,12 +162,17 @@ function InspectDashboardContent({
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const [cardUploadTarget, setCardUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake'; id: string } | null>(null);
 
-  // Handle ?new=true or ?id=... from dashboard navigation
+  // Handle ?new=true or ?id=... or ?tab=view from navigation
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const requestedId = params.get('id');
     const isNew = params.get('new') === 'true';
+    const tabParam = params.get('tab');
+
+    if (tabParam === 'view') {
+      setActiveTab('view');
+    }
 
     if (isNew) {
       const newId = `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -622,14 +627,7 @@ function InspectDashboardContent({
 
   // Print Action
   const handlePrint = () => {
-    if (activeTab !== 'view') {
-      setActiveTab('view');
-      setTimeout(() => {
-        window.print();
-      }, 350);
-    } else {
-      window.print();
-    }
+    window.print();
   };
 
   // Export JSON
@@ -1384,10 +1382,26 @@ function InspectDashboardContent({
   };
 
   return (
-    <div 
-      className={`min-h-screen xl:h-screen bg-[#F8F9FB] bg-dot-pattern flex flex-col xl:flex-row p-2.5 sm:p-4 pl-2.5 sm:pl-4 md:pl-[106px] gap-3 sm:gap-4 overflow-x-hidden overflow-y-auto xl:overflow-hidden ${familjen.className}`}
-      onMouseMove={handleAppMouseMove}
-    >
+    <>
+      {/* Dedicated Print-Only Report Container: 100% pure A4 output matching Report Preview exactly */}
+      <div className="hidden print:block w-[210mm] max-w-[210mm] min-w-[210mm] mx-auto p-0 m-0 bg-white">
+        <ReportPreview 
+          tyres={report.tyres} 
+          rims={report.rims} 
+          brakes={report.brakes}
+          vehicleData={report.vehicleSummary}
+          inspectionDetails={report.inspectionDetails}
+          clientDetails={report.clientDetails}
+          overviewStats={report.reportOverview}
+          report={report}
+        />
+      </div>
+
+      {/* Screen Interactive Workspace */}
+      <div 
+        className={`min-h-screen xl:h-screen bg-[#F8F9FB] bg-dot-pattern flex flex-col xl:flex-row p-2.5 sm:p-4 pl-2.5 sm:pl-4 md:pl-[106px] gap-3 sm:gap-4 overflow-x-hidden overflow-y-auto xl:overflow-hidden print:hidden ${familjen.className}`}
+        onMouseMove={handleAppMouseMove}
+      >
       {/* Hidden Card Image Selector Input */}
       <input
         type="file"
@@ -2587,7 +2601,8 @@ function InspectDashboardContent({
       {/* Persistent Bottom-Right Support Badge */}
       <SupportBadge />
 
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -105,12 +105,21 @@ select {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 0;
   }
 
-  body {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
+    width: 210mm !important;
     overflow: visible !important;
   }
 
@@ -119,6 +128,7 @@ select {
   header,
   aside,
   .print-hide,
+  .print\:hidden,
   .custom-scrollbar::-webkit-scrollbar {
     display: none !important;
   }
@@ -134,17 +144,47 @@ select {
     background: none !important;
   }
 
+  /* Remove background dot pattern effect during print */
+  .bg-dot-pattern::before {
+    display: none !important;
+  }
+
   /* Page break rules for preview pages */
-  [id^="preview-page-"] {
+  [id^="preview-page-"],
+  .a4-print-page {
     page-break-after: always !important;
     break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     box-shadow: none !important;
     border: none !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 100vh !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 24px 32px !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  /* Exception for Page 1 (Cover page full bleed image) */
+  #preview-page-1,
+  .a4-print-page-cover {
+    padding: 0 !important;
+  }
+
+  /* Prevent trailing blank page */
+  [id^="preview-page-"]:last-child,
+  [id^="preview-page-"]:last-of-type,
+  .a4-print-page:last-child,
+  .a4-print-page:last-of-type {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 }
+
