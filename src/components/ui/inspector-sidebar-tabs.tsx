@@ -6,15 +6,14 @@ import {
   ListOrdered, 
   UserCheck, 
   Users, 
-  ChevronRight, 
   ChevronUp,
   ChevronDown,
-  User, 
-  MapPin, 
   Eye, 
   Award,
   RotateCcw
 } from 'lucide-react';
+import User from '@solar-icons/react/bold/user';
+import MapPoint from '@solar-icons/react/bold/map-point';
 import { InputField } from './input-field';
 import { SelectField } from './select-field';
 import { 
@@ -323,19 +322,6 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                             <ChevronDown size={12} />
                           </button>
                         </div>
-
-                        {sec.badgeText && (
-                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md border ${sec.badgeColor}`}>
-                            {sec.badgeText}
-                          </span>
-                        )}
-
-                        <ChevronRight 
-                          size={12} 
-                          className={`transition-all ${
-                            isActive ? 'text-[#9723FF]' : 'text-slate-300 group-hover:text-slate-500'
-                          }`} 
-                        />
                       </div>
                     </div>
                   );
@@ -418,7 +404,7 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                 label="Location" 
                 placeholder="Select Location" 
                 options={locationOptions}
-                icon={<MapPin size={16} fill="currentColor" strokeWidth={0} />} 
+                icon={<MapPoint size={16} fill="currentColor" strokeWidth={0} />} 
                 value={report.clientDetails.location}
                 onChange={(e) => onUpdateClientDetails({ location: e.target.value })}
               />
