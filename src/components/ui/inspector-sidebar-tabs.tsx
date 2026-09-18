@@ -12,8 +12,8 @@ import {
   Award,
   RotateCcw
 } from 'lucide-react';
-import User from '@solar-icons/react/bold/user';
-import MapPoint from '@solar-icons/react/bold/map-point';
+import { UserIcon as User } from '@solar-icons/react/bold/user';
+import { MapPointIcon as MapPoint } from '@solar-icons/react/bold/map-point';
 import { InputField } from './input-field';
 import { SelectField } from './select-field';
 import { 
