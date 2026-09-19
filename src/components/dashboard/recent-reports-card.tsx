@@ -146,19 +146,6 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
           })}
         </div>
       )}
-
-      {/* Footer */}
-      {reports.length > maxItems && (
-        <div className="flex items-center justify-center pt-2 border-t border-slate-100">
-          <Link
-            href="/reports"
-            className="text-xs font-bold text-[#9723FF] hover:text-[#7915D4] flex items-center gap-1.5 transition-colors"
-          >
-            <span>See all {reports.length} inspection records</span>
-            <ArrowRight size={13} />
-          </Link>
-        </div>
-      )}
     </section>
   );
 }

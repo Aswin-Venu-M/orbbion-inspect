@@ -2,19 +2,12 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Familjen_Grotesk } from 'next/font/google';
 
 import { AppShell, dispatchToast } from '@/components/layout/app-shell';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { KPIStatsGrid } from '@/components/dashboard/kpi-stats-grid';
-import { ActivityChartCard } from '@/components/dashboard/activity-chart-card';
 import { RecentReportsCard } from '@/components/dashboard/recent-reports-card';
-import {
-  initialReportsList,
-  initialDashboardKPI,
-  weeklyActivityData,
-  inspectionTypeBreakdown,
-} from '@constants';
+import { initialReportsList, initialDashboardKPI } from '@constants';
 import {
   ReportListItem,
   DashboardKPIData,
@@ -22,18 +15,12 @@ import {
   calculateDynamicKPIs,
 } from '@/lib/reports-data';
 
-const familjen = Familjen_Grotesk({ subsets: ['latin'] });
-
 export default function AppDashboardPage() {
   const router = useRouter();
 
   // Global Data State
   const [reports, setReports] = useState<ReportListItem[]>(initialReportsList);
   const [kpiData, setKpiData] = useState<DashboardKPIData>(initialDashboardKPI);
-
-  // Dashboard Filters
-  const [globalSearch, setGlobalSearch] = useState('');
-  const [datePreset, setDatePreset] = useState<'today' | '7d' | '30d' | 'all'>('7d');
 
   // Hydrate from localStorage on client mount
   React.useEffect(() => {
@@ -63,39 +50,25 @@ export default function AppDashboardPage() {
 
   return (
     <AppShell>
-      <div className={familjen.className}>
-        {/* 1. Header Toolbar */}
-        <DashboardHeader
-          searchQuery={globalSearch}
-          onSearchChange={setGlobalSearch}
-          datePreset={datePreset}
-          onDatePresetChange={setDatePreset}
-          totalCount={reports.length}
-          publishedCount={reports.filter((r) => r.status === 'published').length}
-          onRefresh={handleRefresh}
+      {/* 1. Header Toolbar */}
+      <DashboardHeader
+        totalCount={reports.length}
+        publishedCount={reports.filter((r) => r.status === 'published').length}
+        onRefresh={handleRefresh}
+      />
+
+      {/* 2. KPI Statistics Grid */}
+      <div className="mt-4 sm:mt-6">
+        <KPIStatsGrid
+          data={kpiData}
+          onFilterDrafts={handleFilterDrafts}
+          onFilterTampered={handleFilterTampered}
         />
+      </div>
 
-        {/* 2. KPI Statistics Grid */}
-        <div className="mt-4 sm:mt-6">
-          <KPIStatsGrid
-            data={kpiData}
-            onFilterDrafts={handleFilterDrafts}
-            onFilterTampered={handleFilterTampered}
-          />
-        </div>
-
-        {/* 3. Inspection Throughput & Protocol Breakdown */}
-        <div className="mt-4 sm:mt-6">
-          <ActivityChartCard
-            activityData={weeklyActivityData}
-            typeBreakdown={inspectionTypeBreakdown}
-          />
-        </div>
-
-        {/* 4. Recent Reports Compact Widget */}
-        <div className="mt-4 sm:mt-6">
-          <RecentReportsCard reports={reports} maxItems={5} />
-        </div>
+      {/* 3. Recent Reports */}
+      <div className="mt-4 sm:mt-6">
+        <RecentReportsCard reports={reports} maxItems={5} />
       </div>
     </AppShell>
   );
