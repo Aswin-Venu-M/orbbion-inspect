@@ -273,9 +273,9 @@ export const BodySection: React.FC<BodySectionProps> = ({
           )}
 
           {/* Image Upload Box */}
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 sm:gap-4 items-center w-full">
             {bodyImages.map((url, i) => (
-              <div key={i} className="w-[180px] relative group/img">
+              <div key={i} className="w-full md:w-[180px] relative group/img">
                 <ImageUploadBox 
                   status="completed" 
                   url={url} 
@@ -297,7 +297,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
             
             {bodyImages.length < maxImages ? (
               <div 
-                className="w-[180px] cursor-pointer" 
+                className="w-full md:w-[180px] cursor-pointer" 
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -311,7 +311,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
                 />
               </div>
             ) : (
-              <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+              <div className="text-xs text-slate-400 font-medium px-4 py-6 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center col-span-2 sm:col-span-1">
                 Maximum limit ({maxImages}) reached
               </div>
             )}

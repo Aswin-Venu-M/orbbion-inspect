@@ -132,7 +132,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
       exit={{ opacity: 0, y: 8, scale: 0.92 }}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       onClick={(e) => e.stopPropagation()}
-      className="absolute z-50 flex items-center gap-1 sm:gap-1.5 bg-[#4A4A4A] p-1.5 sm:p-2 rounded-[18px] sm:rounded-[22px] shadow-2xl pointer-events-auto select-none"
+      className="absolute z-50 flex items-center gap-1.5 bg-[#2D2335]/95 backdrop-blur-md p-1.5 sm:p-2 rounded-[18px] sm:rounded-[22px] shadow-2xl pointer-events-auto select-none border border-white/20 max-w-[95vw]"
       style={{
         left: anchor.left,
         top: anchor.top,
@@ -149,7 +149,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
           onSelect('good');
           onClose();
         }}
-        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#7FD159] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#2A5913] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
+        className={`w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] bg-[#7FD159] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#2A5913] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
           currentStatus === 'good' ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-95'
         }`}
       >
@@ -166,7 +166,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
           onSelect('damaged');
           onClose();
         }}
-        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#FE8E4B] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#6E2A0C] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
+        className={`w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] bg-[#FE8E4B] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#6E2A0C] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
           currentStatus === 'damaged' ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-95'
         }`}
       >
@@ -183,7 +183,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
           onSelect('repaired');
           onClose();
         }}
-        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#FFED00] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#7A7000] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
+        className={`w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] bg-[#FFED00] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-[#7A7000] hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
           currentStatus === 'repaired' ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-95'
         }`}
       >
@@ -200,7 +200,7 @@ const BodyActionPopup: React.FC<BodyActionPopupProps> = ({
           onSelect('checked');
           onClose();
         }}
-        className={`w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] bg-[#A0A4AB] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-white hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
+        className={`w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] bg-[#A0A4AB] rounded-[13px] sm:rounded-[16px] flex items-center justify-center text-white hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-sm ${
           currentStatus === 'checked' ? 'ring-2 ring-white scale-105 shadow-md' : 'opacity-95'
         }`}
       >
@@ -409,20 +409,22 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
       </div>
 
       {/* ── Interactive Legend & Quick Actions Bar ── */}
-      <div className="w-full max-w-[850px] flex flex-wrap items-center justify-between gap-3 pt-1">
+      <div className="w-full max-w-[850px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         {/* Status Legend Pills */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
           {BODY_STATUS_LEGEND.map((item) => (
             <div 
               key={item.state}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#E9EBEF] rounded-full text-xs font-medium text-[#1E1035] shadow-2xs"
+              className="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 bg-white border border-[#E9EBEF] rounded-xl sm:rounded-full text-xs font-medium text-[#1E1035] shadow-2xs"
             >
-              <span 
-                className="w-2.5 h-2.5 rounded-full shrink-0" 
-                style={{ backgroundColor: item.color }} 
-              />
-              <span>{item.label}</span>
-              <span className="ml-0.5 px-1.5 py-0.2 bg-[#F4F5F8] text-[#74768B] text-[10px] font-bold rounded-full">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
+                  style={{ backgroundColor: item.color }} 
+                />
+                <span className="truncate">{item.label}</span>
+              </div>
+              <span className="ml-1 px-1.5 py-0.2 bg-[#F4F5F8] text-[#74768B] text-[10px] font-bold rounded-full shrink-0">
                 {counts[item.state]}
               </span>
             </div>
@@ -431,11 +433,11 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
 
         {/* Quick Batch Actions */}
         {!readOnly && onBatchStatusChange && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={() => handleMarkAll('good')}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#74768B] hover:text-[#1E1035] hover:bg-[#F4F5F8] border border-transparent hover:border-[#E2E4EB] rounded-lg transition-all cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-[#74768B] hover:text-[#1E1035] hover:bg-[#F4F5F8] border border-slate-200/80 rounded-xl sm:rounded-lg transition-all cursor-pointer shadow-2xs"
               title="Reset all body panels to Good condition"
             >
               <RotateCcw size={12} />
@@ -444,7 +446,7 @@ export const CarBodyVisualizer: React.FC<CarBodyVisualizerProps> = ({
             <button
               type="button"
               onClick={() => handleMarkAll('checked')}
-              className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/60 rounded-lg transition-all cursor-pointer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/60 rounded-xl sm:rounded-lg transition-all cursor-pointer shadow-2xs"
               title="Mark all body panels as Checked"
             >
               <CheckCheck size={13} />

@@ -106,11 +106,11 @@ export const InspectionDetailCard = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="font-bold text-[#1E1035] text-[15px]">{title}</h3>
           
-          <div className="flex items-center gap-1.5 self-start sm:self-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5 self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-end">
             <button
               type="button"
               onClick={() => onChange({ status: 'pass' })}
-              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-center cursor-pointer ${
                 data.status === 'pass' 
                   ? 'bg-[#5BC335] text-white shadow-xs' 
                   : 'bg-[#F4F5F8] text-[#74768B] hover:text-[#1E1035]'
@@ -121,7 +121,7 @@ export const InspectionDetailCard = ({
             <button
               type="button"
               onClick={() => onChange({ status: 'fail' })}
-              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-center cursor-pointer ${
                 data.status === 'fail' 
                   ? 'bg-[#FE8E4B] text-white shadow-xs' 
                   : 'bg-[#F4F5F8] text-[#74768B] hover:text-[#1E1035]'
@@ -132,7 +132,7 @@ export const InspectionDetailCard = ({
             <button
               type="button"
               onClick={() => onChange({ status: 'weak' })}
-              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-center cursor-pointer ${
                 data.status === 'weak' 
                   ? 'bg-[#FFED00] text-[#7A7000] shadow-xs' 
                   : 'bg-[#F4F5F8] text-[#74768B] hover:text-[#1E1035]'
@@ -143,7 +143,7 @@ export const InspectionDetailCard = ({
             <button
               type="button"
               onClick={() => onChange({ status: 'na' })}
-              className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-1.5 rounded-full text-xs font-bold tracking-wide transition-all text-center cursor-pointer ${
                 data.status === 'na' 
                   ? 'bg-[#D3D3D3] text-[#4A4A4A] shadow-xs' 
                   : 'bg-[#F4F5F8] text-[#74768B] hover:text-[#1E1035]'
@@ -256,10 +256,10 @@ export const InspectionDetailCard = ({
                   e.stopPropagation();
                   onChooseFromGallery();
                 }}
-                className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#D0D4E0] hover:border-[#9723FF] hover:bg-[#FAF6FF] text-[11px] font-bold text-[#1E1035] hover:text-[#9723FF] shadow-xs transition-all cursor-pointer"
+                className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-[#D0D4E0] hover:border-[#9723FF] hover:bg-[#FAF6FF] text-xs font-bold text-[#1E1035] hover:text-[#9723FF] shadow-xs active:scale-95 transition-all cursor-pointer"
                 title="Pick from photos in Media Gallery"
               >
-                <GalleryIcon size={12} className="text-[#9723FF]" />
+                <GalleryIcon size={13} className="text-[#9723FF]" />
                 <span>Choose from Gallery</span>
               </button>
             )}

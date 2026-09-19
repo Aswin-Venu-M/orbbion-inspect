@@ -50,6 +50,7 @@ interface InspectorSidebarTabsProps {
   className?: string;
   showTabs?: boolean;
   initialTab?: SidebarTabId;
+  onSectionSelect?: (id: string) => void;
 }
 
 export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
@@ -66,6 +67,7 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
   className = '',
   showTabs = true,
   initialTab = 'sections',
+  onSectionSelect,
 }) => {
   const [internalTab, setInternalTab] = useState<SidebarTabId>(initialTab);
   const [activeSectionId, setActiveSectionId] = useState<string>('section-inspection-details');
@@ -112,6 +114,10 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
       setTimeout(() => {
         element.classList.remove('ring-2', 'ring-[#9723FF]', 'ring-offset-2');
       }, 1500);
+    }
+
+    if (onSectionSelect) {
+      onSectionSelect(id);
     }
   };
 
@@ -305,9 +311,9 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                               e.stopPropagation();
                               moveSection(index, index - 1);
                             }}
-                            className="p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-slate-200/60 transition-colors"
+                            className="p-1.5 sm:p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded-lg hover:bg-slate-200/60 transition-colors min-w-[28px] min-h-[28px] sm:min-w-0 sm:min-h-0 flex items-center justify-center cursor-pointer"
                           >
-                            <ChevronUp size={12} />
+                            <ChevronUp size={14} className="sm:size-3" />
                           </button>
                           <button
                             type="button"
@@ -317,9 +323,9 @@ export const InspectorSidebarTabs: React.FC<InspectorSidebarTabsProps> = ({
                               e.stopPropagation();
                               moveSection(index, index + 1);
                             }}
-                            className="p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-slate-200/60 transition-colors"
+                            className="p-1.5 sm:p-1 text-slate-400 hover:text-[#9723FF] disabled:opacity-20 disabled:pointer-events-none rounded-lg hover:bg-slate-200/60 transition-colors min-w-[28px] min-h-[28px] sm:min-w-0 sm:min-h-0 flex items-center justify-center cursor-pointer"
                           >
-                            <ChevronDown size={12} />
+                            <ChevronDown size={14} className="sm:size-3" />
                           </button>
                         </div>
                       </div>

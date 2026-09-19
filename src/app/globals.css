@@ -151,6 +151,7 @@ select {
 
   /* Page break rules for preview pages */
   [id^="preview-page-"],
+  [id^="print-page-"],
   .a4-print-page {
     page-break-after: always !important;
     break-after: page !important;
@@ -174,13 +175,16 @@ select {
 
   /* Exception for Page 1 (Cover page full bleed image) */
   #preview-page-1,
+  #print-page-1,
   .a4-print-page-cover {
     padding: 0 !important;
   }
 
   /* Prevent trailing blank page */
   [id^="preview-page-"]:last-child,
+  [id^="print-page-"]:last-child,
   [id^="preview-page-"]:last-of-type,
+  [id^="print-page-"]:last-of-type,
   .a4-print-page:last-child,
   .a4-print-page:last-of-type {
     page-break-after: auto !important;

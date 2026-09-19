@@ -54,46 +54,47 @@ export const MediaAssignModal: React.FC = () => {
   return (
     <AnimatePresence>
       {isAssignModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs">
           <motion.div
             key="assign-modal-content"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="bg-white rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+            className="bg-white rounded-[24px] sm:rounded-[28px] shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
           >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="text-[18px] font-bold text-[#1E1035] flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-[#F4E8FF] text-[#9723FF] flex items-center justify-center">
+              <h2 className="text-[16px] sm:text-[18px] font-bold text-[#1E1035] flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-[#F4E8FF] text-[#9723FF] flex items-center justify-center shrink-0">
                   <ArrowRight size={18} />
                 </span>
-                Assign Media to Report Field
+                <span className="truncate">Assign Media to Report Field</span>
               </h2>
-              <p className="text-[12px] text-[#74768B] font-medium mt-0.5">
+              <p className="text-[11px] sm:text-[12px] text-[#74768B] font-medium mt-0.5">
                 Select where to place {selectedMedia.length} photo{selectedMedia.length === 1 ? '' : 's'} in the inspection form
               </p>
             </div>
             <button
               onClick={closeAssignModal}
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
+              aria-label="Close"
             >
               <X size={18} />
             </button>
           </div>
 
           {/* Selected Photos Strip */}
-          <div className="px-6 py-3 bg-[#F8F9FC] border-b border-slate-100 flex items-center gap-3 overflow-x-auto custom-scrollbar">
-            <span className="text-[11px] font-bold text-[#74768B] uppercase tracking-wider shrink-0">
+          <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#F8F9FC] border-b border-slate-100 flex items-center gap-2.5 sm:gap-3 overflow-x-auto custom-scrollbar">
+            <span className="text-[10px] sm:text-[11px] font-bold text-[#74768B] uppercase tracking-wider shrink-0">
               Selected ({selectedMedia.length}):
             </span>
             <div className="flex items-center gap-2">
               {selectedMedia.map((m) => (
                 <div
                   key={m.id}
-                  className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-[#9723FF] shrink-0 shadow-xs group"
+                  className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border-2 border-[#9723FF] shrink-0 shadow-xs group"
                 >
                   <img src={m.url} alt={m.name} className="w-full h-full object-cover" />
                 </div>
@@ -102,15 +103,15 @@ export const MediaAssignModal: React.FC = () => {
           </div>
 
           {/* Search & Category Filter */}
-          <div className="p-6 pb-3 flex flex-col gap-3">
+          <div className="p-4 sm:p-6 pb-2.5 sm:pb-3 flex flex-col gap-2.5 sm:gap-3">
             <div className="relative flex items-center w-full">
               <Search size={16} className="absolute left-3.5 text-[#74768B]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by field, part, or section (e.g., FL Tyre, Brakes, Exterior...)"
-                className="w-full h-[44px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] pl-10 pr-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 transition-all"
+                placeholder="Search by field, part, or section (e.g., FL Tyre, Brakes...)"
+                className="w-full h-[42px] sm:h-[44px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] pl-10 pr-4 text-[12px] sm:text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 transition-all"
               />
             </div>
 
@@ -133,9 +134,9 @@ export const MediaAssignModal: React.FC = () => {
           </div>
 
           {/* Targets List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 sm:px-6 pb-4 sm:pb-6">
             {filteredTargets.length === 0 ? (
-              <div className="py-12 text-center text-slate-400">
+              <div className="py-10 sm:py-12 text-center text-slate-400">
                 <AlertCircle size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm font-semibold">No matching report targets found</p>
                 <p className="text-xs mt-1">Try searching for something else</p>
@@ -151,13 +152,13 @@ export const MediaAssignModal: React.FC = () => {
                     <button
                       key={target.id}
                       onClick={() => handleAssign(target)}
-                      className="flex items-center justify-between p-3.5 rounded-[18px] border border-slate-200 hover:border-[#9723FF] bg-white hover:bg-[#FAF6FF] transition-all text-left group cursor-pointer shadow-xs hover:shadow-sm"
+                      className="flex items-center justify-between p-3 sm:p-3.5 rounded-[16px] sm:rounded-[18px] border border-slate-200 hover:border-[#9723FF] bg-white hover:bg-[#FAF6FF] active:bg-[#F4E8FF] transition-all text-left group cursor-pointer shadow-xs hover:shadow-sm min-h-[48px]"
                     >
                       <div className="flex flex-col min-w-0 pr-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[#9723FF]">
                           {target.section}
                         </span>
-                        <span className="text-[13px] font-bold text-[#1E1035] group-hover:text-[#9723FF] transition-colors truncate">
+                        <span className="text-[12px] sm:text-[13px] font-bold text-[#1E1035] group-hover:text-[#9723FF] transition-colors truncate">
                           {target.label}
                         </span>
                         <div className="flex items-center gap-2 mt-1">

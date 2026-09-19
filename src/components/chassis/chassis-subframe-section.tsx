@@ -269,29 +269,32 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
         <div className="flex flex-col gap-8 items-center bg-white rounded-[20px] p-6 sm:p-8">
           
           {/* Legend / Global Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 w-full">
             <button 
+              type="button"
               onClick={() => setAllStatus('repaired')}
-              className="px-6 py-2 bg-[#4A72FF] text-white font-semibold text-sm rounded-full transition-transform hover:scale-105 active:scale-95"
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-2 bg-[#4A72FF] text-white font-semibold text-xs sm:text-sm rounded-full transition-transform hover:scale-105 active:scale-95 shadow-xs cursor-pointer text-center"
             >
               REPAIRED
             </button>
             <button 
+              type="button"
               onClick={() => setAllStatus('damaged')}
-              className="px-6 py-2 bg-[#F54752] text-white font-semibold text-sm rounded-full transition-transform hover:scale-105 active:scale-95"
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-2 bg-[#F54752] text-white font-semibold text-xs sm:text-sm rounded-full transition-transform hover:scale-105 active:scale-95 shadow-xs cursor-pointer text-center"
             >
               DAMAGED
             </button>
             <button 
+              type="button"
               onClick={() => setAllStatus('checked')}
-              className="px-6 py-2 bg-[#000000] text-white font-semibold text-sm rounded-full transition-transform hover:scale-105 active:scale-95"
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-2 bg-[#000000] text-white font-semibold text-xs sm:text-sm rounded-full transition-transform hover:scale-105 active:scale-95 shadow-xs cursor-pointer text-center"
             >
               CHECKED
             </button>
           </div>
 
           {/* Visualizer Area */}
-          <div className="relative w-full max-w-[800px] aspect-[16/10] mt-4 select-none">
+          <div className="relative w-full max-w-[800px] aspect-[16/10] mt-2 sm:mt-4 select-none">
             {/* SVG lines */}
             <svg 
               className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -336,7 +339,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
                   <button
                     key={`bubble-${part.id}`}
                     onClick={() => handlePartClick(part.id)}
-                    className="absolute flex items-center justify-center w-8 h-8 rounded-full text-white text-xs font-bold shadow-md transition-all pointer-events-auto hover:scale-110 active:scale-95"
+                    className="absolute flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-white text-[11px] sm:text-xs font-bold shadow-md transition-all pointer-events-auto hover:scale-110 active:scale-95 cursor-pointer"
                     style={{ 
                       top: `${part.by}%`, 
                       left: `${part.bx}%`,
@@ -352,32 +355,32 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
             </div>
           </div>
 
-          {/* 3-Column List */}
-          <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-8 mt-6">
-            <div className="flex flex-col gap-3">
-              {col1.map((p) => (
-                <div key={p.id} className="flex gap-2 text-[14px] font-semibold text-[#1E1035]">
-                  <span className="w-5 text-right">{p.id}.</span>
-                  <span>{p.label}</span>
+          {/* Responsive Parts List Grid */}
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-2 sm:gap-y-3 gap-x-6 mt-4 sm:mt-6">
+            {SUBFRAME_PARTS.map((p) => {
+              const status = partStatuses[p.id] || 'unchecked';
+              const isChecked = status !== 'unchecked';
+              return (
+                <div 
+                  key={p.id} 
+                  onClick={() => handlePartClick(p.id)}
+                  className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer ${
+                    isChecked 
+                      ? 'bg-slate-50 border-slate-200' 
+                      : 'bg-white border-transparent hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-xs sm:text-[13px] font-semibold text-[#1E1035] truncate">
+                    <span className="w-5 text-right font-bold text-slate-400">{p.id}.</span>
+                    <span className="truncate">{p.label}</span>
+                  </div>
+                  <span 
+                    className="w-2.5 h-2.5 rounded-full shrink-0 ml-2" 
+                    style={{ backgroundColor: STATUS_COLORS[status] }}
+                  />
                 </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-3">
-              {col2.map((p) => (
-                <div key={p.id} className="flex gap-2 text-[14px] font-semibold text-[#1E1035]">
-                  <span className="w-5 text-right">{p.id}.</span>
-                  <span>{p.label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-3">
-              {col3.map((p) => (
-                <div key={p.id} className="flex gap-2 text-[14px] font-semibold text-[#1E1035]">
-                  <span className="w-5 text-right">{p.id}.</span>
-                  <span>{p.label}</span>
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
@@ -412,9 +415,9 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
         )}
 
         {/* General Photos Image Upload Box */}
-        <div className="flex flex-wrap gap-4 items-center mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 sm:gap-4 items-center mt-6 w-full">
           {chassisImages.map((imgUrl, i) => (
-            <div key={i} className="w-[180px] relative group/img">
+            <div key={i} className="w-full md:w-[180px] relative group/img">
               <ImageUploadBox 
                 status="completed" 
                 url={imgUrl} 
@@ -436,7 +439,7 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
 
           {chassisImages.length < maxImages ? (
             <div 
-              className="w-[180px] cursor-pointer" 
+              className="w-full md:w-[180px] cursor-pointer" 
               onClick={() => fileInputRef.current?.click()}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}

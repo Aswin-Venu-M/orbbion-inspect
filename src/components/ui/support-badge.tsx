@@ -44,7 +44,7 @@ export const SupportBadge: React.FC<SupportBadgeProps> = ({ className = '' }) =>
       ref={badgeRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed bottom-[84px] md:bottom-6 right-3 sm:right-4 md:right-6 z-[100] flex items-center transition-all duration-300 select-none origin-bottom-right print:hidden ${
+      className={`fixed bottom-[86px] md:bottom-6 right-3 sm:right-4 md:right-6 z-40 flex items-center transition-all duration-300 select-none origin-bottom-right print:hidden ${
         isVisible
           ? 'bg-white/95 backdrop-blur-md border border-slate-200/80 px-3 sm:px-3.5 py-2 sm:py-2 rounded-2xl shadow-xl'
           : 'bg-[#180321] p-2 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'

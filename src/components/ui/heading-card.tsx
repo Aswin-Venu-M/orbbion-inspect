@@ -262,9 +262,9 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
         </div>
 
         {/* Photos List + Upload Option */}
-        <div className="flex flex-wrap gap-4 items-center mt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 sm:gap-4 items-center mt-1 w-full">
           {images.map((url, index) => (
-            <div key={`${url}-${index}`} className="w-[180px] sm:w-[220px] relative group/img">
+            <div key={`${url}-${index}`} className="w-full md:w-[200px] relative group/img">
               <ImageUploadBox 
                 status="completed" 
                 url={url} 
@@ -286,7 +286,7 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
 
           {!isMaxReached ? (
             <div 
-              className="w-[180px] sm:w-[220px] cursor-pointer"
+              className="w-full md:w-[200px] cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -300,7 +300,7 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
               />
             </div>
           ) : (
-            <div className="text-xs text-slate-400 font-medium px-2 py-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center">
+            <div className="text-xs text-slate-400 font-medium px-2 py-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 flex items-center justify-center text-center col-span-2 sm:col-span-1">
               Maximum photo limit ({maxImages}) reached
             </div>
           )}

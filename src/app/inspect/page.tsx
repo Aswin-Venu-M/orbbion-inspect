@@ -108,7 +108,12 @@ function InspectDashboardContent({
   // Tab & Gallery State
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('sections');
-  const [activeLeftDrawer, setActiveLeftDrawer] = useState<'sections' | 'gallery' | null>('sections');
+  const [activeLeftDrawer, setActiveLeftDrawer] = useState<'sections' | 'gallery' | null>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      return null;
+    }
+    return 'sections';
+  });
   const isSectionsOpen = activeLeftDrawer === 'sections';
   const isGalleryOpen = activeLeftDrawer === 'gallery';
   const [isDragging, setIsDragging] = useState(false);
@@ -369,9 +374,17 @@ function InspectDashboardContent({
 
   // Smooth Preview Page Navigation
   const scrollToPreviewPage = (pageNumber: number) => {
-    const el = document.getElementById(`preview-page-${pageNumber}`);
+    const el = (previewScrollRef.current?.querySelector(`#preview-page-${pageNumber}`) as HTMLElement) || document.getElementById(`preview-page-${pageNumber}`);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (previewScrollRef.current) {
+        const container = previewScrollRef.current;
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const offset = rect.top - containerRect.top + container.scrollTop;
+        container.scrollTo({ top: Math.max(0, offset - 10), behavior: 'smooth' });
+      } else {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       setPreviewPage(pageNumber);
     }
   };
@@ -1381,11 +1394,312 @@ function InspectDashboardContent({
     }
   };
 
+  const renderSectionsDrawerContent = (isMobileOverlay = false) => (
+    <div className="w-full xl:w-[320px] h-full flex flex-col overflow-hidden">
+      <InspectorSidebarTabs 
+        className="h-full border-0 shadow-none"
+        showTabs={isMobileOverlay}
+        sectionOrder={sectionOrder}
+        onSectionOrderChange={handleSectionOrderChange}
+        report={report}
+        onUpdateClientDetails={(details) => updateReport({
+          clientDetails: { ...report.clientDetails, ...details }
+        })}
+        onUpdateTeamDetails={(details) => updateReport({
+          teamDetails: { ...report.teamDetails, ...details }
+        })}
+        countryCodeOptions={countryCodeOptions}
+        locationOptions={locationOptions}
+        inspectorOptions={inspectorOptions}
+        onSectionSelect={isMobileOverlay ? () => setActiveLeftDrawer(null) : undefined}
+      />
+    </div>
+  );
+
+  const renderGalleryDrawerContent = () => (
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+      {mediaFiles.length > 0 && (
+        <>
+          <div className="flex justify-between items-center mb-3 shrink-0 min-h-[44px] sm:min-h-[48px] gap-2">
+            {selectedMediaCount > 0 ? (
+              <>
+                <div className="flex flex-col min-w-0">
+                  <h3 className="text-[#1E1035] text-[14px] sm:text-[15px] font-bold tracking-tight leading-tight truncate">
+                    {selectedMediaCount} Selected
+                  </h3>
+                  <button 
+                    onClick={toggleSelectAllMedia}
+                    className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit cursor-pointer"
+                  >
+                    <Check size={13} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] sm:text-[11.5px] font-bold leading-tight underline decoration-1 underline-offset-2">
+                      {mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}
+                    </span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button 
+                    type="button"
+                    onClick={openAssignModal}
+                    className="h-[36px] sm:h-[38px] px-3 rounded-[12px] bg-[#9723FF] hover:bg-[#8213e4] text-white flex items-center gap-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    title="Assign selected photos to report field"
+                  >
+                    <ArrowRightLeft size={14} />
+                    <span>Assign</span>
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleRequestDeleteSelected}
+                    className="w-[36px] h-[36px] sm:w-[38px] sm:h-[38px] rounded-[12px] bg-[#fae5e6] hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer border border-red-200 shadow-xs"
+                    title="Delete Selected"
+                  >
+                    <Trash2 size={16} strokeWidth={2} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col">
+                  <h3 className="text-[#1E1035] text-[15px] sm:text-[16px] font-bold tracking-tight leading-tight">
+                    {mediaFiles.length} Media
+                  </h3>
+                  <p className="text-[#74768B] text-[11px] sm:text-[12px] font-medium leading-tight mt-0.5">
+                    Drag to field or click +
+                  </p>
+                </div>
+                <button 
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-[14px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer shadow-xs"
+                  title="Add Media Files"
+                >
+                  <Plus size={20} strokeWidth={2.5} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Filter Tabs */}
+          {(() => {
+            const assignedCount = mediaFiles.filter(m => getMediaUsage(m.url).length > 0).length;
+            const unassignedCount = mediaFiles.length - assignedCount;
+            return (
+              <div className="flex items-center gap-1 p-1 bg-[#F4F5F8] rounded-xl mb-3 text-[11px] font-semibold shrink-0 border border-slate-200/50">
+                <button
+                  type="button"
+                  onClick={() => setFilter('all')}
+                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                    filter === 'all' 
+                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  All ({mediaFiles.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter('unassigned')}
+                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                    filter === 'unassigned' 
+                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Unassigned ({unassignedCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter('assigned')}
+                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                    filter === 'assigned' 
+                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  In Report ({assignedCount})
+                </button>
+              </div>
+            );
+          })()}
+        </>
+      )}
+
+      <motion.div 
+        animate={{
+          scale: isDragging ? 0.98 : 1,
+          backgroundColor: isDragging ? "#F8FAFC" : "rgba(255, 255, 255, 0)",
+          borderColor: isDragging ? "#1E1035" : "rgba(226, 228, 235, 0.5)"
+        }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className={`flex-1 flex flex-col relative overflow-hidden ${mediaFiles.length === 0 ? 'rounded-[24px] border-2 border-dashed' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input 
+          type="file" 
+          ref={galleryFileInputRef} 
+          onChange={(e) => {
+            if (e.target.files) addMediaFiles(e.target.files);
+            if (e.target) e.target.value = '';
+          }} 
+          multiple 
+          accept="image/*" 
+          className="hidden" 
+        />
+
+        {mediaFiles.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center relative p-4 text-center">
+            <div className="relative w-full flex items-center justify-center mb-4">
+              <img 
+                src="/assets/empty-media.png" 
+                alt="Empty Media" 
+                className="w-40 sm:w-48 h-auto object-contain pointer-events-none"
+              />
+            </div>
+            
+            <h2 className="text-[#1E1035] text-[18px] sm:text-[20px] font-bold mb-1">It&apos;s empty in here.</h2>
+            <p className="text-[#A0A4AB] text-[12px] mb-4">Add some media to bring this album to life.</p>
+            <button 
+              onClick={() => galleryFileInputRef.current?.click()}
+              className="bg-[#3e045a] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm cursor-pointer"
+            >
+              Add Media <Plus size={16} />
+            </button>
+          </div>
+        ) : filteredMediaFiles.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
+            <ImageIcon size={32} className="mb-2 opacity-40 text-[#1E1035]" />
+            <p className="text-xs font-semibold text-slate-600">
+              No {filter === 'assigned' ? 'assigned' : 'unassigned'} photos found
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className="mt-2 text-xs font-bold text-[#9723FF] hover:underline cursor-pointer"
+            >
+              View all ({mediaFiles.length})
+            </button>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 gap-2.5">
+              {filteredMediaFiles.map((media) => {
+                const usage = getMediaUsage(media.url);
+                const isInReport = usage.length > 0;
+                return (
+                  <div 
+                    key={media.id} 
+                    draggable={media.status === 'completed'}
+                    onDragStart={(e) => startDraggingMedia(media, e)}
+                    onDragEnd={endDraggingMedia}
+                    className={`relative group rounded-[16px] overflow-hidden aspect-square border transition-all ${
+                      media.selected 
+                        ? 'border-[#9723FF] ring-2 ring-[#9723FF]/40 shadow-sm' 
+                        : isInReport 
+                          ? 'border-emerald-400 ring-1 ring-emerald-400/40' 
+                          : 'border-[#cfd2e0]'
+                    } ${media.status === 'completed' ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-default'} bg-slate-100 select-none`}
+                  >
+                    <img 
+                      src={media.url} 
+                      alt={media.name} 
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100 group-hover:scale-105'
+                      }`} 
+                    />
+
+                    {/* Usage badge in bottom left */}
+                    {media.status === 'completed' && isInReport && (
+                      <div 
+                        title={`Attached in:\n${usage.map(u => `• ${u.label} (${u.section})`).join('\n')}`}
+                        className="absolute bottom-1.5 left-1.5 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#1E1035]/85 backdrop-blur-xs text-[9.5px] font-bold text-white shadow-xs pointer-events-auto cursor-help"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <span>{usage.length > 1 ? `${usage.length} in report` : 'in report'}</span>
+                      </div>
+                    )}
+
+                    {/* Drag hint on hover */}
+                    {media.status === 'completed' && !isInReport && (
+                      <div className="absolute bottom-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 text-[9px] bg-black/60 text-white font-medium px-1.5 py-0.5 rounded backdrop-blur-xs pointer-events-none">
+                        Drag
+                      </div>
+                    )}
+
+                    {media.status === 'uploading' && (
+                      <div className="absolute inset-0 bg-black/30 flex flex-col justify-between p-2 z-10">
+                        <div className="flex justify-end w-full">
+                          <button 
+                            onClick={() => removeMedia(media.id)}
+                            className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-red-200 shadow-xs"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1 w-full bg-black/60 p-2 rounded-xl backdrop-blur-xs">
+                          <span className="text-white text-[10.5px] font-medium tracking-wide">Uploading...</span>
+                          <div className="flex items-center gap-1.5 w-full">
+                            <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
+                              <div className="h-full bg-white rounded-full transition-all" style={{ width: `${media.progress}%` }} />
+                            </div>
+                            <span className="text-white text-[10px] font-medium whitespace-nowrap">{media.progress}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {media.status === 'completed' && (
+                      <>
+                        {/* Top right delete button */}
+                        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-85 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity z-20">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRequestDeleteSingle(media);
+                            }}
+                            className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-red-200"
+                            title={isInReport ? 'Delete photo (attached to report)' : 'Delete photo'}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        
+                        {/* Center checkmark toggle */}
+                        <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-70 xl:opacity-0 xl:group-hover:opacity-100'}`}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMediaSelect(media.id);
+                            }}
+                            className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
+                              media.selected 
+                                ? 'bg-white border-white scale-110 shadow-md' 
+                                : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
+                            } border cursor-pointer`}
+                            title={media.selected ? 'Deselect photo' : 'Select photo'}
+                          >
+                            <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+
   return (
     <>
       {/* Dedicated Print-Only Report Container: 100% pure A4 output matching Report Preview exactly */}
       <div className="hidden print:block w-[210mm] max-w-[210mm] min-w-[210mm] mx-auto p-0 m-0 bg-white">
         <ReportPreview 
+          idPrefix="print-page-"
           tyres={report.tyres} 
           rims={report.rims} 
           brakes={report.brakes}
@@ -1399,7 +1713,9 @@ function InspectDashboardContent({
 
       {/* Screen Interactive Workspace */}
       <div 
-        className={`min-h-screen xl:h-screen bg-[#F8F9FB] bg-dot-pattern flex flex-col xl:flex-row p-2.5 sm:p-4 pl-2.5 sm:pl-4 md:pl-[106px] gap-3 sm:gap-4 overflow-x-hidden overflow-y-auto xl:overflow-hidden print:hidden ${familjen.className}`}
+        className={`bg-[#F8F9FB] bg-dot-pattern flex flex-col xl:flex-row p-2.5 sm:p-4 pl-2.5 sm:pl-4 md:pl-[106px] gap-3 sm:gap-4 overflow-x-hidden ${
+          activeTab === 'view' ? 'h-screen overflow-hidden' : 'min-h-screen xl:h-screen overflow-y-auto xl:overflow-hidden'
+        } print:hidden ${familjen.className}`}
         onMouseMove={handleAppMouseMove}
       >
       {/* Hidden Card Image Selector Input */}
@@ -1433,40 +1749,51 @@ function InspectDashboardContent({
       </AnimatePresence>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[76px] bg-white border-t border-slate-100 flex items-center justify-around px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-2 print:hidden">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[68px] bg-white border-t border-slate-100 flex items-center justify-around px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom,0px)] print:hidden">
         <button 
           onClick={() => setActiveTab(activeTab === 'edit' ? 'view' : 'edit')}
-          className="flex flex-col items-center justify-center gap-1.5 w-16 h-full text-[#180321] opacity-70 hover:opacity-100 transition-opacity"
+          className={`flex flex-col items-center justify-center gap-1 w-14 h-full transition-all cursor-pointer ${
+            activeTab === 'view' ? 'text-[#9723FF] font-bold' : 'text-[#180321] opacity-70 hover:opacity-100'
+          }`}
         >
-          <Home size={22} fill={activeTab === 'edit' ? "currentColor" : "none"} strokeWidth={2} />
-          <span className="text-[10px] font-medium">{activeTab === 'edit' ? 'View' : 'Edit'}</span>
+          {activeTab === 'edit' ? (
+            <>
+              <Eye size={20} strokeWidth={2.2} />
+              <span className="text-[10px] font-medium">Preview</span>
+            </>
+          ) : (
+            <>
+              <Pencil size={20} strokeWidth={2.2} />
+              <span className="text-[10px] font-medium">Edit</span>
+            </>
+          )}
         </button>
         <button 
           onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'gallery' ? null : 'gallery')}
-          className={`flex flex-col items-center justify-center gap-1.5 w-16 h-full transition-all ${isGalleryOpen ? 'text-[#9723FF] opacity-100' : 'text-[#180321] opacity-50 hover:opacity-100'}`}
+          className={`flex flex-col items-center justify-center gap-1 w-14 h-full transition-all cursor-pointer ${isGalleryOpen ? 'text-[#9723FF] font-bold' : 'text-[#180321] opacity-60 hover:opacity-100'}`}
         >
-          <GalleryIcon size={22} className={isGalleryOpen ? 'drop-shadow-sm' : ''} />
+          <GalleryIcon size={20} className={isGalleryOpen ? 'drop-shadow-sm' : ''} />
           <span className="text-[10px] font-medium">Gallery</span>
         </button>
         <button 
           onClick={() => setActiveLeftDrawer(activeLeftDrawer === 'sections' ? null : 'sections')}
-          className={`flex flex-col items-center justify-center gap-1.5 w-16 h-full transition-all ${isSectionsOpen ? 'text-[#9723FF] opacity-100' : 'text-[#180321] opacity-50 hover:opacity-100'}`}
+          className={`flex flex-col items-center justify-center gap-1 w-14 h-full transition-all cursor-pointer ${isSectionsOpen ? 'text-[#9723FF] font-bold' : 'text-[#180321] opacity-60 hover:opacity-100'}`}
         >
-          <ListOrdered size={22} strokeWidth={2} />
+          <ListOrdered size={20} strokeWidth={2.2} />
           <span className="text-[10px] font-medium">Sections</span>
         </button>
         <button 
           onClick={() => setIsSearchOpen(true)}
-          className="flex flex-col items-center justify-center gap-1.5 w-16 h-full text-[#180321] opacity-60 hover:opacity-100 transition-opacity"
+          className="flex flex-col items-center justify-center gap-1 w-14 h-full text-[#180321] opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
         >
-          <Search size={22} strokeWidth={2} />
+          <Search size={20} strokeWidth={2.2} />
           <span className="text-[10px] font-medium">Search</span>
         </button>
         <button 
           onClick={() => setIsHelpOpen(true)}
-          className="flex flex-col items-center justify-center gap-1.5 w-16 h-full text-[#180321] opacity-60 hover:opacity-100 transition-opacity"
+          className="flex flex-col items-center justify-center gap-1 w-14 h-full text-[#180321] opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
         >
-          <HelpCircle size={22} strokeWidth={2} />
+          <HelpCircle size={20} strokeWidth={2.2} />
           <span className="text-[10px] font-medium">Help</span>
         </button>
       </nav>
@@ -1539,71 +1866,96 @@ function InspectDashboardContent({
       </nav>
 
       {/* Main Workspace Area containing header + 3 columns */}
-      <div className="flex-1 flex flex-col gap-3 sm:gap-4 overflow-visible xl:overflow-hidden min-w-0">
-        
-        {/* Top Header */}
-        <header className="relative w-full min-h-[64px] sm:min-h-[72px] h-auto bg-white rounded-[20px] sm:rounded-[24px] shadow-sm border border-slate-100 shrink-0 flex flex-wrap xl:flex-nowrap items-center justify-between px-3.5 sm:px-5 py-2.5 sm:py-3 xl:py-0 gap-3 xl:gap-0 z-10 print:hidden">
+      <div className={`flex-1 flex flex-col gap-3 sm:gap-4 ${
+        activeTab === 'view' ? 'h-full overflow-hidden' : 'overflow-visible xl:overflow-hidden'
+      } min-w-0`}>
+                {/* Top Header */}
+        <header className="relative w-full bg-white rounded-[20px] sm:rounded-[24px] shadow-sm border border-slate-100 shrink-0 flex flex-col xl:flex-row items-stretch xl:items-center justify-between px-3.5 sm:px-5 py-2.5 sm:py-3 xl:py-0 xl:min-h-[72px] gap-2.5 xl:gap-0 z-10 print:hidden">
           
-          {/* Left Section with Breadcrumb */}
-          <div className="flex items-center gap-3 md:gap-4">
-            <Link 
-              href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1E1035] text-xs font-bold transition-all border border-slate-200/70 shrink-0"
-              title="Go back"
-            >
-              <ArrowLeft size={14} strokeWidth={2.5} />
-              <span>Back</span>
-            </Link>
-            
-            <div className="h-6 w-px bg-slate-200 hidden sm:block shrink-0" />
+          {/* Top Row / Desktop Left Section */}
+          <div className="flex items-center justify-between xl:justify-start gap-2 sm:gap-4 w-full xl:w-auto">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Link 
+                href="/"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1E1035] text-xs font-bold transition-all border border-slate-200/70 shrink-0"
+                title="Go back"
+              >
+                <ArrowLeft size={14} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Back</span>
+              </Link>
+              
+              <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0" />
 
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h1 className="text-[17px] md:text-[18px] font-bold text-[#1E1035] tracking-tight">{report.title}</h1>
-                <button 
-                  onClick={() => setIsHelpOpen(true)}
-                  className="w-5 h-5 rounded-full bg-[#EBDCF9] flex items-center justify-center text-[#9723FF] hover:bg-[#D9A8FF] transition-colors"
-                  title="View report details"
-                >
-                  <Info size={12} strokeWidth={3} />
-                </button>
-                {report.status === 'published' && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="bg-[#E8F8EE] text-[#1E7E34] border border-[#B3EBC8] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      Published
-                    </span>
-                    <button
-                      type="button"
-                      onClick={copyPublishLink}
-                      title="Copy Public Certificate Link"
-                      className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#9723FF] hover:text-[#7915D4] bg-purple-50 hover:bg-purple-100 border border-purple-200/70 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
-                    >
-                      {isCopied ? <Check size={11} className="text-green-600" /> : <Share2 size={11} />}
-                      <span>{isCopied ? 'Copied' : 'Share'}</span>
-                    </button>
-                  </div>
-                )}
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h1 className="text-[15px] sm:text-[17px] md:text-[18px] font-bold text-[#1E1035] tracking-tight truncate max-w-[130px] sm:max-w-xs md:max-w-md">
+                    {report.title}
+                  </h1>
+                  <button 
+                    onClick={() => setIsHelpOpen(true)}
+                    className="w-5 h-5 rounded-full bg-[#EBDCF9] flex items-center justify-center text-[#9723FF] hover:bg-[#D9A8FF] transition-colors shrink-0 cursor-pointer"
+                    title="View report details"
+                  >
+                    <Info size={12} strokeWidth={3} />
+                  </button>
+                  {report.status === 'published' && (
+                    <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                      <span className="bg-[#E8F8EE] text-[#1E7E34] border border-[#B3EBC8] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Published
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyPublishLink}
+                        title="Copy Public Certificate Link"
+                        className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#9723FF] hover:text-[#7915D4] bg-purple-50 hover:bg-purple-100 border border-purple-200/70 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
+                      >
+                        {isCopied ? <Check size={11} className="text-green-600" /> : <Share2 size={11} />}
+                        <span>{isCopied ? 'Copied' : 'Share'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Cloud 
+                    size={11} 
+                    className={`transition-colors ${saveStatus === 'saving' ? 'text-amber-500 animate-pulse' : 'text-[#1E1035]'}`} 
+                    strokeWidth={2.5} 
+                  />
+                  <span className="text-[10.5px] sm:text-[11px] font-semibold text-[#1E1035] truncate">
+                    {saveStatus === 'saving' ? 'Saving changes...' : report.lastSavedAt}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <Cloud 
-                  size={12} 
-                  className={`transition-colors ${saveStatus === 'saving' ? 'text-amber-500 animate-pulse' : 'text-[#1E1035]'}`} 
-                  strokeWidth={2.5} 
-                />
-                <span className="text-[11px] font-semibold text-[#1E1035]">
-                  {saveStatus === 'saving' ? 'Saving changes...' : report.lastSavedAt}
-                </span>
-              </div>
+            </div>
+
+            {/* Mobile-only right action buttons (Reset + Publish) */}
+            <div className="flex xl:hidden items-center gap-1.5 shrink-0">
+              <button 
+                type="button"
+                onClick={() => setIsResetConfirmOpen(true)}
+                className="bg-[#f1f2f6] border border-[#cfd2e0] flex items-center justify-center px-2.5 py-1.5 rounded-xl text-[#3e045a] hover:bg-[#e4e5e9] transition-colors cursor-pointer text-xs font-bold"
+                title="Reset Report"
+              >
+                Reset
+              </button>
+              <button 
+                type="button"
+                onClick={handlePublish}
+                className="bg-[#3e045a] border border-[#cfd2e0] flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-white hover:bg-[#2c0340] active:scale-[0.98] transition-all cursor-pointer shadow-xs text-xs font-bold"
+                title="Publish Report"
+              >
+                <span>Publish</span>
+              </button>
             </div>
           </div>
 
-          {/* Tools Center Bar */}
-          <div className="flex xl:absolute xl:left-1/2 xl:-translate-x-1/2 items-center justify-center gap-2 sm:gap-3 order-last xl:order-none w-full xl:w-auto mt-2 xl:mt-0">
+          {/* Tools Center Bar: On desktop centered; on mobile a sleek second row */}
+          <div className="flex xl:absolute xl:left-1/2 xl:-translate-x-1/2 items-center justify-between sm:justify-center gap-1.5 sm:gap-3 w-full xl:w-auto pt-1.5 xl:pt-0 border-t xl:border-t-0 border-slate-100">
             {/* Edit/View Toggle */}
-            <div className="p-1 bg-[#F3F4F9] rounded-2xl outline outline-1 outline-offset-[-1px] outline-[#CFD2DF] inline-flex justify-start items-center gap-1 shadow-sm">
+            <div className="p-0.5 sm:p-1 bg-[#F3F4F9] rounded-2xl outline outline-1 outline-offset-[-1px] outline-[#CFD2DF] inline-flex justify-start items-center gap-1 shadow-xs">
               <button 
                 onClick={() => setActiveTab('edit')}
-                className="relative w-10 h-10 rounded-xl flex justify-center items-center transition-opacity cursor-pointer"
+                className="relative h-8 sm:h-10 px-2.5 sm:w-10 rounded-xl flex items-center justify-center gap-1 transition-opacity cursor-pointer"
                 style={{ opacity: activeTab === 'edit' ? 1 : 0.5 }}
                 title="Edit Report"
               >
@@ -1614,15 +1966,15 @@ function InspectDashboardContent({
                     transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                   />
                 )}
-                <div className="relative z-10 w-6 h-6 flex flex-col items-center justify-center">
-                  <PencilIcon size={14} className={`absolute top-1 ml-[3px] transition-colors ${activeTab === 'edit' ? 'text-white' : 'text-[#180321]'}`} />
-                  <div className={`w-4 h-[2px] absolute bottom-[1px] rounded-full transition-colors ${activeTab === 'edit' ? 'bg-white opacity-50' : 'bg-[#180321] opacity-30'}`}></div>
+                <div className="relative z-10 flex items-center gap-1">
+                  <PencilIcon size={14} className={activeTab === 'edit' ? 'text-white' : 'text-[#180321]'} />
+                  <span className={`text-[11px] font-bold sm:hidden ${activeTab === 'edit' ? 'text-white' : 'text-[#180321]'}`}>Edit</span>
                 </div>
               </button>
 
               <button 
                 onClick={() => setActiveTab('view')}
-                className="relative w-10 h-10 rounded-xl flex justify-center items-center transition-opacity cursor-pointer"
+                className="relative h-8 sm:h-10 px-2.5 sm:w-10 rounded-xl flex items-center justify-center gap-1 transition-opacity cursor-pointer"
                 style={{ opacity: activeTab === 'view' ? 1 : 0.5 }}
                 title="Preview Live Document"
               >
@@ -1633,394 +1985,107 @@ function InspectDashboardContent({
                     transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                   />
                 )}
-                <div className="relative z-10 w-6 h-6 flex items-center justify-center">
-                  <EyeIcon size={20} className={`transition-colors ${activeTab === 'view' ? 'text-white' : 'text-[#180321]'}`} />
+                <div className="relative z-10 flex items-center gap-1">
+                  <EyeIcon size={16} className={activeTab === 'view' ? 'text-white' : 'text-[#180321]'} />
+                  <span className={`text-[11px] font-bold sm:hidden ${activeTab === 'view' ? 'text-white' : 'text-[#180321]'}`}>Preview</span>
                 </div>
               </button>
             </div>
 
-            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+            <div className="w-px h-5 bg-slate-200 mx-0.5 sm:mx-1"></div>
 
             {/* Undo / Redo */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button 
                 onClick={undo}
                 disabled={!canUndo}
                 title="Undo (Ctrl+Z)"
-                className="w-10 h-10 bg-[#F4F5F8] rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                <RotateCcw size={16} />
+                <RotateCcw size={15} />
               </button>
               <button 
                 onClick={redo}
                 disabled={!canRedo}
                 title="Redo (Ctrl+Y)"
-                className="w-10 h-10 bg-[#F4F5F8] rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                <RotateCw size={16} />
+                <RotateCw size={15} />
               </button>
             </div>
 
-            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+            <div className="w-px h-5 bg-slate-200 mx-0.5 sm:mx-1"></div>
 
             {/* Print / Download */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button 
                 onClick={handlePrint}
                 title="Print Report (PDF)"
-                className="w-10 h-10 bg-[#F4F5F8] rounded-[14px] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-sm cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-2xs cursor-pointer"
               >
-                <Printer size={16} strokeWidth={2.5} />
+                <Printer size={15} strokeWidth={2.2} />
               </button>
               <button 
                 onClick={handleDownload}
                 title="Download JSON Report Data"
-                className="w-10 h-10 bg-[#F4F5F8] rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-sm cursor-pointer"
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs cursor-pointer"
               >
-                <Download size={16} />
+                <Download size={15} />
               </button>
             </div>
           </div>
 
-          {/* Right Section */}
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex border-2 border-[#92a2f6] p-[2px] rounded-full shrink-0 size-[38px] sm:size-[42px] items-center justify-center">
+          {/* Right Section: Desktop only */}
+          <div className="hidden xl:flex items-center gap-2">
+            <div className="border-2 border-[#92a2f6] p-[2px] rounded-full shrink-0 size-[42px] flex items-center justify-center">
               <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" className="size-full object-cover rounded-full" />
             </div>
             <button 
               type="button"
               onClick={() => setIsResetConfirmOpen(true)}
-              className="bg-[#f1f2f6] border border-[#cfd2e0] flex items-center justify-center px-3 sm:px-[20px] py-2 sm:py-[12px] rounded-[14px] sm:rounded-[16px] text-[#3e045a] hover:bg-[#e4e5e9] transition-colors whitespace-nowrap cursor-pointer text-xs font-bold"
+              className="bg-[#f1f2f6] border border-[#cfd2e0] flex items-center justify-center px-[20px] py-[12px] rounded-[16px] text-[#3e045a] hover:bg-[#e4e5e9] transition-colors whitespace-nowrap cursor-pointer text-xs font-bold"
             >
-              <span>Reset <span className="hidden sm:inline">Report</span></span>
+              <span>Reset Report</span>
             </button>
             <button 
               type="button"
               onClick={handlePublish}
-              className="bg-[#3e045a] border border-[#cfd2e0] flex items-center justify-center gap-1.5 px-3.5 sm:px-[24px] py-2 sm:py-[12px] rounded-[14px] sm:rounded-[16px] text-white hover:bg-[#2c0340] active:scale-[0.98] transition-all whitespace-nowrap cursor-pointer shadow-sm text-xs font-bold"
+              className="bg-[#3e045a] border border-[#cfd2e0] flex items-center justify-center gap-1.5 px-[24px] py-[12px] rounded-[16px] text-white hover:bg-[#2c0340] active:scale-[0.98] transition-all whitespace-nowrap cursor-pointer shadow-sm text-xs font-bold"
             >
               <span>Publish</span>
-              <FileText size={15} className="hidden sm:block" />
+              <FileText size={15} />
             </button>
           </div>
         </header>
 
         {/* 3 Columns Layout or Preview */}
-        <div className="flex-1 flex flex-col xl:flex-row gap-4 overflow-visible xl:overflow-hidden pb-32 md:pb-6 xl:pb-0 custom-scrollbar relative">
+        <div className={`flex-1 flex flex-col xl:flex-row gap-4 ${
+          activeTab === 'view' ? 'overflow-hidden pb-0' : 'overflow-visible xl:overflow-hidden pb-32 md:pb-6 xl:pb-0'
+        } custom-scrollbar relative`}>
           
           {activeTab === 'edit' ? (
             <>
-              {/* Sections Drawer (Collapsible) */}
+              {/* Desktop Sections Drawer (Collapsible) */}
               <div 
-                className={`shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
+                className={`hidden xl:block shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
                   isSectionsOpen 
-                    ? 'max-h-[700px] xl:max-h-none w-full xl:max-w-[320px] opacity-100' 
-                    : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0 pointer-events-none'
+                    ? 'max-w-[320px] opacity-100' 
+                    : 'max-w-0 opacity-0 pointer-events-none'
                 }`}
               >
-                <div className="w-full xl:w-[320px] h-full flex flex-col overflow-hidden">
-                  <InspectorSidebarTabs 
-                    className="h-full"
-                    showTabs={false}
-                    sectionOrder={sectionOrder}
-                    onSectionOrderChange={handleSectionOrderChange}
-                    report={report}
-                    onUpdateClientDetails={(details) => updateReport({
-                      clientDetails: { ...report.clientDetails, ...details }
-                    })}
-                    onUpdateTeamDetails={(details) => updateReport({
-                      teamDetails: { ...report.teamDetails, ...details }
-                    })}
-                    countryCodeOptions={countryCodeOptions}
-                    locationOptions={locationOptions}
-                    inspectorOptions={inspectorOptions}
-                  />
-                </div>
+                {renderSectionsDrawerContent(false)}
               </div>
 
-              {/* 2. Media Drawer */}
+              {/* Desktop Media Drawer (Collapsible) */}
               <div 
-                className={`shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
+                className={`hidden xl:block shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
                   isGalleryOpen 
-                    ? 'max-h-[600px] xl:max-h-none w-full xl:max-w-[310px] opacity-100' 
-                    : 'max-h-0 xl:max-h-none w-full xl:max-w-0 opacity-0 pointer-events-none'
+                    ? 'max-w-[310px] opacity-100' 
+                    : 'max-w-0 opacity-0 pointer-events-none'
                 }`}
               >
-                <div className="w-full xl:w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-5 z-10 border border-slate-100 h-[400px] xl:h-full">
-                  
-                  {mediaFiles.length > 0 && (
-                    <>
-                      <div className="flex justify-between items-center mb-3 shrink-0 min-h-[48px] gap-2">
-                        {selectedMediaCount > 0 ? (
-                          <>
-                            <div className="flex flex-col min-w-0">
-                              <h3 className="text-[#1E1035] text-[15px] font-bold tracking-tight leading-tight truncate">
-                                {selectedMediaCount} Selected
-                              </h3>
-                              <button 
-                                onClick={toggleSelectAllMedia}
-                                className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit cursor-pointer"
-                              >
-                                <Check size={13} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                                <span className="text-[11.5px] font-bold leading-tight underline decoration-1 underline-offset-2">
-                                  {mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}
-                                </span>
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <button 
-                                type="button"
-                                onClick={openAssignModal}
-                                className="h-[38px] px-3 rounded-[12px] bg-[#9723FF] hover:bg-[#8213e4] text-white flex items-center gap-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-                                title="Assign selected photos to report field"
-                              >
-                                <ArrowRightLeft size={14} />
-                                <span>Assign</span>
-                              </button>
-                              <button 
-                                type="button"
-                                onClick={handleRequestDeleteSelected}
-                                className="w-[38px] h-[38px] rounded-[12px] bg-[#fae5e6] hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer border border-red-200 shadow-xs"
-                                title="Delete Selected"
-                              >
-                                <Trash2 size={16} strokeWidth={2} />
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex flex-col">
-                              <h3 className="text-[#1E1035] text-[16px] font-bold tracking-tight leading-tight">
-                                {mediaFiles.length} Media
-                              </h3>
-                              <p className="text-[#74768B] text-[12px] font-medium leading-tight mt-0.5">
-                                Drag to field or click +
-                              </p>
-                            </div>
-                            <button 
-                              onClick={() => galleryFileInputRef.current?.click()}
-                              className="w-[42px] h-[42px] rounded-[14px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer shadow-xs"
-                              title="Add Media Files"
-                            >
-                              <Plus size={20} strokeWidth={2.5} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Filter Tabs */}
-                      {(() => {
-                        const assignedCount = mediaFiles.filter(m => getMediaUsage(m.url).length > 0).length;
-                        const unassignedCount = mediaFiles.length - assignedCount;
-                        return (
-                          <div className="flex items-center gap-1 p-1 bg-[#F4F5F8] rounded-xl mb-3 text-[11px] font-semibold shrink-0 border border-slate-200/50">
-                            <button
-                              type="button"
-                              onClick={() => setFilter('all')}
-                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
-                                filter === 'all' 
-                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              All ({mediaFiles.length})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFilter('unassigned')}
-                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
-                                filter === 'unassigned' 
-                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              Unassigned ({unassignedCount})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFilter('assigned')}
-                              className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center ${
-                                filter === 'assigned' 
-                                  ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                                  : 'text-slate-500 hover:text-slate-800'
-                              }`}
-                            >
-                              In Report ({assignedCount})
-                            </button>
-                          </div>
-                        );
-                      })()}
-                    </>
-                  )}
-
-                  <motion.div 
-                    animate={{
-                      scale: isDragging ? 0.98 : 1,
-                      backgroundColor: isDragging ? "#F8FAFC" : "rgba(255, 255, 255, 0)",
-                      borderColor: isDragging ? "#1E1035" : "rgba(226, 228, 235, 0.5)"
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    className={`flex-1 flex flex-col relative overflow-hidden ${mediaFiles.length === 0 ? 'rounded-[24px] border-2 border-dashed' : ''}`}
-                    onDragEnter={handleDragEnter}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    <input 
-                      type="file" 
-                      ref={galleryFileInputRef} 
-                      onChange={(e) => {
-                        if (e.target.files) addMediaFiles(e.target.files);
-                        if (e.target) e.target.value = '';
-                      }} 
-                      multiple 
-                      accept="image/*" 
-                      className="hidden" 
-                    />
-
-                    {mediaFiles.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center relative p-4 text-center">
-                        <div className="relative w-full flex items-center justify-center mb-4">
-                          <img 
-                            src="/assets/empty-media.png" 
-                            alt="Empty Media" 
-                            className="w-48 h-auto object-contain pointer-events-none"
-                          />
-                        </div>
-                        
-                        <h2 className="text-[#1E1035] text-[20px] font-bold mb-1">It&apos;s empty in here.</h2>
-                        <p className="text-[#A0A4AB] text-[12px] mb-4">Add some media to bring this album to life.</p>
-                        <button 
-                          onClick={() => galleryFileInputRef.current?.click()}
-                          className="bg-[#3e045a] text-white px-8 py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm cursor-pointer"
-                        >
-                          Add Media <Plus size={16} />
-                        </button>
-                      </div>
-                    ) : filteredMediaFiles.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
-                        <ImageIcon size={32} className="mb-2 opacity-40 text-[#1E1035]" />
-                        <p className="text-xs font-semibold text-slate-600">
-                          No {filter === 'assigned' ? 'assigned' : 'unassigned'} photos found
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setFilter('all')}
-                          className="mt-2 text-xs font-bold text-[#9723FF] hover:underline cursor-pointer"
-                        >
-                          View all ({mediaFiles.length})
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
-                        <div className="grid grid-cols-2 gap-[10px]">
-                          {filteredMediaFiles.map((media) => {
-                            const usage = getMediaUsage(media.url);
-                            const isInReport = usage.length > 0;
-                            return (
-                              <div 
-                                key={media.id} 
-                                draggable={media.status === 'completed'}
-                                onDragStart={(e) => startDraggingMedia(media, e)}
-                                onDragEnd={endDraggingMedia}
-                                className={`relative group rounded-[16px] overflow-hidden aspect-square border transition-all ${
-                                  media.selected 
-                                    ? 'border-[#9723FF] ring-2 ring-[#9723FF]/40 shadow-sm' 
-                                    : isInReport 
-                                      ? 'border-emerald-400 ring-1 ring-emerald-400/40' 
-                                      : 'border-[#cfd2e0]'
-                                } ${media.status === 'completed' ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-default'} bg-slate-100 select-none`}
-                              >
-                                <img 
-                                  src={media.url} 
-                                  alt={media.name} 
-                                  className={`w-full h-full object-cover transition-all duration-300 ${
-                                    media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100 group-hover:scale-105'
-                                  }`} 
-                                />
-
-                                {/* Usage badge in bottom left */}
-                                {media.status === 'completed' && isInReport && (
-                                  <div 
-                                    title={`Attached in:\n${usage.map(u => `• ${u.label} (${u.section})`).join('\n')}`}
-                                    className="absolute bottom-1.5 left-1.5 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#1E1035]/85 backdrop-blur-xs text-[9.5px] font-bold text-white shadow-xs pointer-events-auto cursor-help"
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                    <span>{usage.length > 1 ? `${usage.length} in report` : 'in report'}</span>
-                                  </div>
-                                )}
-
-                                {/* Drag hint on hover */}
-                                {media.status === 'completed' && !isInReport && (
-                                  <div className="absolute bottom-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 text-[9px] bg-black/60 text-white font-medium px-1.5 py-0.5 rounded backdrop-blur-xs pointer-events-none">
-                                    Drag
-                                  </div>
-                                )}
-
-                                {media.status === 'uploading' && (
-                                  <div className="absolute inset-0 bg-black/30 flex flex-col justify-between p-2 z-10">
-                                    <div className="flex justify-end w-full">
-                                      <button 
-                                        onClick={() => removeMedia(media.id)}
-                                        className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-red-200 shadow-xs"
-                                      >
-                                        <Trash2 size={15} />
-                                      </button>
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full bg-black/60 p-2 rounded-xl backdrop-blur-xs">
-                                      <span className="text-white text-[10.5px] font-medium tracking-wide">Uploading...</span>
-                                      <div className="flex items-center gap-1.5 w-full">
-                                        <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
-                                          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${media.progress}%` }} />
-                                        </div>
-                                        <span className="text-white text-[10px] font-medium whitespace-nowrap">{media.progress}%</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {media.status === 'completed' && (
-                                  <>
-                                    {/* Top right delete button visible on hover */}
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRequestDeleteSingle(media);
-                                        }}
-                                        className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-red-200"
-                                        title={isInReport ? 'Delete photo (attached to report)' : 'Delete photo'}
-                                      >
-                                        <Trash2 size={15} />
-                                      </button>
-                                    </div>
-                                    
-                                    {/* Center checkmark toggle */}
-                                    <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleMediaSelect(media.id);
-                                        }}
-                                        className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
-                                          media.selected 
-                                            ? 'bg-white border-white scale-110 shadow-md' 
-                                            : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
-                                        } border cursor-pointer`}
-                                        title={media.selected ? 'Deselect photo' : 'Select photo'}
-                                      >
-                                        <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
-                                      </button>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
+                <div className="w-[310px] bg-white rounded-[32px] shadow-sm flex flex-col p-5 z-10 border border-slate-100 h-full">
+                  {renderGalleryDrawerContent()}
                 </div>
               </div>
 
@@ -2158,7 +2223,7 @@ function InspectDashboardContent({
               <div 
                 ref={previewScrollRef}
                 onScroll={handlePreviewScroll}
-                className="flex-1 flex justify-center w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] xl:px-4 pb-10 xl:pb-0"
+                className="flex-1 flex justify-center w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] xl:px-4 pb-28 xl:pb-0"
               >
                 <div 
                   style={{ 
@@ -2236,20 +2301,157 @@ function InspectDashboardContent({
                     >
                       <ZoomOut size={20} strokeWidth={2} />
                     </button>
-                  </div>
-                </div>
+                  </div>                </div>
 
               </aside>
+
+              {/* Mobile Floating Bar for Preview */}
+              <div className="xl:hidden fixed bottom-[84px] left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-xl border border-slate-200/80 flex items-center gap-2.5 sm:gap-3.5 text-[#1E1035] max-w-[95vw]">
+                {/* Page Stepper */}
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={handlePrevPage} 
+                    disabled={previewPage <= 1}
+                    aria-label="Previous Page"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] active:bg-slate-200 disabled:opacity-25 transition-colors cursor-pointer"
+                  >
+                    <ChevronUp size={16} className="-rotate-90 stroke-[2.5]" />
+                  </button>
+                  <span className="text-[11px] font-bold text-[#1E1035] whitespace-nowrap">
+                    {String(previewPage).padStart(2, '0')} / {String(totalPreviewPages).padStart(2, '0')}
+                  </span>
+                  <button 
+                    onClick={handleNextPage} 
+                    disabled={previewPage >= totalPreviewPages}
+                    aria-label="Next Page"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[#1E1035] hover:bg-[#F4F5F8] active:bg-slate-200 disabled:opacity-25 transition-colors cursor-pointer"
+                  >
+                    <ChevronDown size={16} className="-rotate-90 stroke-[2.5]" />
+                  </button>
+                </div>
+
+                <div className="w-px h-4 bg-slate-200"></div>
+
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-0.5">
+                  <button 
+                    onClick={handleZoomOut} 
+                    aria-label="Zoom Out"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#1E1035] active:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <ZoomOut size={14} />
+                  </button>
+                  <button 
+                    onClick={handleZoomReset} 
+                    className="text-[10px] font-bold text-slate-600 hover:text-[#1E1035] px-1 cursor-pointer"
+                  >
+                    {zoomLevel}%
+                  </button>
+                  <button 
+                    onClick={handleZoomIn} 
+                    aria-label="Zoom In"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#1E1035] active:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <ZoomIn size={14} />
+                  </button>
+                </div>
+
+                <div className="w-px h-4 bg-slate-200"></div>
+
+                {/* Print PDF Button */}
+                <button 
+                  onClick={handlePrint}
+                  aria-label="Print Report"
+                  className="w-7 h-7 rounded-lg bg-[#3e045a] text-white flex items-center justify-center active:scale-95 transition-all shadow-2xs cursor-pointer"
+                >
+                  <Printer size={13} strokeWidth={2.2} />
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
 
+      {/* Mobile Slide-Over Sections Drawer */}
+      <AnimatePresence>
+        {isSectionsOpen && (
+          <div className="xl:hidden fixed inset-0 z-[140] flex flex-col justify-end bg-black/50 backdrop-blur-xs">
+            <div 
+              className="fixed inset-0" 
+              onClick={() => setActiveLeftDrawer(null)}
+              aria-label="Close sections overlay"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative z-10 w-full max-h-[85vh] bg-white rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden border-t border-slate-100 pb-[calc(env(safe-area-inset-bottom,0px)+8px)]"
+            >
+              <div className="flex items-center justify-between px-5 pt-3.5 pb-2.5 border-b border-slate-100">
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
+                <h3 className="text-base font-bold text-[#1E1035] flex items-center gap-2 mt-1">
+                  <ListOrdered size={18} className="text-[#9723FF]" />
+                  Inspection Sections
+                </h3>
+                <button
+                  onClick={() => setActiveLeftDrawer(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3">
+                {renderSectionsDrawerContent(true)}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Slide-Over Media Gallery Drawer */}
+      <AnimatePresence>
+        {isGalleryOpen && (
+          <div className="xl:hidden fixed inset-0 z-[140] flex flex-col justify-end bg-black/50 backdrop-blur-xs">
+            <div 
+              className="fixed inset-0" 
+              onClick={() => setActiveLeftDrawer(null)}
+              aria-label="Close gallery overlay"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative z-10 w-full max-h-[85vh] bg-white rounded-t-[28px] shadow-2xl flex flex-col overflow-hidden border-t border-slate-100 p-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]"
+            >
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-2" />
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                <h3 className="text-base font-bold text-[#1E1035] flex items-center gap-2">
+                  <GalleryIcon size={20} className="text-[#9723FF]" />
+                  Media Gallery
+                </h3>
+                <button
+                  onClick={() => setActiveLeftDrawer(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto flex flex-col">
+                {renderGalleryDrawerContent()}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL 1: Spotlight Quick Jump Search */}
       <AnimatePresence>
         {isSearchOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: -20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2304,7 +2506,7 @@ function InspectDashboardContent({
       {/* MODAL 2: Inspection SOP Help Modal */}
       <AnimatePresence>
         {isHelpOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2394,7 +2596,7 @@ function InspectDashboardContent({
       {/* MODAL 3: Reset Report Confirmation */}
       <AnimatePresence>
         {isResetConfirmOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2451,7 +2653,7 @@ function InspectDashboardContent({
       {/* MODAL 4: Publish Celebration & Share */}
       <AnimatePresence>
         {isPublishModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2479,7 +2681,7 @@ function InspectDashboardContent({
                   className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-[#1E1035] hover:bg-slate-50 flex items-center gap-1 transition-colors"
                 >
                   {isCopied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-                  {isCopied ? 'Copied' : 'Copy'}
+                  {isCopied ? 'Copied' : 'Share'}
                 </button>
               </div>
 
@@ -2511,7 +2713,7 @@ function InspectDashboardContent({
       {/* MODAL 5: Safe Media Deletion Confirmation */}
       <AnimatePresence>
         {deleteConfirmState && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

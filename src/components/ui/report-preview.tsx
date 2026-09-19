@@ -16,6 +16,7 @@ import {
 } from '@/lib/inspection-types';
 
 interface ReportPreviewProps {
+  idPrefix?: string;
   tyres: Record<string, InspectionDetailState>;
   rims: Record<string, InspectionDetailState>;
   brakes?: Record<string, InspectionDetailState>;
@@ -192,10 +193,10 @@ function GenericItemCard({
   // Compact row representation when no images and no remarks are attached
   if (!hasImages && !hasComments) {
     return (
-      <div className="bg-white rounded-xl px-3 py-2 flex items-center justify-between shadow-xs border border-slate-100 min-h-[36px]">
-        <span className="text-[#1E1035] text-[11px] font-bold truncate pr-2">{title}</span>
+      <div className="bg-white rounded-xl px-2.5 sm:px-3 py-2 flex items-center justify-between shadow-xs border border-slate-100 min-h-[36px] gap-1">
+        <span className="text-[#1E1035] text-[10.5px] sm:text-[11px] font-bold truncate pr-1" title={title}>{title}</span>
         {status && (
-          <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase shrink-0 ${getBadgeStyle()}`}>
+          <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[8.5px] sm:text-[9px] font-bold tracking-wide uppercase shrink-0 ${getBadgeStyle()}`}>
             {getStatusText()}
           </span>
         )}
@@ -248,7 +249,7 @@ function PreviewPage({ id, title, children }: { id: string; title: string; child
   return (
     <div
       id={id}
-      className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
+      className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
     >
       <div className="flex justify-between items-center mb-5 shrink-0">
         <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
@@ -267,6 +268,7 @@ function PreviewPage({ id, title, children }: { id: string; title: string; child
 }
 
 export function ReportPreview({
+  idPrefix = 'preview-page-',
   tyres,
   rims,
   brakes,
@@ -280,11 +282,11 @@ export function ReportPreview({
   const failVal = Math.max(0, Math.min(100 - passVal, overviewStats.fail !== undefined ? Number(overviewStats.fail) : (100 - passVal)));
 
   return (
-    <div className="w-full p-4 md:p-8 flex flex-col items-center gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
+    <div className="w-full p-2 sm:p-4 md:p-8 flex flex-col items-center gap-6 sm:gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
       
       {/* PAGE 1: Cover Page */}
       <div
-        id="preview-page-1"
+        id={`${idPrefix}1`}
         className="a4-print-page a4-print-page-cover w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-0 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Background Image Area */}
@@ -298,10 +300,10 @@ export function ReportPreview({
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col h-full p-8 sm:p-10">
+        <div className="relative z-10 flex flex-col h-full p-4 sm:p-8 md:p-10">
           {/* Logo Area */}
-          <div className="w-full flex justify-center mt-6">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-xl flex items-center justify-center bg-white/10 backdrop-blur-xs border border-white/40">
+          <div className="w-full flex justify-center mt-4 sm:mt-6">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-xl flex items-center justify-center bg-white/10 backdrop-blur-xs border border-white/40">
               <img 
                 src="/assets/checkmycar-logo.png" 
                 alt="CheckMyCar Logo" 
@@ -313,36 +315,36 @@ export function ReportPreview({
           <div className="flex-1"></div>
 
           {/* Title Area */}
-          <div className="w-full flex flex-col items-center justify-center text-center mt-auto mb-12 sm:mb-16">
-            <h1 className="text-[52px] sm:text-[64px] font-bold leading-tight tracking-tight text-[#009E49]">
+          <div className="w-full flex flex-col items-center justify-center text-center mt-auto mb-8 sm:mb-16">
+            <h1 className="text-[34px] sm:text-[50px] md:text-[64px] font-bold leading-tight tracking-tight text-[#009E49] break-words">
               Comprehensive<br/>
               <span className="text-[#18181B]">Green Book</span>
             </h1>
-            <div className="flex items-center gap-2 mt-4 text-[#4B5563]">
-              <div className="w-5 h-5 rounded-full border-2 border-[#009E49] flex items-center justify-center">
-                <div className="w-3 h-3 bg-[#009E49] rounded-full"></div>
+            <div className="flex items-center gap-2 mt-3 sm:mt-4 text-[#4B5563]">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-[#009E49] flex items-center justify-center">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#009E49] rounded-full"></div>
               </div>
-              <span className="text-[15px] font-semibold">www.checkmycar.ae</span>
+              <span className="text-xs sm:text-[15px] font-semibold">www.checkmycar.ae</span>
             </div>
           </div>
 
           {/* Footer Card */}
-          <div className="w-full bg-[#1F2022] rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex justify-between items-center text-white mt-auto shrink-0">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Phone size={15} />
-                <span className="text-xs sm:text-sm font-medium">Contact Us</span>
+          <div className="w-full bg-[#1F2022] rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex justify-between items-center text-white mt-auto shrink-0 gap-2">
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <Phone size={14} />
+                <span className="text-[11px] sm:text-sm font-medium">Contact Us</span>
               </div>
-              <span className="text-base sm:text-lg font-bold">
+              <span className="text-xs sm:text-base font-bold truncate">
                 {clientDetails.whatsappNumber || '+971 054 409 3009'}
               </span>
             </div>
-            <div className="flex flex-col gap-1.5 text-right">
-              <div className="flex items-center justify-end gap-2 text-slate-400">
-                <Mail size={15} />
-                <span className="text-xs sm:text-sm font-medium">Mail Id</span>
+            <div className="flex flex-col gap-1 text-right min-w-0">
+              <div className="flex items-center justify-end gap-1.5 text-slate-400">
+                <Mail size={14} />
+                <span className="text-[11px] sm:text-sm font-medium">Mail Id</span>
               </div>
-              <span className="text-base sm:text-lg font-bold">
+              <span className="text-xs sm:text-base font-bold truncate">
                 {clientDetails.email || 'Checkmycar.ae@gmail.com'}
               </span>
             </div>
@@ -352,8 +354,8 @@ export function ReportPreview({
 
       {/* PAGE 2: Vehicle Summary */}
       <div
-        id="preview-page-2"
-        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
+        id={`${idPrefix}2`}
+        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-5 shrink-0">
@@ -368,7 +370,7 @@ export function ReportPreview({
         {/* Inspection Details */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 mb-4 shadow-sm shrink-0">
           <h3 className="text-[#A0A4AB] text-xs font-bold mb-3">Inspection Details</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-[10px] text-slate-400 font-semibold">Date</span>
               <span className="text-[14px] font-bold text-[#1E1035]">{inspectionDetails.date || '—'}</span>
@@ -379,11 +381,11 @@ export function ReportPreview({
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="text-[10px] text-slate-400 font-semibold">Inspection Type</span>
-              <span className="text-[14px] font-bold text-[#1E1035] truncate">{inspectionDetails.inspectionType || '—'}</span>
+              <span className="text-[13px] sm:text-[14px] font-bold text-[#1E1035] truncate">{inspectionDetails.inspectionType || '—'}</span>
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="text-[10px] text-slate-400 font-semibold">VIN Number</span>
-              <span className="text-[14px] font-bold text-[#1E1035] font-mono tracking-wider truncate">{inspectionDetails.vinNumber || '—'}</span>
+              <span className="text-[13px] sm:text-[14px] font-bold text-[#1E1035] font-mono tracking-wider truncate">{inspectionDetails.vinNumber || '—'}</span>
             </div>
           </div>
         </div>
@@ -453,17 +455,17 @@ export function ReportPreview({
         <div className="mt-auto"></div>
 
         {/* Report Overview Footer */}
-        <div className="bg-[#1F2022] rounded-[24px] p-5 flex items-center justify-between gap-4 shadow-sm mt-auto shrink-0">
-          <h2 className="text-white text-[20px] font-medium tracking-tight">Report Overview</h2>
-          <div className="flex items-center gap-5">
+        <div className="bg-[#1F2022] rounded-[24px] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm mt-auto shrink-0">
+          <h2 className="text-white text-[17px] sm:text-[20px] font-medium tracking-tight">Report Overview</h2>
+          <div className="flex items-center gap-3 sm:gap-5">
             <div className="flex flex-col text-right">
               <span className="text-white text-[10px] uppercase tracking-wider font-semibold opacity-70">Pass</span>
-              <span className="text-[#7FD159] text-lg font-bold">{passVal}%</span>
+              <span className="text-[#7FD159] text-base sm:text-lg font-bold">{passVal}%</span>
             </div>
             
             {/* Real CSS Conic Pie Chart */}
             <div 
-              className="w-[85px] h-[85px] rounded-full shadow-lg border-2 border-white/10 shrink-0" 
+              className="w-[70px] h-[70px] sm:w-[85px] sm:h-[85px] rounded-full shadow-lg border-2 border-white/10 shrink-0" 
               style={{
                 background: `conic-gradient(#5BC335 0% ${passVal}%, #FE8E4B ${passVal}% 100%)`
               }}
@@ -471,7 +473,7 @@ export function ReportPreview({
 
             <div className="flex flex-col text-left">
               <span className="text-white text-[10px] uppercase tracking-wider font-semibold opacity-70">Defects</span>
-              <span className="text-[#FE8E4B] text-lg font-bold">{failVal}%</span>
+              <span className="text-[#FE8E4B] text-base sm:text-lg font-bold">{failVal}%</span>
             </div>
           </div>
         </div>
@@ -480,8 +482,8 @@ export function ReportPreview({
 
       {/* PAGE 3: Tyres Section */}
       <div
-        id="preview-page-3"
-        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
+        id={`${idPrefix}3`}
+        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-3.5 shrink-0">
@@ -503,7 +505,7 @@ export function ReportPreview({
           <div className="absolute top-2 left-4 text-[#A0A4AB] font-bold text-[11px]">
             Chassis Alignment
           </div>
-          <div className="scale-[0.62] origin-center pointer-events-none -my-6">
+          <div className="scale-[0.58] sm:scale-[0.62] origin-center pointer-events-none -my-6">
             <ChassisVisualizer items={tyres} setItemStatus={() => {}} hideLegend={true} compact={true} />
           </div>
         </div>
@@ -521,8 +523,8 @@ export function ReportPreview({
 
       {/* PAGE 4: Rims Section */}
       <div
-        id="preview-page-4"
-        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
+        id={`${idPrefix}4`}
+        className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-3.5 shrink-0">
@@ -544,7 +546,7 @@ export function ReportPreview({
           <div className="absolute top-2 left-4 text-[#A0A4AB] font-bold text-[11px]">
             Wheel Status
           </div>
-          <div className="scale-[0.62] origin-center pointer-events-none -my-6">
+          <div className="scale-[0.58] sm:scale-[0.62] origin-center pointer-events-none -my-6">
             <ChassisVisualizer items={rims} setItemStatus={() => {}} hideLegend={true} compact={true} />
           </div>
         </div>
@@ -563,8 +565,8 @@ export function ReportPreview({
       {/* PAGE 5: Brakes Section */}
       {brakes && (
         <div
-          id="preview-page-5"
-          className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
+          id={`${idPrefix}5`}
+          className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
         >
           {/* Header */}
           <div className="flex justify-between items-center mb-3.5 shrink-0">
@@ -604,7 +606,7 @@ export function ReportPreview({
 
       {/* PAGE 6: Chassis & Subframe */}
       {report?.chassisSubframePartStatuses && (
-        <PreviewPage id="preview-page-6" title="Chassis & Subframe">
+        <PreviewPage id={`${idPrefix}6`} title="Chassis & Subframe">
           {report.chassisSubframeComments && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -693,7 +695,7 @@ export function ReportPreview({
 
       {/* PAGE 7: Body */}
       {report?.bodyPartStatuses && (
-        <PreviewPage id="preview-page-7" title="Body">
+        <PreviewPage id={`${idPrefix}7`} title="Body">
           {(report.bodyGeneralComments || report.bodyComments || (report.bodyGeneralImages && report.bodyGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-2.5 mb-2.5 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -762,7 +764,7 @@ export function ReportPreview({
 
       {/* PAGE 8: Interior & Exterior */}
       {(report?.seatsStatus || report?.interiorCustomHeadlines || report?.seatsComments || report?.interiorComments || (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
-        <PreviewPage id="preview-page-8" title="Interior & Exterior">
+        <PreviewPage id={`${idPrefix}8`} title="Interior & Exterior">
           {report.seatsComments && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Seats Comments</h3>
@@ -806,7 +808,7 @@ export function ReportPreview({
 
       {/* PAGE 9: Engine */}
       {report?.engineItems && (
-        <PreviewPage id="preview-page-9" title="Engine">
+        <PreviewPage id={`${idPrefix}9`} title="Engine">
           {(report.engineComments || (report.engineGeneralImages && report.engineGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -844,7 +846,7 @@ export function ReportPreview({
 
       {/* PAGE 10: Transmission */}
       {report?.transmissionItems && (
-        <PreviewPage id="preview-page-10" title="Transmission">
+        <PreviewPage id={`${idPrefix}10`} title="Transmission">
           {(report.transmissionComments || (report.transmissionGeneralImages && report.transmissionGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -882,7 +884,7 @@ export function ReportPreview({
 
       {/* PAGE 11: Electrical */}
       {report?.electricalItems && (
-        <PreviewPage id="preview-page-11" title="Electrical">
+        <PreviewPage id={`${idPrefix}11`} title="Electrical">
           {(report.electricalComments || (report.electricalGeneralImages && report.electricalGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -920,7 +922,7 @@ export function ReportPreview({
 
       {/* PAGE 12: General Photos */}
       {(report?.generalPhotosExteriorImages?.length || report?.generalPhotosInteriorImages?.length || report?.generalPhotosEngineImages?.length || report?.generalPhotosExteriorComments || report?.generalPhotosInteriorComments || report?.generalPhotosEngineComments) ? (
-        <PreviewPage id="preview-page-12" title="General Photos">
+        <PreviewPage id={`${idPrefix}12`} title="General Photos">
           
           {/* Exterior */}
           {(report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) || report.generalPhotosExteriorComments ? (
