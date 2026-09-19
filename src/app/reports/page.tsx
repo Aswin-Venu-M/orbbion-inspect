@@ -1,25 +1,26 @@
 'use client';
 
-import React, { useState, useCallback, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Familjen_Grotesk } from 'next/font/google';
 import Link from 'next/link';
 import {
-  Search, Plus, Calendar, RefreshCw, ShieldCheck, FileText,
+  Search, Plus, Calendar, RefreshCw, FileText,
 } from 'lucide-react';
 
 import { AppShell, dispatchToast } from '@/components/layout/app-shell';
 import { ReportsListTable, TabFilter } from '@/components/dashboard/reports-list-table';
 import { DATE_PRESET_OPTIONS } from '@/constants/options';
-import {
-  initialReportsList,
-  initialDashboardKPI,
-} from '@constants';
+import { initialReportsList } from '@constants';
 import {
   ReportListItem,
   getStoredReports,
   deleteStoredReport,
-  calculateDynamicKPIs,
+  bulkDeleteStoredReports,
+  bulkUpdateStoredReportsStatus,
+  duplicateStoredReport,
+  resetStoredReportsToDefault,
+  REPORTS_UPDATED_EVENT,
 } from '@/lib/reports-data';
 
 const familjen = Familjen_Grotesk({ subsets: ['latin'] });
@@ -28,7 +29,10 @@ function ReportsContent() {
   const searchParams = useSearchParams();
 
   // Read initial tab from URL query param (e.g., /reports?tab=draft)
-  const initialTab = (searchParams.get('tab') as TabFilter) || 'all';
+  const initialTabParam = searchParams.get('tab') as TabFilter;
+  const initialTab: TabFilter = (initialTabParam && ['all', 'published', 'draft', 'tampered', 'defects'].includes(initialTabParam))
+    ? initialTabParam
+    : 'all';
 
   // Reports Data State
   const [reports, setReports] = useState<ReportListItem[]>(initialReportsList);
@@ -38,33 +42,97 @@ function ReportsContent() {
   const [datePreset, setDatePreset] = useState<'today' | '7d' | '30d' | 'all'>('all');
   const [activeTab, setActiveTab] = useState<TabFilter>(initialTab);
 
-  // Hydrate from localStorage on client mount
-  React.useEffect(() => {
+  // Sync state from localStorage
+  const syncReportsFromStorage = useCallback(() => {
     const loaded = getStoredReports();
     setReports(loaded);
   }, []);
 
-  // Sync tab from URL when searchParams change
-  React.useEffect(() => {
+  // Hydrate from localStorage on client mount
+  useEffect(() => {
+    syncReportsFromStorage();
+  }, [syncReportsFromStorage]);
+
+  // Real-time listener for cross-tab and in-app catalog changes
+  useEffect(() => {
+    const handleUpdate = () => {
+      syncReportsFromStorage();
+    };
+
+    window.addEventListener(REPORTS_UPDATED_EVENT, handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener(REPORTS_UPDATED_EVENT, handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [syncReportsFromStorage]);
+
+  // Sync tab from URL when searchParams change (browser back/forward or external navigation)
+  useEffect(() => {
     const tabParam = searchParams.get('tab') as TabFilter;
     if (tabParam && ['all', 'published', 'draft', 'tampered', 'defects'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
 
+  // Update tab state AND update URL search param without full reload
+  const handleActiveTabChange = useCallback((newTab: TabFilter) => {
+    setActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newTab === 'all') {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', newTab);
+      }
+      window.history.replaceState(null, '', url.pathname + url.search);
+    }
+  }, []);
+
   const handleRefresh = useCallback(() => {
     dispatchToast('Syncing reports directory...', 'info');
-    const loaded = getStoredReports();
-    setReports(loaded);
+    syncReportsFromStorage();
     setTimeout(() => {
       dispatchToast('All reports up to date', 'success');
     }, 600);
-  }, []);
+  }, [syncReportsFromStorage]);
 
+  // Delete single report
   const handleDeleteReport = useCallback((id: string) => {
     const updated = deleteStoredReport(id);
     setReports(updated);
     dispatchToast('Report deleted successfully', 'success');
+  }, []);
+
+  // Bulk delete selected reports
+  const handleBulkDeleteReports = useCallback((ids: string[]) => {
+    const updated = bulkDeleteStoredReports(ids);
+    setReports(updated);
+    dispatchToast(`${ids.length} reports deleted successfully`, 'success');
+  }, []);
+
+  // Bulk update report status
+  const handleBulkStatusChange = useCallback((ids: string[], status: 'published' | 'draft') => {
+    const updated = bulkUpdateStoredReportsStatus(ids, status);
+    setReports(updated);
+    const label = status === 'published' ? 'Published' : 'Draft';
+    dispatchToast(`${ids.length} reports marked as ${label}`, 'success');
+  }, []);
+
+  // Duplicate an inspection report
+  const handleDuplicateReport = useCallback((report: ReportListItem) => {
+    const updated = duplicateStoredReport(report.id);
+    setReports(updated);
+    const vehicleLabel = `${report.vehicle?.make || ''} ${report.vehicle?.model || ''}`.trim() || 'vehicle';
+    dispatchToast(`Cloned draft inspection for ${vehicleLabel}`, 'success');
+  }, []);
+
+  // Reset catalog to demo mock data
+  const handleResetCatalog = useCallback(() => {
+    const defaultData = resetStoredReportsToDefault();
+    setReports(defaultData);
+    dispatchToast('Catalog restored to default enterprise dataset', 'info');
   }, []);
 
   const publishedCount = reports.filter((r) => r.status === 'published').length;
@@ -104,6 +172,7 @@ function ReportsContent() {
               onClick={handleRefresh}
               className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200 text-slate-600 hover:text-[#1E1035] hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
               title="Refresh Data"
+              aria-label="Refresh Data"
             >
               <RefreshCw size={16} />
             </button>
@@ -128,12 +197,14 @@ function ReportsContent() {
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
               placeholder="Search by VIN, Vehicle Make & Model, Client Name, Inspector..."
+              aria-label="Search reports catalog"
               className="w-full pl-9 sm:pl-10 pr-12 sm:pr-14 py-2 sm:py-2.5 rounded-xl bg-[#F8F9FB] border border-slate-200/80 text-xs sm:text-sm font-medium text-[#1E1035] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9723FF]/30 focus:border-[#9723FF] transition-all"
             />
             {globalSearch && (
               <button
+                type="button"
                 onClick={() => setGlobalSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-slate-500 hover:text-[#1E1035] bg-slate-200/70 hover:bg-slate-200 rounded px-1.5 py-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-slate-500 hover:text-[#1E1035] bg-slate-200/70 hover:bg-slate-200 rounded px-1.5 py-0.5 cursor-pointer"
               >
                 Clear
               </button>
@@ -149,6 +220,7 @@ function ReportsContent() {
             {DATE_PRESET_OPTIONS.map((preset) => (
               <button
                 key={preset.id}
+                type="button"
                 onClick={() => setDatePreset(preset.id)}
                 className={`px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   datePreset === preset.id
@@ -167,10 +239,14 @@ function ReportsContent() {
       <ReportsListTable
         reports={reports}
         activeTab={activeTab}
-        onActiveTabChange={setActiveTab}
+        onActiveTabChange={handleActiveTabChange}
         globalSearch={globalSearch}
         datePreset={datePreset}
         onDeleteReport={handleDeleteReport}
+        onBulkDeleteReports={handleBulkDeleteReports}
+        onBulkStatusChange={handleBulkStatusChange}
+        onDuplicateReport={handleDuplicateReport}
+        onResetCatalog={handleResetCatalog}
       />
     </div>
   );

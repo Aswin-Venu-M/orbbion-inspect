@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight, CheckCircle2, Clock, AlertTriangle,
-  FileText, Copy, Check,
+  FileText, Copy, Check, Car, Plus,
 } from 'lucide-react';
 import type { ReportListItem } from '@/lib/reports-data';
 
@@ -14,16 +14,25 @@ interface RecentReportsCardProps {
   maxItems?: number;
 }
 
+const FALLBACK_VEHICLE_IMG = 'https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=600&auto=format&fit=crop';
+
 export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardProps) {
   const recentReports = reports.slice(0, maxItems);
-  const [copiedVinId, setCopiedVinId] = React.useState<string | null>(null);
+  const [copiedVinId, setCopiedVinId] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const handleCopyVin = (e: React.MouseEvent, vin: string, id: string) => {
     e.stopPropagation();
     e.preventDefault();
-    navigator.clipboard.writeText(vin);
-    setCopiedVinId(id);
-    setTimeout(() => setCopiedVinId(null), 2000);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(vin);
+      setCopiedVinId(id);
+      setTimeout(() => setCopiedVinId(null), 2000);
+    }
+  };
+
+  const handleImageError = (id: string) => {
+    setImageErrors((prev) => ({ ...prev, [id]: true }));
   };
 
   return (
@@ -36,7 +45,9 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
           </div>
           <div>
             <h2 className="text-base font-bold text-[#1E1035]">Recent Inspections</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Latest {recentReports.length} of {reports.length} total records</p>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Latest {recentReports.length} of {reports.length} total records
+            </p>
           </div>
         </div>
         <Link
@@ -50,14 +61,34 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
 
       {/* Reports List */}
       {recentReports.length === 0 ? (
-        <div className="py-10 text-center text-xs text-slate-500 font-medium">
-          No inspection reports yet. Start a new inspection to see reports here.
+        <div className="py-12 text-center flex flex-col items-center justify-center border-2 border-dashed border-slate-200/80 rounded-2xl p-6">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-[#9723FF] mb-3">
+            <Car size={24} />
+          </div>
+          <h3 className="text-sm font-bold text-[#1E1035]">No inspection reports found</h3>
+          <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
+            Get started by launching a new vehicle inspection session or importing records.
+          </p>
+          <Link
+            href="/inspect?new=true"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#180321] text-white text-xs font-bold hover:bg-[#9723FF] transition-colors shadow-xs cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>Start New Inspection</span>
+          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
           {recentReports.map((report) => {
-            const isPassHigh = report.passPercentage >= 80;
-            const isTampered = report.vehicle.odometerStatus === 'Tampered';
+            const passPct = report.passPercentage ?? 85;
+            const isPassHigh = passPct >= 80;
+            const isTampered = report.vehicle?.odometerStatus === 'Tampered';
+            const vehicleMake = report.vehicle?.make || 'Vehicle';
+            const vehicleModel = report.vehicle?.model || '';
+            const vehicleYear = report.vehicle?.year || '';
+            const vin = report.vehicle?.vin || 'VIN Not Specified';
+            const hasImgError = imageErrors[report.id];
+            const imgSrc = hasImgError ? FALLBACK_VEHICLE_IMG : (report.vehicle?.imageUrl || FALLBACK_VEHICLE_IMG);
 
             return (
               <Link
@@ -68,12 +99,16 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
                 {/* Vehicle Thumbnail */}
                 <div className="w-14 h-11 sm:w-16 sm:h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
                   <img
-                    src={report.vehicle.imageUrl}
-                    alt={report.vehicle.model}
+                    src={imgSrc}
+                    alt={`${vehicleMake} ${vehicleModel}`}
+                    onError={() => handleImageError(report.id)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {isTampered && (
-                    <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
+                    <div
+                      className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center"
+                      title="Odometer Tampered Alert"
+                    >
                       <AlertTriangle size={9} className="text-white" />
                     </div>
                   )}
@@ -83,21 +118,22 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-[#1E1035] group-hover:text-[#9723FF] transition-colors truncate">
-                      {report.vehicle.year} {report.vehicle.make} {report.vehicle.model}
+                      {vehicleYear} {vehicleMake} {vehicleModel}
                     </span>
                     <span className="text-[10px] font-semibold text-slate-500 shrink-0">
-                      {report.reportNumber}
+                      {report.reportNumber || report.id}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] font-mono text-slate-500 truncate">
-                      {report.vehicle.vin}
+                      {vin}
                     </span>
                     <button
                       type="button"
-                      onClick={(e) => handleCopyVin(e, report.vehicle.vin, report.id)}
+                      onClick={(e) => handleCopyVin(e, vin, report.id)}
                       className="text-slate-400 hover:text-[#1E1035] transition-colors cursor-pointer shrink-0"
                       title="Copy VIN"
+                      aria-label={`Copy VIN ${vin}`}
                     >
                       {copiedVinId === report.id ? (
                         <Check size={10} className="text-emerald-600" />
@@ -115,12 +151,12 @@ export function RecentReportsCard({ reports, maxItems = 5 }: RecentReportsCardPr
                   {/* Mini pass bar */}
                   <div className="hidden sm:flex flex-col items-end gap-0.5 w-16">
                     <span className={`text-[11px] font-extrabold ${isPassHigh ? 'text-[#008751]' : 'text-amber-600'}`}>
-                      {report.passPercentage}%
+                      {passPct}%
                     </span>
                     <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${isPassHigh ? 'bg-[#008751]' : 'bg-[#FE8E4B]'}`}
-                        style={{ width: `${report.passPercentage}%` }}
+                        style={{ width: `${Math.min(100, Math.max(0, passPct))}%` }}
                       />
                     </div>
                   </div>

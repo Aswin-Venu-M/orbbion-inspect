@@ -259,6 +259,8 @@ function InspectDashboardContent({
         };
         resetReport(loadedReport);
         showToast(`Loaded ${match.vehicle.year} ${match.vehicle.make} ${match.vehicle.model} (${match.id})`, 'info');
+      } else {
+        showToast(`Report ${requestedId} was not found in catalog`, 'error');
       }
     }
   }, [resetReport, showToast, report.id]);

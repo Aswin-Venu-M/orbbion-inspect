@@ -9,15 +9,39 @@ import { DashboardKPIData } from '@/lib/reports-data';
 
 interface KPIStatsGridProps {
   data: DashboardKPIData;
+  onFilterAll?: () => void;
+  onFilterPublished?: () => void;
   onFilterDrafts?: () => void;
   onFilterTampered?: () => void;
 }
 
-export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStatsGridProps) {
+export function KPIStatsGrid({
+  data,
+  onFilterAll,
+  onFilterPublished,
+  onFilterDrafts,
+  onFilterTampered,
+}: KPIStatsGridProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-      {/* 1. Total Inspections */}
-      <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-slate-200 transition-all">
+      {/* 1. Total Inspections (Clickable) */}
+      <div
+        role={onFilterAll ? 'button' : undefined}
+        tabIndex={onFilterAll ? 0 : undefined}
+        aria-label="View all inspection reports"
+        onClick={onFilterAll}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && onFilterAll) {
+            e.preventDefault();
+            onFilterAll();
+          }
+        }}
+        className={`bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between transition-all outline-none ${
+          onFilterAll
+            ? 'hover:shadow-md hover:border-purple-200 focus-visible:ring-2 focus-visible:ring-purple-500 cursor-pointer'
+            : 'hover:shadow-md hover:border-slate-200'
+        }`}
+      >
         <div className="flex items-center justify-between">
           <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Total Volume</span>
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-50 flex items-center justify-center text-[#9723FF]">
@@ -32,10 +56,32 @@ export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStat
             Across all hubs
           </span>
         </div>
+        {onFilterAll && (
+          <div className="flex items-center justify-between text-[11px] font-bold text-[#9723FF] mt-3 pt-2 border-t border-slate-100">
+            <span>View All Records</span>
+            <ArrowUpRight size={13} />
+          </div>
+        )}
       </div>
 
-      {/* 2. Pass Rate */}
-      <div className="bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-slate-200 transition-all">
+      {/* 2. Pass Rate (Clickable) */}
+      <div
+        role={onFilterPublished ? 'button' : undefined}
+        tabIndex={onFilterPublished ? 0 : undefined}
+        aria-label="Filter certified published reports"
+        onClick={onFilterPublished}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && onFilterPublished) {
+            e.preventDefault();
+            onFilterPublished();
+          }
+        }}
+        className={`bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between transition-all outline-none ${
+          onFilterPublished
+            ? 'hover:shadow-md hover:border-emerald-200 focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer'
+            : 'hover:shadow-md hover:border-slate-200'
+        }`}
+      >
         <div className="flex items-center justify-between">
           <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Pass Rate</span>
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-[#008751]">
@@ -49,10 +95,16 @@ export function KPIStatsGrid({ data, onFilterDrafts, onFilterTampered }: KPIStat
           <div className="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
             <div
               className="bg-[#008751] h-full rounded-full transition-all duration-700"
-              style={{ width: `${data.passRate.value}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, data.passRate.value))}%` }}
             />
           </div>
         </div>
+        {onFilterPublished && (
+          <div className="flex items-center justify-between text-[11px] font-bold text-[#008751] mt-3 pt-2 border-t border-slate-100">
+            <span>View Published</span>
+            <ArrowUpRight size={13} />
+          </div>
+        )}
       </div>
 
       {/* 3. Drafts Queue (Clickable) */}
