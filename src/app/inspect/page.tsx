@@ -24,6 +24,18 @@ import { InputField } from '@/components/ui/input-field';
 import { DatePickerInput, parseDate } from '@/components/ui/date-picker-input';
 import { TimePickerInput, parseTimeString } from '@/components/ui/time-picker-input';
 import { SelectField } from '@/components/ui/select-field';
+import { ComboboxField } from '@/components/ui/combobox-field';
+import {
+  CAR_MAKES,
+  CAR_MODELS_BY_MAKE,
+  POPULAR_CAR_MODELS,
+  REGIONAL_SPECS_OPTIONS,
+  TRANSMISSION_OPTIONS,
+  ENGINE_SIZE_OPTIONS,
+  VEHICLE_TYPE_OPTIONS,
+  EXTERNAL_COLOUR_OPTIONS,
+  FUEL_TYPE_OPTIONS,
+} from '@/constants/vehicle-options';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { SidebarCard } from '@/components/ui/sidebar-card';
 import { SectionTitlesCard } from '@/components/ui/section-titles-card';
@@ -250,6 +262,16 @@ function InspectDashboardContent({
       }
     }
   }, [resetReport, showToast, report.id]);
+
+  // Dynamic autosuggestion models based on selected Make
+  const currentMakeModels = useMemo(() => {
+    const make = report.vehicleSummary.make?.trim();
+    if (!make) return POPULAR_CAR_MODELS;
+    const foundKey = Object.keys(CAR_MODELS_BY_MAKE).find(
+      (k) => k.toLowerCase() === make.toLowerCase()
+    );
+    return foundKey ? CAR_MODELS_BY_MAKE[foundKey] : POPULAR_CAR_MODELS;
+  }, [report.vehicleSummary.make]);
 
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
@@ -818,17 +840,19 @@ function InspectDashboardContent({
           <div id="section-vehicle-summary" className="scroll-mt-6">
             <ReusableSection title="Vehicle Summary">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
-                <InputField 
+                <ComboboxField 
                   label="Make" 
                   placeholder="Enter Make (e.g. Toyota)" 
+                  options={CAR_MAKES}
                   value={report.vehicleSummary.make}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, make: e.target.value }
                   })}
                 />
-                <InputField 
+                <ComboboxField 
                   label="Model" 
                   placeholder="Enter Model (e.g. Tundra)" 
+                  options={currentMakeModels}
                   value={report.vehicleSummary.model}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, model: e.target.value }
@@ -847,26 +871,29 @@ function InspectDashboardContent({
                   })}
                 />
                 
-                <InputField 
+                <ComboboxField 
                   label="Regional Specs" 
                   placeholder="GCC, American, Euro..." 
+                  options={REGIONAL_SPECS_OPTIONS}
                   rightIcon={<MapPin size={18} />} 
                   value={report.vehicleSummary.regionalSpecs}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, regionalSpecs: e.target.value }
                   })}
                 />
-                <InputField 
+                <ComboboxField 
                   label="Transmission" 
                   placeholder="Automatic, Manual..." 
+                  options={TRANSMISSION_OPTIONS}
                   value={report.vehicleSummary.transmission}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, transmission: e.target.value }
                   })}
                 />
-                <InputField 
+                <ComboboxField 
                   label="Engine Size" 
                   placeholder="3.5L V6, 2.0L Turbo..." 
+                  options={ENGINE_SIZE_OPTIONS}
                   value={report.vehicleSummary.engineSize}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, engineSize: e.target.value }
@@ -947,25 +974,28 @@ function InspectDashboardContent({
                   } 
                 />
 
-                <InputField 
+                <ComboboxField 
                   label="Vehicle Type" 
                   placeholder="SUV, Truck, Sedan, Coupe..." 
+                  options={VEHICLE_TYPE_OPTIONS}
                   value={report.vehicleSummary.vehicleType}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, vehicleType: e.target.value }
                   })}
                 />
-                <InputField 
+                <ComboboxField 
                   label="External Colour" 
                   placeholder="Grey, White, Black..." 
+                  options={EXTERNAL_COLOUR_OPTIONS}
                   value={report.vehicleSummary.externalColour}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, externalColour: e.target.value }
                   })}
                 />
-                <InputField 
+                <ComboboxField 
                   label="Fuel Type" 
                   placeholder="Petrol, Diesel, Hybrid, EV..." 
+                  options={FUEL_TYPE_OPTIONS}
                   value={report.vehicleSummary.fuelType}
                   onChange={(e) => updateReport({
                     vehicleSummary: { ...report.vehicleSummary, fuelType: e.target.value }
