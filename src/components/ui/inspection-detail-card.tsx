@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Trash2, ImageOff, Sparkles } from 'lucide-react';
 import { GalleryIcon } from './gallery-icon';
 import { InputField } from './input-field';
+import { YearPickerInput } from './year-picker-input';
 import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 export type InspectionDetailState = {
@@ -156,12 +157,13 @@ export const InspectionDetailCard = ({
 
         {/* Inputs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InputField 
+          <YearPickerInput 
             label="Manufacturing year" 
-            placeholder="e.g. 2025" 
-            rightIcon={<Calendar size={18} />} 
+            placeholder="YYYY" 
             value={data.year || ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ year: e.target.value })}
+            onChange={(val) => onChange({ year: val })}
+            minYear={1980}
+            maxYear={new Date().getFullYear() + 1}
           />
           <InputField 
             label="Comments" 

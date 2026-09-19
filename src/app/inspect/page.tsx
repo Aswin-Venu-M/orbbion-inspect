@@ -23,6 +23,7 @@ import { GalleryIcon } from '@/components/ui/gallery-icon';
 import { InputField } from '@/components/ui/input-field';
 import { DatePickerInput, parseDate } from '@/components/ui/date-picker-input';
 import { TimePickerInput, parseTimeString } from '@/components/ui/time-picker-input';
+import { YearPickerInput } from '@/components/ui/year-picker-input';
 import { SelectField } from '@/components/ui/select-field';
 import { ComboboxField } from '@/components/ui/combobox-field';
 import {
@@ -860,17 +861,16 @@ function InspectDashboardContent({
                     vehicleSummary: { ...report.vehicleSummary, model: e.target.value }
                   })}
                 />
-                <InputField 
+                <YearPickerInput 
                   label="Model Year" 
+                  required
                   placeholder="YYYY" 
-                  type="number"
-                  min="1900"
-                  max={new Date().getFullYear() + 1}
-                  rightIcon={<Hash size={18} />} 
                   value={report.vehicleSummary.year}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, year: e.target.value }
+                  onChange={(val) => updateReport({
+                    vehicleSummary: { ...report.vehicleSummary, year: val }
                   })}
+                  minYear={1900}
+                  maxYear={new Date().getFullYear() + 1}
                 />
                 
                 <ComboboxField 
