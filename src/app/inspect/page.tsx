@@ -1517,7 +1517,7 @@ function InspectDashboardContent({
                 <button
                   type="button"
                   onClick={() => setFilter('all')}
-                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
                     filter === 'all' 
                       ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
                       : 'text-slate-500 hover:text-slate-800'
@@ -1528,7 +1528,7 @@ function InspectDashboardContent({
                 <button
                   type="button"
                   onClick={() => setFilter('unassigned')}
-                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
                     filter === 'unassigned' 
                       ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
                       : 'text-slate-500 hover:text-slate-800'
@@ -1539,7 +1539,7 @@ function InspectDashboardContent({
                 <button
                   type="button"
                   onClick={() => setFilter('assigned')}
-                  className={`flex-1 py-1.5 px-1 rounded-lg transition-all text-center cursor-pointer ${
+                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
                     filter === 'assigned' 
                       ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
                       : 'text-slate-500 hover:text-slate-800'
