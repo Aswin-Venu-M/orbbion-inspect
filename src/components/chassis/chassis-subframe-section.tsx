@@ -4,8 +4,7 @@ import React, { useRef, useState } from 'react';
 import { ReusableSection } from '@/components/ui/reusable-section';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
-import { HeadingCard } from '@/components/ui/heading-card';
-import { AddHeadlineButton } from '@/components/ui/add-headline-button';
+import { DynamicHeadlineGroup } from '@/components/ui/dynamic-headline-group';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
 import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
@@ -81,9 +80,6 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
-    { id: 'default-chassis', title: 'Chassis Details', comments: '', imageUrl: undefined }
-  ];
 
   const handlePartClick = (id: number) => {
     const current = partStatuses[id] || 'unchecked';
@@ -232,23 +228,6 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
   };
 
-  const addHeadline = () => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
-    }
-  };
-
-  const removeHeadline = (id: string) => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange(defaultHeadlines.filter(h => h.id !== id));
-    }
-  };
-
-  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
-    }
-  };
 
   // Group parts for the 3-column list
   const col1 = SUBFRAME_PARTS.slice(0, 7);
@@ -461,24 +440,12 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
       </ReusableSection>
       
       {/* Dynamically added headlines */}
-      {defaultHeadlines.map((headline) => (
-        <HeadingCard
-          key={headline.id}
-          initialTitle={headline.title}
-          initialComments={headline.comments}
-          initialImageUrl={headline.imageUrl}
-          initialImages={headline.images || (headline.imageUrl ? [headline.imageUrl] : [])}
-          isRemovable={defaultHeadlines.length > 1}
-          onRemove={() => removeHeadline(headline.id)}
-          onChangeTitle={(title) => updateHeadline(headline.id, { title })}
-          onChangeComments={(comments) => updateHeadline(headline.id, { comments })}
-          onChangeImage={(imageUrl) => updateHeadline(headline.id, { imageUrl: imageUrl || undefined })}
-          onChangeImages={(images) => updateHeadline(headline.id, { images, imageUrl: images[0] || undefined })}
-        />
-      ))}
-
-      {/* Add Headline Button */}
-      <AddHeadlineButton onClick={addHeadline} label="Add Chassis Headline" />
+      <DynamicHeadlineGroup
+        defaultHeadlineId="default-chassis"
+        defaultHeadlineTitle="Chassis Details"
+        headlines={customHeadlines}
+        onChange={onCustomHeadlinesChange}
+      />
 
       {previewUrl && (
         <ImageLightboxModal 

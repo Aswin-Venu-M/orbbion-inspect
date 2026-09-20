@@ -16,43 +16,34 @@ import {
 } from 'lucide-react';
 import { UndoLeftIcon } from '@solar-icons/react/bold/undo-left';
 import { UndoRightIcon } from '@solar-icons/react/bold/undo-right';
-import { MediaConnectionProvider, useMediaConnection } from '@/lib/media-connection-context';
+import { MediaConnectionProvider, useMediaConnection, MediaItem } from '@/lib/media-connection-context';
 import { MediaAssignModal } from '@/components/ui/media-assign-modal';
 import { MediaGalleryPickerModal } from '@/components/ui/media-gallery-picker-modal';
 import { EyeIcon } from '@/components/ui/eye-icon';
 import { PencilIcon } from '@/components/ui/pencil-icon';
 import { GalleryIcon } from '@/components/ui/gallery-icon';
 import { InputField } from '@/components/ui/input-field';
-import { DatePickerInput, parseDate } from '@/components/ui/date-picker-input';
-import { TimePickerInput, parseTimeString } from '@/components/ui/time-picker-input';
-import { YearPickerInput } from '@/components/ui/year-picker-input';
 import { SelectField } from '@/components/ui/select-field';
-import { ComboboxField } from '@/components/ui/combobox-field';
-import {
-  CAR_MAKES,
-  CAR_MODELS_BY_MAKE,
-  POPULAR_CAR_MODELS,
-  REGIONAL_SPECS_OPTIONS,
-  TRANSMISSION_OPTIONS,
-  ENGINE_SIZE_OPTIONS,
-  VEHICLE_TYPE_OPTIONS,
-  EXTERNAL_COLOUR_OPTIONS,
-  FUEL_TYPE_OPTIONS,
-} from '@/constants/vehicle-options';
-import { ReusableSection } from '@/components/ui/reusable-section';
+import { parseDate } from '@/components/ui/date-picker-input';
+import { parseTimeString } from '@/components/ui/time-picker-input';
 import { SidebarCard } from '@/components/ui/sidebar-card';
 import { SectionTitlesCard } from '@/components/ui/section-titles-card';
 import { InspectorSidebarTabs, SidebarTabId } from '@/components/ui/inspector-sidebar-tabs';
-import { ChassisVisualizer, InspectionState } from '@/components/ui/chassis-visualizer';
-import { ChassisSubframeSection } from '@/components/chassis/chassis-subframe-section';
-import { InspectionDetailCard, InspectionDetailState } from '@/components/ui/inspection-detail-card';
+import { InspectionState } from '@/components/ui/chassis-visualizer';
+import { InspectionDetailState } from '@/components/ui/inspection-detail-card';
 import { ReportPreview } from '@/components/ui/report-preview';
+import { InspectionDetailsSection } from '@/components/sections/inspection-details-section';
+import { VehicleSummarySection } from '@/components/sections/vehicle-summary-section';
+import { ReportOverviewSection } from '@/components/sections/report-overview-section';
+import { WheelSubsystemSection } from '@/components/sections/wheel-subsystem-section';
+import { ChassisSubframeSection } from '@/components/chassis/chassis-subframe-section';
 import { InteriorExteriorSection } from '@/components/interior-exterior/interior-exterior-section';
 import { GeneralPhotosSection } from '@/components/general-photos/general-photos-section';
 import { BodySection } from '@/components/body/body-section';
 import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { EngineSection } from '@/components/engine/engine-section';
 import { TransmissionSection } from '@/components/transmission/transmission-section';
+import { InspectMediaDrawer } from '@/components/sections/inspect-media-drawer';
 import { useInspectionHistory } from '@/lib/use-inspection-history';
 import { FullInspectionReport } from '@/lib/inspection-types';
 import { getStoredReports, upsertStoredReport, convertFullReportToListItem } from '@/lib/reports-data';
@@ -71,15 +62,6 @@ import {
   initialReportData,
   initialReportsList,
 } from '@constants';
-
-interface MediaItem {
-  id: string;
-  url: string;
-  name: string;
-  progress: number;
-  status: 'uploading' | 'completed';
-  selected?: boolean;
-}
 
 function InspectDashboardContent({
   history,
@@ -103,21 +85,11 @@ function InspectDashboardContent({
 
   const {
     mediaFiles,
-    filter,
-    setFilter,
-    filteredMediaFiles,
-    selectedMediaCount,
-    toggleMediaSelect,
-    toggleSelectAllMedia,
     getMediaUsage,
     addDirectUpload,
-    addMediaFiles,
     removeMedia,
     deleteSelectedMedia,
-    startDraggingMedia,
-    endDraggingMedia,
     openGalleryPicker,
-    openAssignModal,
   } = useMediaConnection();
 
   // Tab & Gallery State
@@ -131,8 +103,6 @@ function InspectDashboardContent({
   });
   const isSectionsOpen = activeLeftDrawer === 'sections';
   const isGalleryOpen = activeLeftDrawer === 'gallery';
-  const [isDragging, setIsDragging] = useState(false);
-  const dragCounterRef = useRef(0);
 
   // Section Order Interchangeable State
   const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
@@ -177,8 +147,7 @@ function InspectDashboardContent({
     showToast('Section order updated', 'success');
   }, [showToast]);
 
-  // Separate file inputs to prevent upload race conditions
-  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  // Separate file input to prevent upload race conditions
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const [cardUploadTarget, setCardUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake'; id: string } | null>(null);
 
@@ -268,15 +237,6 @@ function InspectDashboardContent({
     }
   }, [resetReport, showToast, report.id]);
 
-  // Dynamic autosuggestion models based on selected Make
-  const currentMakeModels = useMemo(() => {
-    const make = report.vehicleSummary.make?.trim();
-    if (!make) return POPULAR_CAR_MODELS;
-    const foundKey = Object.keys(CAR_MODELS_BY_MAKE).find(
-      (k) => k.toLowerCase() === make.toLowerCase()
-    );
-    return foundKey ? CAR_MODELS_BY_MAKE[foundKey] : POPULAR_CAR_MODELS;
-  }, [report.vehicleSummary.make]);
 
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
@@ -607,63 +567,6 @@ function InspectDashboardContent({
     }
   };
 
-  // Drag & Drop for Media Gallery
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounterRef.current += 1;
-    setIsDragging(true);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounterRef.current -= 1;
-    if (dragCounterRef.current === 0) {
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounterRef.current = 0;
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      addMediaFiles(e.dataTransfer.files);
-    }
-  };
-
-  // Stepper for Keys
-  const incrementKeys = () => {
-    updateReport({
-      vehicleSummary: {
-        ...report.vehicleSummary,
-        numberOfKeys: Math.min((report.vehicleSummary.numberOfKeys || 0) + 1, 10),
-      },
-    });
-  };
-
-  const decrementKeys = () => {
-    updateReport({
-      vehicleSummary: {
-        ...report.vehicleSummary,
-        numberOfKeys: Math.max((report.vehicleSummary.numberOfKeys || 0) - 1, 0),
-      },
-    });
-  };
-
-  // Toggle Odometer Unit
-  const toggleOdometerUnit = () => {
-    const nextUnit = report.vehicleSummary.odometerUnit === 'KM' ? 'Miles' : 'KM';
-    updateReport({
-      vehicleSummary: {
-        ...report.vehicleSummary,
-        odometerUnit: nextUnit,
-      },
-    });
-  };
 
   // Print Action
   const handlePrint = () => {
@@ -791,488 +694,72 @@ function InspectDashboardContent({
     switch (sectionId) {
       case 'section-inspection-details':
         return (
-          <div id="section-inspection-details" className="scroll-mt-6">
-            <ReusableSection title="Inspection Details">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <DatePickerInput 
-                  label="Date" 
-                  required 
-                  placeholder="DD-MM-YYYY"
-                  dateFormat="DD-MM-YYYY"
-                  value={report.inspectionDetails.date}
-                  onChange={(dateVal) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, date: dateVal }
-                  })}
-                  className="w-full"
-                />
-                <TimePickerInput 
-                  label="Time" 
-                  required 
-                  placeholder="09:00 AM" 
-                  value={report.inspectionDetails.time}
-                  onChange={(timeVal) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, time: timeVal }
-                  })}
-                  className="w-full"
-                />
-                <SelectField 
-                  label="Inspection Type" 
-                  required 
-                  placeholder="Select Inspection Type"
-                  options={inspectionTypeOptions}
-                  value={report.inspectionDetails.inspectionType}
-                  onChange={(e) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, inspectionType: e.target.value as string }
-                  })}
-                />
-                <InputField 
-                  label="VIN Number" 
-                  required 
-                  placeholder="Enter 17-digit VIN" 
-                  maxLength={17}
-                  value={report.inspectionDetails.vinNumber}
-                  onChange={(e) => updateReport({
-                    inspectionDetails: { ...report.inspectionDetails, vinNumber: e.target.value.toUpperCase() }
-                  })}
-                />
-              </div>
-            </ReusableSection>
-          </div>
+          <InspectionDetailsSection 
+            data={report.inspectionDetails} 
+            onChange={(patch) => updateReport({
+              inspectionDetails: { ...report.inspectionDetails, ...patch }
+            })} 
+          />
         );
 
       case 'section-vehicle-summary':
         return (
-          <div id="section-vehicle-summary" className="scroll-mt-6">
-            <ReusableSection title="Vehicle Summary">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
-                <ComboboxField 
-                  label="Make" 
-                  placeholder="Enter Make (e.g. Toyota)" 
-                  options={CAR_MAKES}
-                  value={report.vehicleSummary.make}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, make: e.target.value }
-                  })}
-                />
-                <ComboboxField 
-                  label="Model" 
-                  placeholder="Enter Model (e.g. Tundra)" 
-                  options={currentMakeModels}
-                  value={report.vehicleSummary.model}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, model: e.target.value }
-                  })}
-                />
-                <YearPickerInput 
-                  label="Model Year" 
-                  required
-                  placeholder="YYYY" 
-                  value={report.vehicleSummary.year}
-                  onChange={(val) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, year: val }
-                  })}
-                  minYear={1900}
-                  maxYear={new Date().getFullYear() + 1}
-                />
-                
-                <ComboboxField 
-                  label="Regional Specs" 
-                  placeholder="GCC, American, Euro..." 
-                  options={REGIONAL_SPECS_OPTIONS}
-                  rightIcon={<MapPin size={18} />} 
-                  value={report.vehicleSummary.regionalSpecs}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, regionalSpecs: e.target.value }
-                  })}
-                />
-                <ComboboxField 
-                  label="Transmission" 
-                  placeholder="Automatic, Manual..." 
-                  options={TRANSMISSION_OPTIONS}
-                  value={report.vehicleSummary.transmission}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, transmission: e.target.value }
-                  })}
-                />
-                <ComboboxField 
-                  label="Engine Size" 
-                  placeholder="3.5L V6, 2.0L Turbo..." 
-                  options={ENGINE_SIZE_OPTIONS}
-                  value={report.vehicleSummary.engineSize}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, engineSize: e.target.value }
-                  })}
-                />
-                
-                <SelectField 
-                  label="Odometer Status" 
-                  placeholder="Select Odometer Status" 
-                  options={odometerStatusOptions}
-                  value={report.vehicleSummary.odometerStatus}
-                  onChange={(e) => {
-                    const newStatus = e.target.value as string;
-                    const isTampered = newStatus === 'Tampered';
-                    updateReport({
-                      vehicleSummary: { 
-                        ...report.vehicleSummary, 
-                        odometerStatus: newStatus,
-                        ...( !isTampered && { tamperedReading: '' } )
-                      }
-                    });
-                  }}
-                />
-
-                {/* Spare Type Toggle */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1E1035]">Spare Type</label>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      type="button"
-                      onClick={() => updateReport({
-                        vehicleSummary: { ...report.vehicleSummary, spareType: 'available' }
-                      })}
-                      className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
-                        report.vehicleSummary.spareType === 'available'
-                          ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
-                          : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
-                      }`}
-                    >
-                      Available
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => updateReport({
-                        vehicleSummary: { ...report.vehicleSummary, spareType: 'not-available' }
-                      })}
-                      className={`flex-1 text-sm font-semibold h-[46px] rounded-[14px] transition-all cursor-pointer ${
-                        report.vehicleSummary.spareType === 'not-available'
-                          ? 'bg-[#F4E8FF] border border-[#D9A8FF] text-[#9723FF] shadow-xs'
-                          : 'bg-[#F4F5F8] text-[#A0A4AB] hover:text-[#1E1035]'
-                      }`}
-                    >
-                      Not-Available
-                    </button>
-                  </div>
-                </div>
-
-                {/* Number of Keys with Stepper */}
-                <InputField 
-                  label="Number of Keys" 
-                  placeholder="Number of Keys" 
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={report.vehicleSummary.numberOfKeys}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, numberOfKeys: Number(e.target.value) || 0 }
-                  })}
-                  rightIcon={
-                    <div className="flex flex-col items-center justify-center text-slate-400">
-                      <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5" aria-label="Increase number of keys">
-                        <ChevronUp size={12} strokeWidth={3} />
-                      </button>
-                      <button type="button" onClick={decrementKeys} className="hover:text-[#1E1035] p-0.5" aria-label="Decrease number of keys">
-                        <ChevronDown size={12} strokeWidth={3} />
-                      </button>
-                    </div>
-                  } 
-                />
-
-                <ComboboxField 
-                  label="Vehicle Type" 
-                  placeholder="SUV, Truck, Sedan, Coupe..." 
-                  options={VEHICLE_TYPE_OPTIONS}
-                  value={report.vehicleSummary.vehicleType}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, vehicleType: e.target.value }
-                  })}
-                />
-                <ComboboxField 
-                  label="External Colour" 
-                  placeholder="Grey, White, Black..." 
-                  options={EXTERNAL_COLOUR_OPTIONS}
-                  value={report.vehicleSummary.externalColour}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, externalColour: e.target.value }
-                  })}
-                />
-                <ComboboxField 
-                  label="Fuel Type" 
-                  placeholder="Petrol, Diesel, Hybrid, EV..." 
-                  options={FUEL_TYPE_OPTIONS}
-                  value={report.vehicleSummary.fuelType}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, fuelType: e.target.value }
-                  })}
-                />
-                
-                <InputField 
-                  label="Odometer Reading" 
-                  placeholder="Current mileage" 
-                  value={report.vehicleSummary.odometerReading}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, odometerReading: e.target.value }
-                  })}
-                  rightText={
-                    <button 
-                      type="button" 
-                      onClick={toggleOdometerUnit}
-                      className="font-bold hover:underline cursor-pointer flex items-center gap-1"
-                      title="Toggle between KM and Miles"
-                    >
-                      <span className={report.vehicleSummary.odometerUnit === 'KM' ? 'text-[#9723FF]' : 'text-slate-400'}>KM</span>
-                      <span>/</span>
-                      <span className={report.vehicleSummary.odometerUnit === 'Miles' ? 'text-[#9723FF]' : 'text-slate-400'}>Miles</span>
-                    </button>
-                  } 
-                />
-                <InputField 
-                  label="Tampered Odometer Reading" 
-                  placeholder="Reported tampered reading" 
-                  value={report.vehicleSummary.tamperedReading}
-                  disabled={report.vehicleSummary.odometerStatus !== 'Tampered'}
-                  onChange={(e) => updateReport({
-                    vehicleSummary: { ...report.vehicleSummary, tamperedReading: e.target.value }
-                  })}
-                  rightText={
-                    <span className="font-bold text-slate-500">
-                      {report.vehicleSummary.odometerUnit}
-                    </span>
-                  } 
-                />
-              </div>
-            </ReusableSection>
-          </div>
+          <VehicleSummarySection 
+            data={report.vehicleSummary} 
+            onChange={(patch) => updateReport({
+              vehicleSummary: { ...report.vehicleSummary, ...patch }
+            })} 
+          />
         );
 
       case 'section-report-overview':
         return (
-          <div id="section-report-overview" className="scroll-mt-6">
-            <ReusableSection title="Report Overview" className="flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="w-full sm:w-1/3 flex flex-col gap-4">
-                <InputField 
-                  label="Pass Percentage" 
-                  placeholder="e.g. 55" 
-                  type="number"
-                  min="0"
-                  max="100"
-                  rightText="%" 
-                  value={report.reportOverview.pass}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const num = Math.min(100, Math.max(0, Number(val) || 0));
-                    updateReport({
-                      reportOverview: {
-                        ...report.reportOverview,
-                        pass: String(num),
-                        fail: String(100 - num),
-                        autoCalculate: false,
-                      },
-                    });
-                  }}
-                />
-                <InputField 
-                  label="Defects / Fail Percentage" 
-                  placeholder="e.g. 45" 
-                  type="number"
-                  min="0"
-                  max="100"
-                  rightText="%" 
-                  value={report.reportOverview.fail}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const num = Math.min(100, Math.max(0, Number(val) || 0));
-                    updateReport({
-                      reportOverview: {
-                        ...report.reportOverview,
-                        fail: String(num),
-                        pass: String(100 - num),
-                        autoCalculate: false,
-                      },
-                    });
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => updateReport({
-                    reportOverview: {
-                      ...report.reportOverview,
-                      autoCalculate: true,
-                      pass: String(calculatedStats.pass),
-                      fail: String(calculatedStats.fail),
-                    },
-                  })}
-                  className="text-xs font-semibold text-[#9723FF] hover:underline flex items-center gap-1 w-fit focus-visible:ring-2 focus-visible:ring-[#9723FF] focus-visible:outline-none rounded"
-                >
-                  <Sparkles size={13} />
-                  Auto-calculate from points
-                </button>
-              </div>
-
-              {/* Real Dynamic Conic-Gradient Pie Chart */}
-              <div className="w-full sm:w-1/3 flex flex-col items-center justify-center py-4">
-                <div 
-                  className="w-[130px] h-[130px] rounded-full shadow-md border-4 border-white transition-all duration-500" 
-                  style={{
-                    background: `conic-gradient(#5BC335 0% ${report.reportOverview.pass}%, #FE8E4B ${report.reportOverview.pass}% 100%)`
-                  }}
-                />
-                <div className="flex items-center gap-4 mt-3 text-xs font-bold">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-[#5BC335]" />
-                    <span>Pass {report.reportOverview.pass}%</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-[#FE8E4B]" />
-                    <span>Defects {report.reportOverview.fail}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full sm:w-1/3 text-xs text-slate-500 leading-relaxed bg-[#F8FAFC] p-4 rounded-2xl border border-slate-100">
-                <span className="font-bold text-[#1E1035] block mb-1">Inspection Formula</span>
-                Scores are calculated across chassis, tyres, rims, brakes, and electrical subsystems. Green represents safe parameters; orange indicates repairs or defects required.
-              </div>
-            </ReusableSection>
-          </div>
+          <ReportOverviewSection 
+            data={report.reportOverview} 
+            calculatedStats={calculatedStats} 
+            onChange={(patch) => updateReport({
+              reportOverview: { ...report.reportOverview, ...patch }
+            })} 
+          />
         );
 
       case 'section-tyres':
         return (
-          <div id="section-tyres" className="flex flex-col gap-2 scroll-mt-6">
-            <ReusableSection title="Tyres" className="pb-8">
-              <ChassisVisualizer items={report.tyres} setItemStatus={setTyreStatus} />
-            </ReusableSection>
-            <div className="flex flex-col gap-2">
-              <InspectionDetailCard 
-                title="Rear Right (RR)" 
-                data={report.tyres.RR} 
-                onChange={(d) => updateTyreData('RR', d)} 
-                onImageClick={() => handleTyreImageClick('RR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'RR', 'Tyre Rear Right (RR)')}
-              />
-              <InspectionDetailCard 
-                title="Rear Left (RL)" 
-                data={report.tyres.RL} 
-                onChange={(d) => updateTyreData('RL', d)} 
-                onImageClick={() => handleTyreImageClick('RL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'RL', 'Tyre Rear Left (RL)')}
-              />
-              <InspectionDetailCard 
-                title="Front Right (FR)" 
-                data={report.tyres.FR} 
-                onChange={(d) => updateTyreData('FR', d)} 
-                onImageClick={() => handleTyreImageClick('FR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'FR', 'Tyre Front Right (FR)')}
-              />
-              <InspectionDetailCard 
-                title="Front Left (FL)" 
-                data={report.tyres.FL} 
-                onChange={(d) => updateTyreData('FL', d)} 
-                onImageClick={() => handleTyreImageClick('FL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'FL', 'Tyre Front Left (FL)')}
-              />
-              <InspectionDetailCard 
-                title="Spare tyre (ST)" 
-                data={report.tyres.ST} 
-                onChange={(d) => updateTyreData('ST', d)} 
-                onImageClick={() => handleTyreImageClick('ST')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('tyre', 'ST', 'Spare Tyre (ST)')}
-              />
-            </div>
-          </div>
+          <WheelSubsystemSection 
+            id="section-tyres" 
+            title="Tyres" 
+            items={report.tyres} 
+            onStatusChange={setTyreStatus} 
+            onDataChange={updateTyreData} 
+            onImageClick={handleTyreImageClick} 
+            onChooseFromGallery={(id, label) => handleChooseWheelImageFromGallery('tyre', id, label)} 
+          />
         );
 
       case 'section-rims':
         return (
-          <div id="section-rims" className="flex flex-col gap-2 scroll-mt-6">
-            <ReusableSection title="Rims" className="pb-8">
-              <ChassisVisualizer items={report.rims} setItemStatus={setRimStatus} />
-            </ReusableSection>
-            <div className="flex flex-col gap-2">
-              <InspectionDetailCard 
-                title="Rear Right (RR)" 
-                data={report.rims.RR} 
-                onChange={(d) => updateRimData('RR', d)} 
-                onImageClick={() => handleRimImageClick('RR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'RR', 'Rim Rear Right (RR)')}
-              />
-              <InspectionDetailCard 
-                title="Rear Left (RL)" 
-                data={report.rims.RL} 
-                onChange={(d) => updateRimData('RL', d)} 
-                onImageClick={() => handleRimImageClick('RL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'RL', 'Rim Rear Left (RL)')}
-              />
-              <InspectionDetailCard 
-                title="Front Right (FR)" 
-                data={report.rims.FR} 
-                onChange={(d) => updateRimData('FR', d)} 
-                onImageClick={() => handleRimImageClick('FR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'FR', 'Rim Front Right (FR)')}
-              />
-              <InspectionDetailCard 
-                title="Front Left (FL)" 
-                data={report.rims.FL} 
-                onChange={(d) => updateRimData('FL', d)} 
-                onImageClick={() => handleRimImageClick('FL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'FL', 'Rim Front Left (FL)')}
-              />
-              <InspectionDetailCard 
-                title="Spare tyre (ST)" 
-                data={report.rims.ST} 
-                onChange={(d) => updateRimData('ST', d)} 
-                onImageClick={() => handleRimImageClick('ST')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('rim', 'ST', 'Rim Spare Tyre (ST)')}
-              />
-            </div>
-          </div>
+          <WheelSubsystemSection 
+            id="section-rims" 
+            title="Rims" 
+            items={report.rims} 
+            onStatusChange={setRimStatus} 
+            onDataChange={updateRimData} 
+            onImageClick={handleRimImageClick} 
+            onChooseFromGallery={(id, label) => handleChooseWheelImageFromGallery('rim', id, label)} 
+          />
         );
 
       case 'section-brakes':
         return (
-          <div id="section-brakes" className="flex flex-col gap-2 scroll-mt-6">
-            <ReusableSection title="Brakes" className="pb-8">
-              <ChassisVisualizer items={report.brakes} setItemStatus={setBrakeStatus} />
-            </ReusableSection>
-            <div className="flex flex-col gap-2">
-              <InspectionDetailCard 
-                title="Rear Right (RR)" 
-                data={report.brakes.RR} 
-                onChange={(d) => updateBrakeData('RR', d)} 
-                onImageClick={() => handleBrakeImageClick('RR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'RR', 'Brake Rear Right (RR)')}
-              />
-              <InspectionDetailCard 
-                title="Rear Left (RL)" 
-                data={report.brakes.RL} 
-                onChange={(d) => updateBrakeData('RL', d)} 
-                onImageClick={() => handleBrakeImageClick('RL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'RL', 'Brake Rear Left (RL)')}
-              />
-              <InspectionDetailCard 
-                title="Front Right (FR)" 
-                data={report.brakes.FR} 
-                onChange={(d) => updateBrakeData('FR', d)} 
-                onImageClick={() => handleBrakeImageClick('FR')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'FR', 'Brake Front Right (FR)')}
-              />
-              <InspectionDetailCard 
-                title="Front Left (FL)" 
-                data={report.brakes.FL} 
-                onChange={(d) => updateBrakeData('FL', d)} 
-                onImageClick={() => handleBrakeImageClick('FL')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'FL', 'Brake Front Left (FL)')}
-              />
-              <InspectionDetailCard 
-                title="Spare tyre (ST)" 
-                data={report.brakes.ST} 
-                onChange={(d) => updateBrakeData('ST', d)} 
-                onImageClick={() => handleBrakeImageClick('ST')} 
-                onChooseFromGallery={() => handleChooseWheelImageFromGallery('brake', 'ST', 'Brake Spare Tyre (ST)')}
-              />
-            </div>
-          </div>
+          <WheelSubsystemSection 
+            id="section-brakes" 
+            title="Brakes" 
+            items={report.brakes} 
+            onStatusChange={setBrakeStatus} 
+            onDataChange={updateBrakeData} 
+            onImageClick={handleBrakeImageClick} 
+            onChooseFromGallery={(id, label) => handleChooseWheelImageFromGallery('brake', id, label)} 
+          />
         );
 
       case 'section-chassis-subframe':
@@ -1451,281 +938,10 @@ function InspectDashboardContent({
   );
 
   const renderGalleryDrawerContent = () => (
-    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-      {mediaFiles.length > 0 && (
-        <>
-          <div className="flex justify-between items-center mb-3 shrink-0 min-h-[44px] sm:min-h-[48px] gap-2">
-            {selectedMediaCount > 0 ? (
-              <>
-                <div className="flex flex-col min-w-0">
-                  <h3 className="text-[#1E1035] text-[14px] sm:text-[15px] font-bold tracking-tight leading-tight truncate">
-                    {selectedMediaCount} Selected
-                  </h3>
-                  <button 
-                    onClick={toggleSelectAllMedia}
-                    className="flex items-center gap-1 mt-1 text-[#3b59ff] group w-fit cursor-pointer"
-                  >
-                    <Check size={13} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                    <span className="text-[11px] sm:text-[11.5px] font-bold leading-tight underline decoration-1 underline-offset-2">
-                      {mediaFiles.every(m => m.selected) ? 'Deselect All' : 'Select All'}
-                    </span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button 
-                    type="button"
-                    onClick={openAssignModal}
-                    className="h-[36px] sm:h-[38px] px-3 rounded-[12px] bg-[#9723FF] hover:bg-[#8213e4] text-white flex items-center gap-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-                    title="Assign selected photos to report field"
-                  >
-                    <ArrowRightLeft size={14} />
-                    <span>Assign</span>
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={handleRequestDeleteSelected}
-                    className="w-[36px] h-[36px] sm:w-[38px] sm:h-[38px] rounded-[12px] bg-[#fae5e6] hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer border border-red-200 shadow-xs"
-                    title="Delete Selected"
-                  >
-                    <Trash2 size={16} strokeWidth={2} />
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col">
-                  <h3 className="text-[#1E1035] text-[15px] sm:text-[16px] font-bold tracking-tight leading-tight">
-                    {mediaFiles.length} Media
-                  </h3>
-                  <p className="text-[#74768B] text-[11px] sm:text-[12px] font-medium leading-tight mt-0.5">
-                    Drag to field or click +
-                  </p>
-                </div>
-                <button 
-                  onClick={() => galleryFileInputRef.current?.click()}
-                  className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-[14px] bg-[#3e045a] hover:bg-[#280445] flex items-center justify-center text-white transition-colors cursor-pointer shadow-xs"
-                  title="Add Media Files"
-                >
-                  <Plus size={20} strokeWidth={2.5} />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Filter Tabs */}
-          {(() => {
-            const assignedCount = mediaFiles.filter(m => getMediaUsage(m.url).length > 0).length;
-            const unassignedCount = mediaFiles.length - assignedCount;
-            return (
-              <div className="flex items-center gap-1 p-1 bg-[#F4F5F8] rounded-xl mb-3 text-[11px] font-semibold shrink-0 border border-slate-200/50">
-                <button
-                  type="button"
-                  onClick={() => setFilter('all')}
-                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
-                    filter === 'all' 
-                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  All ({mediaFiles.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilter('unassigned')}
-                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
-                    filter === 'unassigned' 
-                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Unassigned ({unassignedCount})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilter('assigned')}
-                  className={`flex-1 py-1.5 px-1.5 rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
-                    filter === 'assigned' 
-                      ? 'bg-white text-[#1E1035] shadow-xs font-bold' 
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  In Report ({assignedCount})
-                </button>
-              </div>
-            );
-          })()}
-        </>
-      )}
-
-      <motion.div 
-        animate={{
-          scale: isDragging ? 0.98 : 1,
-          backgroundColor: isDragging ? "#F8FAFC" : "rgba(255, 255, 255, 0)",
-          borderColor: isDragging ? "#1E1035" : "rgba(226, 228, 235, 0.5)"
-        }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        className={`flex-1 flex flex-col relative overflow-hidden ${mediaFiles.length === 0 ? 'rounded-[24px] border-2 border-dashed' : ''}`}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <input 
-          type="file" 
-          ref={galleryFileInputRef} 
-          onChange={(e) => {
-            if (e.target.files) addMediaFiles(e.target.files);
-            if (e.target) e.target.value = '';
-          }} 
-          multiple 
-          accept="image/*" 
-          className="hidden" 
-        />
-
-        {mediaFiles.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center relative p-4 text-center">
-            <div className="relative w-full flex items-center justify-center mb-4">
-              <img 
-                src="/assets/empty-media.png" 
-                alt="Empty Media" 
-                className="w-40 sm:w-48 h-auto object-contain pointer-events-none"
-              />
-            </div>
-            
-            <h2 className="text-[#1E1035] text-[18px] sm:text-[20px] font-bold mb-1">It&apos;s empty in here.</h2>
-            <p className="text-[#A0A4AB] text-[12px] mb-4">Add some media to bring this album to life.</p>
-            <button 
-              onClick={() => galleryFileInputRef.current?.click()}
-              className="bg-[#3e045a] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-[16px] flex items-center gap-2 text-[12px] font-medium font-['Familjen_Grotesk'] hover:bg-[#281446] transition-colors shadow-sm cursor-pointer"
-            >
-              Add Media <Plus size={16} />
-            </button>
-          </div>
-        ) : filteredMediaFiles.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-400">
-            <ImageIcon size={32} className="mb-2 opacity-40 text-[#1E1035]" />
-            <p className="text-xs font-semibold text-slate-600">
-              No {filter === 'assigned' ? 'assigned' : 'unassigned'} photos found
-            </p>
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className="mt-2 text-xs font-bold text-[#9723FF] hover:underline cursor-pointer"
-            >
-              View all ({mediaFiles.length})
-            </button>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 gap-2.5">
-              {filteredMediaFiles.map((media) => {
-                const usage = getMediaUsage(media.url);
-                const isInReport = usage.length > 0;
-                return (
-                  <div 
-                    key={media.id} 
-                    draggable={media.status === 'completed'}
-                    onDragStart={(e) => startDraggingMedia(media, e)}
-                    onDragEnd={endDraggingMedia}
-                    className={`relative group rounded-[16px] overflow-hidden aspect-square border transition-all ${
-                      media.selected 
-                        ? 'border-[#9723FF] ring-2 ring-[#9723FF]/40 shadow-sm' 
-                        : isInReport 
-                          ? 'border-emerald-400 ring-1 ring-emerald-400/40' 
-                          : 'border-[#cfd2e0]'
-                    } ${media.status === 'completed' ? 'cursor-grab active:cursor-grabbing hover:shadow-md' : 'cursor-default'} bg-slate-100 select-none`}
-                  >
-                    <img 
-                      src={media.url} 
-                      alt={media.name} 
-                      className={`w-full h-full object-cover transition-all duration-300 ${
-                        media.status === 'uploading' ? 'scale-105 blur-[2px]' : 'scale-100 group-hover:scale-105'
-                      }`} 
-                    />
-
-                    {/* Usage badge in bottom left */}
-                    {media.status === 'completed' && isInReport && (
-                      <div 
-                        title={`Attached in:\n${usage.map(u => `• ${u.label} (${u.section})`).join('\n')}`}
-                        className="absolute bottom-1.5 left-1.5 z-20 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#1E1035]/85 backdrop-blur-xs text-[9.5px] font-bold text-white shadow-xs pointer-events-auto cursor-help"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span>{usage.length > 1 ? `${usage.length} in report` : 'in report'}</span>
-                      </div>
-                    )}
-
-                    {/* Drag hint on hover */}
-                    {media.status === 'completed' && !isInReport && (
-                      <div className="absolute bottom-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 text-[9px] bg-black/60 text-white font-medium px-1.5 py-0.5 rounded backdrop-blur-xs pointer-events-none">
-                        Drag
-                      </div>
-                    )}
-
-                    {media.status === 'uploading' && (
-                      <div className="absolute inset-0 bg-black/30 flex flex-col justify-between p-2 z-10">
-                        <div className="flex justify-end w-full">
-                          <button 
-                            onClick={() => removeMedia(media.id)}
-                            className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer border border-red-200 shadow-xs"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                        <div className="flex flex-col gap-1 w-full bg-black/60 p-2 rounded-xl backdrop-blur-xs">
-                          <span className="text-white text-[10.5px] font-medium tracking-wide">Uploading...</span>
-                          <div className="flex items-center gap-1.5 w-full">
-                            <div className="h-[3px] bg-[#f1f2f6]/60 flex-1 rounded-full overflow-hidden">
-                              <div className="h-full bg-white rounded-full transition-all" style={{ width: `${media.progress}%` }} />
-                            </div>
-                            <span className="text-white text-[10px] font-medium whitespace-nowrap">{media.progress}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {media.status === 'completed' && (
-                      <>
-                        {/* Top right delete button */}
-                        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-85 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity z-20">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRequestDeleteSingle(media);
-                            }}
-                            className="bg-[#fae5e6] text-red-500 p-1 rounded-[8px] hover:bg-red-100 transition-colors cursor-pointer shadow-sm border border-red-200"
-                            title={isInReport ? 'Delete photo (attached to report)' : 'Delete photo'}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                        
-                        {/* Center checkmark toggle */}
-                        <div className={`absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-200 ${media.selected ? 'opacity-100' : 'opacity-70 xl:opacity-0 xl:group-hover:opacity-100'}`}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMediaSelect(media.id);
-                            }}
-                            className={`p-1.5 rounded-full shadow-sm flex items-center justify-center transition-all duration-300 transform active:scale-95 ${
-                              media.selected 
-                                ? 'bg-white border-white scale-110 shadow-md' 
-                                : 'backdrop-blur-[2px] bg-black/40 border-white/60 hover:bg-black/60 hover:scale-110'
-                            } border cursor-pointer`}
-                            title={media.selected ? 'Deselect photo' : 'Select photo'}
-                          >
-                            <Check size={18} className={media.selected ? "text-[#3e045a]" : "text-white"} strokeWidth={media.selected ? 3.5 : 2} />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </motion.div>
-    </div>
+    <InspectMediaDrawer
+      onRequestDeleteSingle={handleRequestDeleteSingle}
+      onRequestDeleteSelected={handleRequestDeleteSelected}
+    />
   );
 
   return (

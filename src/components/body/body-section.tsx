@@ -7,8 +7,7 @@ import { INITIAL_BODY_PART_STATUSES } from '@/constants/visualizers';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
-import { HeadingCard } from '@/components/ui/heading-card';
-import { AddHeadlineButton } from '@/components/ui/add-headline-button';
+import { DynamicHeadlineGroup } from '@/components/ui/dynamic-headline-group';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
 import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
@@ -59,9 +58,6 @@ export const BodySection: React.FC<BodySectionProps> = ({
     };
   }, [partStatuses]);
 
-  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
-    { id: 'default-body', title: 'Underbody Shield & Chassis Frame', comments: '', imageUrl: undefined }
-  ];
 
   const handlePartStatusSelect = (partId: BodyPartId, status: BodyPartStatusValue) => {
     if (onPartStatusesChange) {
@@ -203,23 +199,6 @@ export const BodySection: React.FC<BodySectionProps> = ({
     }
   };
 
-  const addHeadline = () => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
-    }
-  };
-
-  const removeHeadline = (id: string) => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange(defaultHeadlines.filter(h => h.id !== id));
-    }
-  };
-
-  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
-    if (onCustomHeadlinesChange) {
-      onCustomHeadlinesChange(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
-    }
-  };
 
   return (
     <div id="section-body" className="flex flex-col gap-2 w-full">
@@ -328,25 +307,13 @@ export const BodySection: React.FC<BodySectionProps> = ({
         onImagesChange={onGeneralImagesChange}
       />
 
-      {/* Dynamically added headlines including the default one */}
-      {defaultHeadlines.map((h, index) => (
-        <HeadingCard
-          key={h.id}
-          initialTitle={h.title}
-          initialComments={h.comments}
-          initialImageUrl={h.imageUrl}
-          initialImages={h.images || (h.imageUrl ? [h.imageUrl] : [])}
-          isRemovable={index !== 0} // Make the first one non-removable
-          onRemove={() => removeHeadline(h.id)}
-          onChangeTitle={(title) => updateHeadline(h.id, { title })}
-          onChangeComments={(comments) => updateHeadline(h.id, { comments })}
-          onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
-          onChangeImages={(images) => updateHeadline(h.id, { images, imageUrl: images[0] || undefined })}
-        />
-      ))}
-
-      {/* Add Headline Button */}
-      <AddHeadlineButton onClick={addHeadline} label="Add Body Headline" />
+      {/* Dynamically added headlines */}
+      <DynamicHeadlineGroup
+        defaultHeadlineId="default-body"
+        defaultHeadlineTitle="Underbody Shield & Chassis Frame"
+        headlines={customHeadlines}
+        onChange={onCustomHeadlinesChange}
+      />
 
       {previewUrl && (
         <ImageLightboxModal 

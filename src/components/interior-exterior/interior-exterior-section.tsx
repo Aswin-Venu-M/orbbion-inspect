@@ -6,8 +6,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { ImageUploadBox } from '@/components/ui/image-upload-box';
 import { ImageLightboxModal } from '@/components/ui/image-lightbox-modal';
 import { GeneralCommentsCard } from '@/components/ui/general-comments-card';
-import { HeadingCard } from '@/components/ui/heading-card';
-import { AddHeadlineButton } from '@/components/ui/add-headline-button';
+import { DynamicHeadlineGroup } from '@/components/ui/dynamic-headline-group';
 import { Trash2, AlertCircle, X } from 'lucide-react';
 import { INTERIOR_EXTERIOR_POINTS } from '@/constants/inspection-points';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
@@ -62,9 +61,6 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
   const chunk2 = INTERIOR_EXTERIOR_POINTS.chunk2;
   const chunk3 = INTERIOR_EXTERIOR_POINTS.chunk3;
 
-  const defaultHeadlines = customHeadlines.length > 0 ? customHeadlines : [
-    { id: 'default-interior', title: 'Dashboard & Infotainment Screen Trim', comments: '', imageUrl: undefined }
-  ];
 
   const handleSeatsCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -195,17 +191,6 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     setUploadError(null);
   };
 
-  const addHeadline = () => {
-    onCustomHeadlinesChange?.([...defaultHeadlines, { id: generateSafeId(), title: '', comments: '' }]);
-  };
-
-  const removeHeadline = (id: string) => {
-    onCustomHeadlinesChange?.(defaultHeadlines.filter(h => h.id !== id));
-  };
-
-  const updateHeadline = (id: string, updates: Partial<CustomHeadlineItem>) => {
-    onCustomHeadlinesChange?.(defaultHeadlines.map(h => h.id === id ? { ...h, ...updates } : h));
-  };
 
   return (
     <div id="section-interior-exterior" className="flex flex-col gap-2">
@@ -422,24 +407,12 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
       />
 
       {/* Dynamically added headlines */}
-      {defaultHeadlines.map(h => (
-        <HeadingCard
-          key={h.id}
-          initialTitle={h.title}
-          initialComments={h.comments}
-          initialImageUrl={h.imageUrl}
-          initialImages={h.images || (h.imageUrl ? [h.imageUrl] : [])}
-          isRemovable={defaultHeadlines.length > 1}
-          onRemove={() => removeHeadline(h.id)}
-          onChangeTitle={(title) => updateHeadline(h.id, { title })}
-          onChangeComments={(comments) => updateHeadline(h.id, { comments })}
-          onChangeImage={(imageUrl) => updateHeadline(h.id, { imageUrl: imageUrl || undefined })}
-          onChangeImages={(images) => updateHeadline(h.id, { images, imageUrl: images[0] || undefined })}
-        />
-      ))}
-
-      {/* Add Headline Button */}
-      <AddHeadlineButton onClick={addHeadline} label="Add Interior Headline" />
+      <DynamicHeadlineGroup
+        defaultHeadlineId="default-interior"
+        defaultHeadlineTitle="Dashboard & Infotainment Screen Trim"
+        headlines={customHeadlines}
+        onChange={onCustomHeadlinesChange}
+      />
 
       {previewUrl && (
         <ImageLightboxModal 
