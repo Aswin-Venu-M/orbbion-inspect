@@ -7,13 +7,15 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from "motion/react";
 import Link from 'next/link';
 import {
-  Calendar, Clock, ChevronDown, ChevronUp, User, MapPin, RotateCcw, RotateCw, 
+  Calendar, Clock, ChevronDown, ChevronUp, User, MapPin, 
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
   ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash, ListOrdered,
   ArrowRightLeft,
 } from 'lucide-react';
+import { UndoLeftIcon } from '@solar-icons/react/bold/undo-left';
+import { UndoRightIcon } from '@solar-icons/react/bold/undo-right';
 import { MediaConnectionProvider, useMediaConnection } from '@/lib/media-connection-context';
 import { MediaAssignModal } from '@/components/ui/media-assign-modal';
 import { MediaGalleryPickerModal } from '@/components/ui/media-gallery-picker-modal';
@@ -2034,7 +2036,7 @@ function InspectDashboardContent({
                 title="Undo (Ctrl+Z)"
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                <RotateCcw size={15} />
+                <UndoLeftIcon size={16} />
               </button>
               <button 
                 onClick={redo}
@@ -2042,7 +2044,7 @@ function InspectDashboardContent({
                 title="Redo (Ctrl+Y)"
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                <RotateCw size={15} />
+                <UndoRightIcon size={16} />
               </button>
             </div>
 
