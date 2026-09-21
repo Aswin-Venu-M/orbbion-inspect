@@ -1289,13 +1289,13 @@ function InspectDashboardContent({
 
             {/* Print / Download */}
             <div className="flex items-center gap-1 sm:gap-2">
-              <button 
+              {/* <button 
                 onClick={handlePrint}
                 title="Print Report (PDF)"
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-2xs cursor-pointer"
               >
                 <Printer size={15} strokeWidth={2.2} />
-              </button>
+              </button> */}
               <button 
                 onClick={handleDownload}
                 title="Download JSON Report Data"
@@ -1627,16 +1627,16 @@ function InspectDashboardContent({
                   </button>
                 </div>
 
-                <div className="w-px h-4 bg-slate-200"></div>
+                {/* <div className="w-px h-4 bg-slate-200"></div> */}
 
                 {/* Print PDF Button */}
-                <button 
+                {/* <button 
                   onClick={handlePrint}
                   aria-label="Print Report"
                   className="w-7 h-7 rounded-lg bg-[#3e045a] text-white flex items-center justify-center active:scale-95 transition-all shadow-2xs cursor-pointer"
                 >
                   <Printer size={13} strokeWidth={2.2} />
-                </button>
+                </button> */}
               </div>
             </>
           )}
