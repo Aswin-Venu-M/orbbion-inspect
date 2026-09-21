@@ -203,12 +203,18 @@ export function ReportsListTable({
     return filteredReports.slice(startIndex, startIndex + pageSize);
   }, [filteredReports, currentPage, pageSize]);
 
-  // Selection toggle
+  // Selection state computation
+  const isAllFilteredSelected = useMemo(() => {
+    return filteredReports.length > 0 && filteredReports.every((r) => selectedReportIds.includes(r.id));
+  }, [filteredReports, selectedReportIds]);
+
   const toggleSelectAll = () => {
-    if (selectedReportIds.length === filteredReports.length && filteredReports.length > 0) {
-      setSelectedReportIds([]);
+    if (isAllFilteredSelected) {
+      const filteredIdSet = new Set(filteredReports.map((r) => r.id));
+      setSelectedReportIds((prev) => prev.filter((id) => !filteredIdSet.has(id)));
     } else {
-      setSelectedReportIds(filteredReports.map((r) => r.id));
+      const newIds = new Set([...selectedReportIds, ...filteredReports.map((r) => r.id)]);
+      setSelectedReportIds(Array.from(newIds));
     }
   };
 
@@ -507,7 +513,7 @@ export function ReportsListTable({
                 <th className="py-3 px-3 w-10 text-center">
                   <input
                     type="checkbox"
-                    checked={selectedReportIds.length === filteredReports.length && filteredReports.length > 0}
+                    checked={isAllFilteredSelected}
                     onChange={toggleSelectAll}
                     aria-label="Select all reports"
                     className="rounded text-[#9723FF] focus:ring-purple-500 cursor-pointer"

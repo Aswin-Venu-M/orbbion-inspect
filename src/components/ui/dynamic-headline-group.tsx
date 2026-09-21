@@ -4,6 +4,7 @@ import React from 'react';
 import { HeadingCard } from './heading-card';
 import { AddHeadlineButton } from './add-headline-button';
 import { CustomHeadlineItem } from '@/lib/inspection-types';
+import { generateSafeId } from '@/lib/media-targets';
 
 export interface DynamicHeadlineGroupProps {
   defaultHeadlineId: string;
@@ -21,17 +22,17 @@ export const DynamicHeadlineGroup: React.FC<DynamicHeadlineGroupProps> = ({
   maxImages,
 }) => {
   const activeHeadlines: CustomHeadlineItem[] = headlines.length > 0 ? headlines : [
-    { id: defaultHeadlineId, title: defaultHeadlineTitle, comments: '', imageUrl: undefined }
+    { id: defaultHeadlineId, title: defaultHeadlineTitle, comments: '', imageUrl: undefined, images: [] }
   ];
 
   const handleAdd = () => {
     if (!onChange) return;
-    const newId = Math.random().toString(36).substring(7);
-    onChange([...activeHeadlines, { id: newId, title: '', comments: '' }]);
+    const newId = generateSafeId();
+    onChange([...activeHeadlines, { id: newId, title: '', comments: '', images: [] }]);
   };
 
   const handleRemove = (id: string) => {
-    if (!onChange) return;
+    if (!onChange || id === defaultHeadlineId) return;
     onChange(activeHeadlines.filter(h => h.id !== id));
   };
 
@@ -44,14 +45,14 @@ export const DynamicHeadlineGroup: React.FC<DynamicHeadlineGroupProps> = ({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      {activeHeadlines.map((h, index) => (
+      {activeHeadlines.map((h) => (
         <HeadingCard
           key={h.id}
           initialTitle={h.title}
           initialComments={h.comments}
           initialImageUrl={h.imageUrl}
           initialImages={h.images || (h.imageUrl ? [h.imageUrl] : [])}
-          isRemovable={index !== 0}
+          isRemovable={h.id !== defaultHeadlineId}
           onRemove={() => handleRemove(h.id)}
           onChangeTitle={(title) => handleUpdate(h.id, { title })}
           onChangeComments={(comments) => handleUpdate(h.id, { comments })}

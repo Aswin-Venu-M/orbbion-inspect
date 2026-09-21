@@ -54,11 +54,12 @@ export function AppShell({ children }: AppShellProps) {
     if (!debouncedSpotlightQuery.trim()) return spotlightReports.slice(0, 5);
     const q = debouncedSpotlightQuery.toLowerCase();
     return spotlightReports.filter((r) =>
-      r.vehicle.vin.toLowerCase().includes(q) ||
-      `${r.vehicle.year} ${r.vehicle.make} ${r.vehicle.model}`.toLowerCase().includes(q) ||
-      r.client.name.toLowerCase().includes(q) ||
-      r.inspector.name.toLowerCase().includes(q) ||
-      r.reportNumber.toLowerCase().includes(q)
+      (r.vehicle?.vin || '').toLowerCase().includes(q) ||
+      `${r.vehicle?.year || ''} ${r.vehicle?.make || ''} ${r.vehicle?.model || ''}`.toLowerCase().includes(q) ||
+      (r.client?.name || '').toLowerCase().includes(q) ||
+      (r.client?.company || '').toLowerCase().includes(q) ||
+      (r.inspector?.name || '').toLowerCase().includes(q) ||
+      (r.reportNumber || r.id || '').toLowerCase().includes(q)
     );
   }, [spotlightReports, debouncedSpotlightQuery]);
 

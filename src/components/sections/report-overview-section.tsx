@@ -17,6 +17,9 @@ export const ReportOverviewSection: React.FC<ReportOverviewSectionProps> = ({
   calculatedStats,
   onChange,
 }) => {
+  const passNum = Math.min(100, Math.max(0, parseInt(data?.pass || '0', 10) || 0));
+  const failNum = 100 - passNum;
+
   return (
     <div id="section-report-overview" className="scroll-mt-6">
       <ReusableSection title="Report Overview" className="flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -28,7 +31,7 @@ export const ReportOverviewSection: React.FC<ReportOverviewSectionProps> = ({
             min="0"
             max="100"
             rightText="%" 
-            value={data.pass}
+            value={data?.pass ?? ''}
             onChange={(e) => {
               const val = e.target.value;
               const num = Math.min(100, Math.max(0, Number(val) || 0));
@@ -46,7 +49,7 @@ export const ReportOverviewSection: React.FC<ReportOverviewSectionProps> = ({
             min="0"
             max="100"
             rightText="%" 
-            value={data.fail}
+            value={data?.fail ?? ''}
             onChange={(e) => {
               const val = e.target.value;
               const num = Math.min(100, Math.max(0, Number(val) || 0));
@@ -76,17 +79,17 @@ export const ReportOverviewSection: React.FC<ReportOverviewSectionProps> = ({
           <div 
             className="w-[130px] h-[130px] rounded-full shadow-md border-4 border-white transition-all duration-500" 
             style={{
-              background: `conic-gradient(#5BC335 0% ${data.pass}%, #FE8E4B ${data.pass}% 100%)`
+              background: `conic-gradient(#5BC335 0% ${passNum}%, #FE8E4B ${passNum}% 100%)`
             }}
           />
           <div className="flex items-center gap-4 mt-3 text-xs font-bold">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[#5BC335]" />
-              <span>Pass {data.pass}%</span>
+              <span>Pass {passNum}%</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-[#FE8E4B]" />
-              <span>Defects {data.fail}%</span>
+              <span>Defects {failNum}%</span>
             </div>
           </div>
         </div>

@@ -109,10 +109,9 @@ export const VehicleSummarySection: React.FC<VehicleSummarySectionProps> = ({
             value={data.odometerStatus}
             onChange={(e) => {
               const newStatus = e.target.value as string;
-              const isTampered = newStatus === 'Tampered';
               onChange({ 
                 odometerStatus: newStatus,
-                ...( !isTampered && { tamperedReading: '' } )
+                tamperedReading: newStatus === 'Tampered' ? data.tamperedReading : '',
               });
             }}
           />
@@ -154,7 +153,11 @@ export const VehicleSummarySection: React.FC<VehicleSummarySectionProps> = ({
             min="0"
             max="10"
             value={data.numberOfKeys}
-            onChange={(e) => onChange({ numberOfKeys: Number(e.target.value) || 0 })}
+            onChange={(e) => {
+              const parsed = parseInt(e.target.value, 10);
+              const clamped = isNaN(parsed) ? 0 : Math.min(10, Math.max(0, parsed));
+              onChange({ numberOfKeys: clamped });
+            }}
             rightIcon={
               <div className="flex flex-col items-center justify-center text-slate-400">
                 <button type="button" onClick={incrementKeys} className="hover:text-[#1E1035] p-0.5" aria-label="Increase number of keys">
@@ -193,7 +196,7 @@ export const VehicleSummarySection: React.FC<VehicleSummarySectionProps> = ({
             label="Odometer Reading" 
             placeholder="Current mileage" 
             value={data.odometerReading}
-            onChange={(e) => onChange({ odometerReading: e.target.value })}
+            onChange={(e) => onChange({ odometerReading: e.target.value.replace(/[^0-9]/g, '') })}
             rightText={
               <button 
                 type="button" 
@@ -212,7 +215,7 @@ export const VehicleSummarySection: React.FC<VehicleSummarySectionProps> = ({
             placeholder="Reported tampered reading" 
             value={data.tamperedReading}
             disabled={data.odometerStatus !== 'Tampered'}
-            onChange={(e) => onChange({ tamperedReading: e.target.value })}
+            onChange={(e) => onChange({ tamperedReading: e.target.value.replace(/[^0-9]/g, '') })}
             rightText={
               <span className="font-bold text-slate-500">
                 {data.odometerUnit}

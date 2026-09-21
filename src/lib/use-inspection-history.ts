@@ -8,6 +8,40 @@ import { upsertStoredReport, convertFullReportToListItem } from './reports-data'
 const STORAGE_KEY = 'orbbion_inspection_report_v2';
 const MAX_HISTORY = 30;
 
+export function cleanReportForStorage(data: FullInspectionReport): FullInspectionReport {
+  const sanitize = (val: any): any => {
+    if (val === null || val === undefined) return val;
+    if (typeof val === 'string') {
+      return val.startsWith('blob:') ? '' : val;
+    }
+    if (Array.isArray(val)) {
+      return val
+        .filter((item) => {
+          if (typeof item === 'string') return !item.startsWith('blob:');
+          if (item && typeof item === 'object' && typeof item.url === 'string') {
+            return !item.url.startsWith('blob:');
+          }
+          return true;
+        })
+        .map(sanitize);
+    }
+    if (typeof val === 'object') {
+      const copy: any = {};
+      for (const k of Object.keys(val)) {
+        if (k === 'image' && val[k] && typeof val[k].url === 'string' && val[k].url.startsWith('blob:')) {
+          copy[k] = null;
+        } else {
+          copy[k] = sanitize(val[k]);
+        }
+      }
+      return copy;
+    }
+    return val;
+  };
+
+  return sanitize(data) as FullInspectionReport;
+}
+
 export function useInspectionHistory() {
   const [report, setReport] = useState<FullInspectionReport>(initialReportData);
   const [past, setPast] = useState<FullInspectionReport[]>([]);
@@ -72,6 +106,34 @@ export function useInspectionHistory() {
               ...(prev.brakes || {}),
               ...(parsed.brakes || {}),
             },
+            bodyPartStatuses: {
+              ...initialReportData.bodyPartStatuses,
+              ...(prev.bodyPartStatuses || {}),
+              ...(parsed.bodyPartStatuses || {}),
+            },
+            chassisSubframePartStatuses: {
+              ...initialReportData.chassisSubframePartStatuses,
+              ...(prev.chassisSubframePartStatuses || {}),
+              ...(parsed.chassisSubframePartStatuses || {}),
+            },
+            bodyCustomHeadlines: Array.isArray(parsed.bodyCustomHeadlines) && parsed.bodyCustomHeadlines.length > 0
+              ? parsed.bodyCustomHeadlines
+              : initialReportData.bodyCustomHeadlines,
+            chassisSubframeCustomHeadlines: Array.isArray(parsed.chassisSubframeCustomHeadlines) && parsed.chassisSubframeCustomHeadlines.length > 0
+              ? parsed.chassisSubframeCustomHeadlines
+              : initialReportData.chassisSubframeCustomHeadlines,
+            interiorCustomHeadlines: Array.isArray(parsed.interiorCustomHeadlines) && parsed.interiorCustomHeadlines.length > 0
+              ? parsed.interiorCustomHeadlines
+              : initialReportData.interiorCustomHeadlines,
+            electricalCustomHeadlines: Array.isArray(parsed.electricalCustomHeadlines) && parsed.electricalCustomHeadlines.length > 0
+              ? parsed.electricalCustomHeadlines
+              : initialReportData.electricalCustomHeadlines,
+            engineCustomHeadlines: Array.isArray(parsed.engineCustomHeadlines) && parsed.engineCustomHeadlines.length > 0
+              ? parsed.engineCustomHeadlines
+              : initialReportData.engineCustomHeadlines,
+            transmissionCustomHeadlines: Array.isArray(parsed.transmissionCustomHeadlines) && parsed.transmissionCustomHeadlines.length > 0
+              ? parsed.transmissionCustomHeadlines
+              : initialReportData.transmissionCustomHeadlines,
             lastSavedAt: 'Loaded from local save',
           }));
         }
@@ -91,8 +153,9 @@ export function useInspectionHistory() {
     }
     saveTimeoutRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        upsertStoredReport(convertFullReportToListItem(data));
+        const cleaned = cleanReportForStorage(data);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        upsertStoredReport(convertFullReportToListItem(cleaned));
         setSaveStatus('saved');
       } catch (e) {
         console.error('Failed to save to localStorage:', e);

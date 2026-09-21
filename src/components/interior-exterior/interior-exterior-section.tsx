@@ -87,9 +87,8 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
     }
 
     if (validFiles.length > 0 && onSeatsImagesChange) {
-      const newImages = validFiles.map(f => {
-        const url = URL.createObjectURL(f);
-        mediaContext?.addDirectUpload(f, f.name);
+      const newImages = validFiles.map((f) => {
+        const url = mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
         return {
           id: generateSafeId(),
           url,

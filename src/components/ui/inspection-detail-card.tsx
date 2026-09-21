@@ -92,8 +92,7 @@ export const InspectionDetailCard = ({
     if (files && files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
-        const url = URL.createObjectURL(file);
-        mediaContext?.addDirectUpload(file, file.name);
+        const url = mediaContext ? mediaContext.addDirectUpload(file, file.name) : URL.createObjectURL(file);
         onChange({ image: { url, progress: 100 } });
         return;
       }

@@ -245,20 +245,95 @@ function GenericItemCard({
   );
 }
 
-function PreviewPage({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+export function hasInspectionItems(
+  items?: Record<string, any>,
+  comments?: string,
+  images?: any[],
+  customHeadlines?: CustomHeadlineItem[]
+): boolean {
+  const hasKeys = items ? Object.keys(items).length > 0 : false;
+  const hasRemarks = Boolean(comments && comments.trim().length > 0);
+  const hasImgs = Boolean(images && images.length > 0);
+  const hasHeadlines = Boolean(customHeadlines && customHeadlines.length > 0);
+  return hasKeys || hasRemarks || hasImgs || hasHeadlines;
+}
+
+export function getReportPreviewPagesCount(
+  report?: FullInspectionReport,
+  brakes?: Record<string, InspectionDetailState>
+): number {
+  let count = 4; // 1: Cover, 2: Vehicle Summary, 3: Tyres, 4: Rims
+  const activeBrakes = brakes || report?.brakes;
+  if (activeBrakes && Object.keys(activeBrakes).length > 0) count++;
+  
+  if (report?.chassisSubframePartStatuses && Object.keys(report.chassisSubframePartStatuses).length > 0) count++;
+  if (report?.bodyPartStatuses && Object.keys(report.bodyPartStatuses).length > 0) count++;
+  
+  const hasInterior = Boolean(
+    report?.seatsStatus ||
+    (report?.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0) ||
+    (report?.seatsComments && report.seatsComments.trim().length > 0) ||
+    (report?.interiorComments && report.interiorComments.trim().length > 0) ||
+    (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)
+  );
+  if (hasInterior) count++;
+
+  if (hasInspectionItems(report?.engineItems, report?.engineComments, report?.engineGeneralImages, report?.engineCustomHeadlines)) count++;
+  if (hasInspectionItems(report?.transmissionItems, report?.transmissionComments, report?.transmissionGeneralImages, report?.transmissionCustomHeadlines)) count++;
+  if (hasInspectionItems(report?.electricalItems, report?.electricalComments, report?.electricalGeneralImages, report?.electricalCustomHeadlines)) count++;
+
+  const hasPhotos = Boolean(
+    (report?.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) ||
+    (report?.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0) ||
+    (report?.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0) ||
+    (report?.generalPhotosExteriorComments && report.generalPhotosExteriorComments.trim().length > 0) ||
+    (report?.generalPhotosInteriorComments && report.generalPhotosInteriorComments.trim().length > 0) ||
+    (report?.generalPhotosEngineComments && report.generalPhotosEngineComments.trim().length > 0)
+  );
+  if (hasPhotos) count++;
+
+  return count;
+}
+
+function PageHeader({ pageNumber, totalPages }: { pageNumber?: number; totalPages?: number }) {
+  return (
+    <div className="flex justify-between items-center mb-3.5 sm:mb-5 shrink-0">
+      <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+        <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[#64748B] text-xs sm:text-sm font-semibold">
+          Comprehensive Green Book
+        </span>
+        {pageNumber !== undefined && totalPages !== undefined && (
+          <span className="text-[10px] sm:text-[11px] font-bold bg-white text-slate-500 px-2.5 py-0.5 rounded-full shadow-xs border border-slate-200">
+            {String(pageNumber).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PreviewPage({
+  id,
+  title,
+  pageNumber,
+  totalPages,
+  children,
+}: {
+  id: string;
+  title: string;
+  pageNumber?: number;
+  totalPages?: number;
+  children: React.ReactNode;
+}) {
   return (
     <div
       id={id}
       className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
     >
-      <div className="flex justify-between items-center mb-5 shrink-0">
-        <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-          <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
-        </div>
-        <div className="text-[#64748B] text-sm font-semibold">
-          Comprehensive Green Book
-        </div>
-      </div>
+      <PageHeader pageNumber={pageNumber} totalPages={totalPages} />
       <div className="bg-[#1F2022] rounded-[20px] px-5 py-3 mb-4 shadow-sm shrink-0">
         <h2 className="text-white text-base font-semibold">{title}</h2>
       </div>
@@ -281,12 +356,73 @@ export function ReportPreview({
   const passVal = Math.max(0, Math.min(100, overviewStats.pass !== undefined ? Number(overviewStats.pass) : 55));
   const failVal = Math.max(0, Math.min(100 - passVal, overviewStats.fail !== undefined ? Number(overviewStats.fail) : (100 - passVal)));
 
+  const activeBrakes = brakes || report?.brakes;
+  const totalPages = getReportPreviewPagesCount(report, activeBrakes);
+
+  let pageCounter = 1;
+  const coverPageNum = pageCounter++;
+  const summaryPageNum = pageCounter++;
+  const tyresPageNum = pageCounter++;
+  const rimsPageNum = pageCounter++;
+
+  const hasBrakes = Boolean(activeBrakes && Object.keys(activeBrakes).length > 0);
+  const brakesPageNum = hasBrakes ? pageCounter++ : undefined;
+
+  const hasChassis = Boolean(report?.chassisSubframePartStatuses && Object.keys(report.chassisSubframePartStatuses).length > 0);
+  const chassisPageNum = hasChassis ? pageCounter++ : undefined;
+
+  const hasBody = Boolean(report?.bodyPartStatuses && Object.keys(report.bodyPartStatuses).length > 0);
+  const bodyPageNum = hasBody ? pageCounter++ : undefined;
+
+  const hasInterior = Boolean(
+    report?.seatsStatus ||
+    (report?.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0) ||
+    (report?.seatsComments && report.seatsComments.trim().length > 0) ||
+    (report?.interiorComments && report.interiorComments.trim().length > 0) ||
+    (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)
+  );
+  const interiorPageNum = hasInterior ? pageCounter++ : undefined;
+
+  const hasEngine = hasInspectionItems(
+    report?.engineItems,
+    report?.engineComments,
+    report?.engineGeneralImages,
+    report?.engineCustomHeadlines
+  );
+  const enginePageNum = hasEngine ? pageCounter++ : undefined;
+
+  const hasTransmission = hasInspectionItems(
+    report?.transmissionItems,
+    report?.transmissionComments,
+    report?.transmissionGeneralImages,
+    report?.transmissionCustomHeadlines
+  );
+  const transmissionPageNum = hasTransmission ? pageCounter++ : undefined;
+
+  const hasElectrical = hasInspectionItems(
+    report?.electricalItems,
+    report?.electricalComments,
+    report?.electricalGeneralImages,
+    report?.electricalCustomHeadlines
+  );
+  const electricalPageNum = hasElectrical ? pageCounter++ : undefined;
+
+  const hasPhotos = Boolean(
+    (report?.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) ||
+    (report?.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0) ||
+    (report?.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0) ||
+    (report?.generalPhotosExteriorComments && report.generalPhotosExteriorComments.trim().length > 0) ||
+    (report?.generalPhotosInteriorComments && report.generalPhotosInteriorComments.trim().length > 0) ||
+    (report?.generalPhotosEngineComments && report.generalPhotosEngineComments.trim().length > 0)
+  );
+  const photosPageNum = hasPhotos ? pageCounter++ : undefined;
+
   return (
     <div className="w-full p-2 sm:p-4 md:p-8 flex flex-col items-center gap-6 sm:gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
       
       {/* PAGE 1: Cover Page */}
       <div
-        id={`${idPrefix}1`}
+        id={`${idPrefix}${coverPageNum}`}
         className="a4-print-page a4-print-page-cover w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-0 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Background Image Area */}
@@ -318,28 +454,29 @@ export function ReportPreview({
           <div className="w-full flex flex-col items-center justify-center text-center mt-auto mb-8 sm:mb-16">
             <h1 className="text-[34px] sm:text-[50px] md:text-[64px] font-bold leading-tight tracking-tight text-[#009E49] break-words">
               Comprehensive<br/>
-              <span className="text-[#18181B]">Green Book</span>
+              Green Book
             </h1>
-            <div className="flex items-center gap-2 mt-3 sm:mt-4 text-[#4B5563]">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-[#009E49] flex items-center justify-center">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#009E49] rounded-full"></div>
-              </div>
-              <span className="text-xs sm:text-[15px] font-semibold">www.checkmycar.ae</span>
-            </div>
+            <p className="text-[#64748B] text-sm sm:text-lg font-medium mt-3">
+              Full Spectrum Certified Inspection Report
+            </p>
           </div>
 
-          {/* Footer Card */}
-          <div className="w-full bg-[#1F2022] rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex justify-between items-center text-white mt-auto shrink-0 gap-2">
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-center gap-1.5 text-slate-400">
+          {/* Bottom Client Details Bar */}
+          <div className="w-full bg-[#1F2022] text-white rounded-2xl p-4 sm:p-6 shadow-2xl flex justify-between items-center mt-auto">
+            <div className="flex flex-col gap-1 min-w-0 pr-2">
+              <span className="text-slate-400 text-xs sm:text-sm font-medium">Customer Name</span>
+              <span className="text-sm sm:text-lg font-bold truncate">{clientDetails.name || 'Al Tayer Motors'}</span>
+            </div>
+            <div className="flex flex-col gap-1 text-center min-w-0 px-2">
+              <div className="flex items-center justify-center gap-1.5 text-slate-400">
                 <Phone size={14} />
-                <span className="text-[11px] sm:text-sm font-medium">Contact Us</span>
+                <span className="text-[11px] sm:text-sm font-medium">Contact Number</span>
               </div>
               <span className="text-xs sm:text-base font-bold truncate">
                 {clientDetails.whatsappNumber || '+971 054 409 3009'}
               </span>
             </div>
-            <div className="flex flex-col gap-1 text-right min-w-0">
+            <div className="flex flex-col gap-1 text-right min-w-0 pl-2">
               <div className="flex items-center justify-end gap-1.5 text-slate-400">
                 <Mail size={14} />
                 <span className="text-[11px] sm:text-sm font-medium">Mail Id</span>
@@ -354,18 +491,10 @@ export function ReportPreview({
 
       {/* PAGE 2: Vehicle Summary */}
       <div
-        id={`${idPrefix}2`}
+        id={`${idPrefix}${summaryPageNum}`}
         className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-5 shrink-0">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
-          </div>
-          <div className="text-[#64748B] text-sm font-semibold">
-            Comprehensive Green Book
-          </div>
-        </div>
+        <PageHeader pageNumber={summaryPageNum} totalPages={totalPages} />
 
         {/* Inspection Details */}
         <div className="bg-white rounded-2xl p-4 sm:p-5 mb-4 shadow-sm shrink-0">
@@ -482,18 +611,10 @@ export function ReportPreview({
 
       {/* PAGE 3: Tyres Section */}
       <div
-        id={`${idPrefix}3`}
+        id={`${idPrefix}${tyresPageNum}`}
         className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-3.5 shrink-0">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
-          </div>
-          <div className="text-[#64748B] text-sm font-semibold">
-            Comprehensive Green Book
-          </div>
-        </div>
+        <PageHeader pageNumber={tyresPageNum} totalPages={totalPages} />
 
         {/* Tyres Banner */}
         <div className="bg-[#1F2022] rounded-[20px] px-5 py-3 mb-2.5 shadow-sm shrink-0">
@@ -523,18 +644,10 @@ export function ReportPreview({
 
       {/* PAGE 4: Rims Section */}
       <div
-        id={`${idPrefix}4`}
+        id={`${idPrefix}${rimsPageNum}`}
         className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-3.5 shrink-0">
-          <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-            <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
-          </div>
-          <div className="text-[#64748B] text-sm font-semibold">
-            Comprehensive Green Book
-          </div>
-        </div>
+        <PageHeader pageNumber={rimsPageNum} totalPages={totalPages} />
 
         {/* Rims Banner */}
         <div className="bg-[#1F2022] rounded-[20px] px-5 py-3 mb-2.5 shadow-sm shrink-0">
@@ -563,20 +676,12 @@ export function ReportPreview({
       </div>
 
       {/* PAGE 5: Brakes Section */}
-      {brakes && (
+      {hasBrakes && activeBrakes && (
         <div
-          id={`${idPrefix}5`}
+          id={`${idPrefix}${brakesPageNum}`}
           className="a4-print-page w-full max-w-[800px] min-h-[1131px] bg-[#F4F5F8] shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 p-4 sm:p-6 md:p-8 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-8 print:overflow-hidden print:box-border print:break-inside-avoid"
         >
-          {/* Header */}
-          <div className="flex justify-between items-center mb-3.5 shrink-0">
-            <div className="bg-[#009E49] px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-              <img src="/assets/checkmycar-logo.png" alt="CheckMyCar" className="w-3.5 h-3.5 object-contain rounded-xs" /> CheckMyCar.ae
-            </div>
-            <div className="text-[#64748B] text-sm font-semibold">
-              Comprehensive Green Book
-            </div>
-          </div>
+          <PageHeader pageNumber={brakesPageNum} totalPages={totalPages} />
 
           {/* Brakes Banner */}
           <div className="bg-[#1F2022] rounded-[20px] px-5 py-3 mb-2.5 shadow-sm shrink-0">
@@ -589,24 +694,24 @@ export function ReportPreview({
               Brake Status
             </div>
             <div className="scale-[0.62] origin-center pointer-events-none -my-6">
-              <ChassisVisualizer items={brakes} setItemStatus={() => {}} hideLegend={true} compact={true} />
+              <ChassisVisualizer items={activeBrakes} setItemStatus={() => {}} hideLegend={true} compact={true} />
             </div>
           </div>
 
           {/* Brakes Cards Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-            <PreviewPositionCard title="Rear Right (RR)" data={brakes.RR} />
-            <PreviewPositionCard title="Rear Left (RL)" data={brakes.RL} />
-            <PreviewPositionCard title="Spare tyre (ST)" data={brakes.ST} />
-            <PreviewPositionCard title="Front Right (FR)" data={brakes.FR} />
-            <PreviewPositionCard title="Front Left (FL)" data={brakes.FL} />
+            <PreviewPositionCard title="Rear Right (RR)" data={activeBrakes.RR} />
+            <PreviewPositionCard title="Rear Left (RL)" data={activeBrakes.RL} />
+            <PreviewPositionCard title="Spare tyre (ST)" data={activeBrakes.ST} />
+            <PreviewPositionCard title="Front Right (FR)" data={activeBrakes.FR} />
+            <PreviewPositionCard title="Front Left (FL)" data={activeBrakes.FL} />
           </div>
         </div>
       )}
 
       {/* PAGE 6: Chassis & Subframe */}
-      {report?.chassisSubframePartStatuses && (
-        <PreviewPage id={`${idPrefix}6`} title="Chassis & Subframe">
+      {hasChassis && report?.chassisSubframePartStatuses && (
+        <PreviewPage id={`${idPrefix}${chassisPageNum}`} title="Chassis & Subframe" pageNumber={chassisPageNum} totalPages={totalPages}>
           {report.chassisSubframeComments && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -694,8 +799,8 @@ export function ReportPreview({
       )}
 
       {/* PAGE 7: Body */}
-      {report?.bodyPartStatuses && (
-        <PreviewPage id={`${idPrefix}7`} title="Body">
+      {hasBody && report?.bodyPartStatuses && (
+        <PreviewPage id={`${idPrefix}${bodyPageNum}`} title="Body" pageNumber={bodyPageNum} totalPages={totalPages}>
           {(report.bodyGeneralComments || report.bodyComments || (report.bodyGeneralImages && report.bodyGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-2.5 mb-2.5 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
@@ -763,20 +868,20 @@ export function ReportPreview({
       )}
 
       {/* PAGE 8: Interior & Exterior */}
-      {(report?.seatsStatus || report?.interiorCustomHeadlines || report?.seatsComments || report?.interiorComments || (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
-        <PreviewPage id={`${idPrefix}8`} title="Interior & Exterior">
-          {report.seatsComments && (
+      {hasInterior && (
+        <PreviewPage id={`${idPrefix}${interiorPageNum}`} title="Interior & Exterior" pageNumber={interiorPageNum} totalPages={totalPages}>
+          {report?.seatsComments && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Seats Comments</h3>
               <p className="text-[11px] text-slate-600 leading-relaxed">{report.seatsComments}</p>
             </div>
           )}
-          {report.seatsStatus && (
+          {report?.seatsStatus && (
              <div className="mb-3 shrink-0">
                <GenericItemCard title="Seats Condition" status={report.seatsStatus} images={report.seatsImages?.map(i => i.url)} />
              </div>
           )}
-          {(report.interiorComments || (report.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
+          {(report?.interiorComments || (report?.interiorGeneralImages && report.interiorGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">General Comments</h3>
               {report.interiorComments && (
@@ -793,7 +898,7 @@ export function ReportPreview({
               )}
             </div>
           )}
-          {report.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0 && (
+          {report?.interiorCustomHeadlines && report.interiorCustomHeadlines.length > 0 && (
             <div className="mt-2 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Additional Details</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -807,15 +912,15 @@ export function ReportPreview({
       )}
 
       {/* PAGE 9: Engine */}
-      {report?.engineItems && (
-        <PreviewPage id={`${idPrefix}9`} title="Engine">
-          {(report.engineComments || (report.engineGeneralImages && report.engineGeneralImages.length > 0)) && (
+      {hasEngine && (
+        <PreviewPage id={`${idPrefix}${enginePageNum}`} title="Engine" pageNumber={enginePageNum} totalPages={totalPages}>
+          {(report?.engineComments || (report?.engineGeneralImages && report.engineGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
-              {report.engineComments && (
+              {report?.engineComments && (
                 <p className="text-[11px] text-slate-600 leading-relaxed">{report.engineComments}</p>
               )}
-              {report.engineGeneralImages && report.engineGeneralImages.length > 0 && (
+              {report?.engineGeneralImages && report.engineGeneralImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {report.engineGeneralImages.map((img, i) => (
                     <div key={i} className="aspect-[4/3] rounded-lg overflow-hidden shadow-xs border border-slate-100">
@@ -826,12 +931,14 @@ export function ReportPreview({
               )}
             </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {Object.entries(report.engineItems).map(([key, data]) => (
-              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
-            ))}
-          </div>
-          {report.engineCustomHeadlines && report.engineCustomHeadlines.length > 0 && (
+          {report?.engineItems && Object.keys(report.engineItems).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(report.engineItems).map(([key, data]) => (
+                <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+              ))}
+            </div>
+          )}
+          {report?.engineCustomHeadlines && report.engineCustomHeadlines.length > 0 && (
             <div className="mt-3 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Additional Details</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -845,15 +952,15 @@ export function ReportPreview({
       )}
 
       {/* PAGE 10: Transmission */}
-      {report?.transmissionItems && (
-        <PreviewPage id={`${idPrefix}10`} title="Transmission">
-          {(report.transmissionComments || (report.transmissionGeneralImages && report.transmissionGeneralImages.length > 0)) && (
+      {hasTransmission && (
+        <PreviewPage id={`${idPrefix}${transmissionPageNum}`} title="Transmission" pageNumber={transmissionPageNum} totalPages={totalPages}>
+          {(report?.transmissionComments || (report?.transmissionGeneralImages && report.transmissionGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
-              {report.transmissionComments && (
+              {report?.transmissionComments && (
                 <p className="text-[11px] text-slate-600 leading-relaxed">{report.transmissionComments}</p>
               )}
-              {report.transmissionGeneralImages && report.transmissionGeneralImages.length > 0 && (
+              {report?.transmissionGeneralImages && report.transmissionGeneralImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {report.transmissionGeneralImages.map((img, i) => (
                     <div key={i} className="aspect-[4/3] rounded-lg overflow-hidden shadow-xs border border-slate-100">
@@ -864,12 +971,14 @@ export function ReportPreview({
               )}
             </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {Object.entries(report.transmissionItems).map(([key, data]) => (
-              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
-            ))}
-          </div>
-          {report.transmissionCustomHeadlines && report.transmissionCustomHeadlines.length > 0 && (
+          {report?.transmissionItems && Object.keys(report.transmissionItems).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(report.transmissionItems).map(([key, data]) => (
+                <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+              ))}
+            </div>
+          )}
+          {report?.transmissionCustomHeadlines && report.transmissionCustomHeadlines.length > 0 && (
             <div className="mt-3 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Additional Details</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -883,15 +992,15 @@ export function ReportPreview({
       )}
 
       {/* PAGE 11: Electrical */}
-      {report?.electricalItems && (
-        <PreviewPage id={`${idPrefix}11`} title="Electrical">
-          {(report.electricalComments || (report.electricalGeneralImages && report.electricalGeneralImages.length > 0)) && (
+      {hasElectrical && (
+        <PreviewPage id={`${idPrefix}${electricalPageNum}`} title="Electrical" pageNumber={electricalPageNum} totalPages={totalPages}>
+          {(report?.electricalComments || (report?.electricalGeneralImages && report.electricalGeneralImages.length > 0)) && (
             <div className="bg-white rounded-2xl p-3 mb-3 shadow-xs border border-slate-100 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1">Inspector Comments</h3>
-              {report.electricalComments && (
+              {report?.electricalComments && (
                 <p className="text-[11px] text-slate-600 leading-relaxed">{report.electricalComments}</p>
               )}
-              {report.electricalGeneralImages && report.electricalGeneralImages.length > 0 && (
+              {report?.electricalGeneralImages && report.electricalGeneralImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {report.electricalGeneralImages.map((img, i) => (
                     <div key={i} className="aspect-[4/3] rounded-lg overflow-hidden shadow-xs border border-slate-100">
@@ -902,12 +1011,14 @@ export function ReportPreview({
               )}
             </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {Object.entries(report.electricalItems).map(([key, data]) => (
-              <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
-            ))}
-          </div>
-          {report.electricalCustomHeadlines && report.electricalCustomHeadlines.length > 0 && (
+          {report?.electricalItems && Object.keys(report.electricalItems).length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(report.electricalItems).map(([key, data]) => (
+                <GenericItemCard key={key} title={key} status={data.status} comments={data.comments} images={data.images} />
+              ))}
+            </div>
+          )}
+          {report?.electricalCustomHeadlines && report.electricalCustomHeadlines.length > 0 && (
             <div className="mt-3 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Additional Details</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -921,19 +1032,19 @@ export function ReportPreview({
       )}
 
       {/* PAGE 12: General Photos */}
-      {(report?.generalPhotosExteriorImages?.length || report?.generalPhotosInteriorImages?.length || report?.generalPhotosEngineImages?.length || report?.generalPhotosExteriorComments || report?.generalPhotosInteriorComments || report?.generalPhotosEngineComments) ? (
-        <PreviewPage id={`${idPrefix}12`} title="General Photos">
+      {hasPhotos && (
+        <PreviewPage id={`${idPrefix}${photosPageNum}`} title="General Photos" pageNumber={photosPageNum} totalPages={totalPages}>
           
           {/* Exterior */}
-          {(report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) || report.generalPhotosExteriorComments ? (
+          {(report?.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0) || (report?.generalPhotosExteriorComments && report.generalPhotosExteriorComments.trim().length > 0) ? (
             <div className="mb-4 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Exterior</h3>
-              {report.generalPhotosExteriorComments && (
+              {report?.generalPhotosExteriorComments && (
                 <div className="bg-white rounded-xl p-3 mb-2 shadow-xs border border-slate-100">
                   <p className="text-[11px] text-slate-600 leading-relaxed">{report.generalPhotosExteriorComments}</p>
                 </div>
               )}
-              {report.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0 && (
+              {report?.generalPhotosExteriorImages && report.generalPhotosExteriorImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2">
                   {report.generalPhotosExteriorImages.map((img) => (
                     <div key={img.id} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-white p-0.5 border border-slate-100">
@@ -946,15 +1057,15 @@ export function ReportPreview({
           ) : null}
 
           {/* Interior */}
-          {(report.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0) || report.generalPhotosInteriorComments ? (
+          {(report?.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0) || (report?.generalPhotosInteriorComments && report.generalPhotosInteriorComments.trim().length > 0) ? (
             <div className="mb-4 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Interior</h3>
-              {report.generalPhotosInteriorComments && (
+              {report?.generalPhotosInteriorComments && (
                 <div className="bg-white rounded-xl p-3 mb-2 shadow-xs border border-slate-100">
                   <p className="text-[11px] text-slate-600 leading-relaxed">{report.generalPhotosInteriorComments}</p>
                 </div>
               )}
-              {report.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0 && (
+              {report?.generalPhotosInteriorImages && report.generalPhotosInteriorImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2">
                   {report.generalPhotosInteriorImages.map((img) => (
                     <div key={img.id} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-white p-0.5 border border-slate-100">
@@ -967,15 +1078,15 @@ export function ReportPreview({
           ) : null}
 
           {/* Engine */}
-          {(report.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0) || report.generalPhotosEngineComments ? (
+          {(report?.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0) || (report?.generalPhotosEngineComments && report.generalPhotosEngineComments.trim().length > 0) ? (
             <div className="mb-4 shrink-0">
               <h3 className="text-xs font-bold text-[#1E1035] mb-1.5">Engine</h3>
-              {report.generalPhotosEngineComments && (
+              {report?.generalPhotosEngineComments && (
                 <div className="bg-white rounded-xl p-3 mb-2 shadow-xs border border-slate-100">
                   <p className="text-[11px] text-slate-600 leading-relaxed">{report.generalPhotosEngineComments}</p>
                 </div>
               )}
-              {report.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0 && (
+              {report?.generalPhotosEngineImages && report.generalPhotosEngineImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2">
                   {report.generalPhotosEngineImages.map((img) => (
                     <div key={img.id} className="aspect-[4/3] rounded-xl overflow-hidden shadow-xs bg-white p-0.5 border border-slate-100">
@@ -987,7 +1098,7 @@ export function ReportPreview({
             </div>
           ) : null}
         </PreviewPage>
-      ) : null}
+      )}
 
     </div>
   );

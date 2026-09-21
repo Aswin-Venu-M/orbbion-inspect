@@ -46,8 +46,7 @@ const PhotoCategoryCard: React.FC<PhotoCategoryCardProps> = ({ title, comments, 
 
     if (validFiles.length > 0) {
       const newImages = validFiles.map(f => {
-        const url = URL.createObjectURL(f);
-        mediaContext?.addDirectUpload(f, f.name);
+        const url = mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
         return {
           id: generateSafeId(),
           url,

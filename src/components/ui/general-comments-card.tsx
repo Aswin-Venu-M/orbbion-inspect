@@ -94,9 +94,7 @@ export const GeneralCommentsCard: React.FC<GeneralCommentsCardProps> = ({
 
     if (validFiles.length > 0) {
       const newUrls = validFiles.map((f) => {
-        const url = URL.createObjectURL(f);
-        mediaContext?.addDirectUpload(f, f.name);
-        return url;
+        return mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
       });
       const nextImages = [...images, ...newUrls];
       setImages(nextImages);

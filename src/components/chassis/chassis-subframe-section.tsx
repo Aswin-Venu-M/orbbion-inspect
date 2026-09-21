@@ -126,10 +126,8 @@ export const ChassisSubframeSection: React.FC<ChassisSubframeSectionProps> = ({
     }
 
     if (validFiles.length > 0 && onChassisImagesChange) {
-      const newUrls = validFiles.map(f => {
-        const url = URL.createObjectURL(f);
-        mediaContext?.addDirectUpload(f, f.name);
-        return url;
+      const newUrls = validFiles.map((f) => {
+        return mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
       });
       onChassisImagesChange([...chassisImages, ...newUrls]);
     }

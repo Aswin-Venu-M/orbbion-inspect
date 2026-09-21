@@ -97,10 +97,8 @@ export const BodySection: React.FC<BodySectionProps> = ({
     }
 
     if (validFiles.length > 0 && onBodyImagesChange) {
-      const newUrls = validFiles.map(f => {
-        const url = URL.createObjectURL(f);
-        mediaContext?.addDirectUpload(f, f.name);
-        return url;
+      const newUrls = validFiles.map((f) => {
+        return mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
       });
       onBodyImagesChange([...bodyImages, ...newUrls]);
     }

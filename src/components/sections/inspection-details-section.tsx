@@ -27,7 +27,7 @@ export const InspectionDetailsSection: React.FC<InspectionDetailsSectionProps> =
             required 
             placeholder="DD-MM-YYYY"
             dateFormat="DD-MM-YYYY"
-            value={data.date}
+            value={data?.date ?? ''}
             onChange={(dateVal) => onChange({ date: dateVal })}
             className="w-full"
           />
@@ -35,7 +35,7 @@ export const InspectionDetailsSection: React.FC<InspectionDetailsSectionProps> =
             label="Time" 
             required 
             placeholder="09:00 AM" 
-            value={data.time}
+            value={data?.time ?? ''}
             onChange={(timeVal) => onChange({ time: timeVal })}
             className="w-full"
           />
@@ -44,7 +44,7 @@ export const InspectionDetailsSection: React.FC<InspectionDetailsSectionProps> =
             required 
             placeholder="Select Inspection Type"
             options={inspectionTypeOptions}
-            value={data.inspectionType}
+            value={data?.inspectionType ?? ''}
             onChange={(e) => onChange({ inspectionType: e.target.value as string })}
           />
           <InputField 
@@ -52,8 +52,14 @@ export const InspectionDetailsSection: React.FC<InspectionDetailsSectionProps> =
             required 
             placeholder="Enter 17-digit VIN" 
             maxLength={17}
-            value={data.vinNumber}
-            onChange={(e) => onChange({ vinNumber: e.target.value.toUpperCase() })}
+            value={data?.vinNumber ?? ''}
+            onChange={(e) => {
+              const sanitized = e.target.value
+                .toUpperCase()
+                .replace(/[^A-HJ-NPR-Z0-9]/g, '')
+                .slice(0, 17);
+              onChange({ vinNumber: sanitized });
+            }}
           />
         </div>
       </ReusableSection>

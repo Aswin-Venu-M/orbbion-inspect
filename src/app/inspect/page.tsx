@@ -31,7 +31,7 @@ import { SectionTitlesCard } from '@/components/ui/section-titles-card';
 import { InspectorSidebarTabs, SidebarTabId } from '@/components/ui/inspector-sidebar-tabs';
 import { InspectionState } from '@/components/ui/chassis-visualizer';
 import { InspectionDetailState } from '@/components/ui/inspection-detail-card';
-import { ReportPreview } from '@/components/ui/report-preview';
+import { ReportPreview, getReportPreviewPagesCount } from '@/components/ui/report-preview';
 import { InspectionDetailsSection } from '@/components/sections/inspection-details-section';
 import { VehicleSummarySection } from '@/components/sections/vehicle-summary-section';
 import { ReportOverviewSection } from '@/components/sections/report-overview-section';
@@ -44,7 +44,7 @@ import { ElectricalSection } from '@/components/electrical/electrical-section';
 import { EngineSection } from '@/components/engine/engine-section';
 import { TransmissionSection } from '@/components/transmission/transmission-section';
 import { InspectMediaDrawer } from '@/components/sections/inspect-media-drawer';
-import { useInspectionHistory } from '@/lib/use-inspection-history';
+import { useInspectionHistory, cleanReportForStorage } from '@/lib/use-inspection-history';
 import { FullInspectionReport } from '@/lib/inspection-types';
 import { getStoredReports, upsertStoredReport, convertFullReportToListItem } from '@/lib/reports-data';
 import { SupportBadge } from '@/components/ui/support-badge';
@@ -333,25 +333,9 @@ function InspectDashboardContent({
     }
   }, [report.inspectionDetails, report.vehicleSummary, report.clientDetails, report.teamDetails, report.reportOverview, updateReport]);
 
-  // Dynamic calculation of total preview pages (up to 12)
+  // Dynamic calculation of total preview pages (synchronized with ReportPreview renderer)
   const totalPreviewPages = useMemo(() => {
-    let pages = 4; // Cover, Vehicle Summary, Tyres, Rims
-    if (report.brakes) pages++;
-    if (report.chassisSubframePartStatuses) pages++;
-    if (report.bodyPartStatuses) pages++;
-    if (report.seatsStatus || report.interiorCustomHeadlines || report.seatsComments || report.interiorComments) pages++;
-    if (report.engineItems) pages++;
-    if (report.transmissionItems) pages++;
-    if (report.electricalItems) pages++;
-    if (
-      report.generalPhotosExteriorImages?.length ||
-      report.generalPhotosInteriorImages?.length ||
-      report.generalPhotosEngineImages?.length ||
-      report.generalPhotosExteriorComments ||
-      report.generalPhotosInteriorComments ||
-      report.generalPhotosEngineComments
-    ) pages++;
-    return Math.max(1, pages);
+    return getReportPreviewPagesCount(report, report.brakes);
   }, [report]);
 
   // Zoom handlers
@@ -466,12 +450,14 @@ function InspectDashboardContent({
     const file = e.target.files?.[0];
     if (!file || !cardUploadTarget) {
       setCardUploadTarget(null);
+      if (e.target) e.target.value = '';
       return;
     }
 
     if (!file.type.startsWith('image/')) {
       showToast('Please select a valid image file (PNG, JPG, WebP)', 'error');
       setCardUploadTarget(null);
+      if (e.target) e.target.value = '';
       return;
     }
 
@@ -573,10 +559,11 @@ function InspectDashboardContent({
     window.print();
   };
 
-  // Export JSON
+  // Export JSON (sanitized to remove ephemeral session blob URLs)
   const handleDownload = () => {
     try {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report, null, 2));
+      const cleaned = cleanReportForStorage(report);
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleaned, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", `orbbion_inspection_${report.id || 'report'}.json`);
@@ -643,6 +630,40 @@ function InspectDashboardContent({
       showToast(`Model Year must be between 1900 and ${currentYear + 1}.`, 'error');
       document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
       return;
+    }
+
+    const odoNum = parseInt(report.vehicleSummary.odometerReading, 10);
+    if (isNaN(odoNum) || odoNum < 0) {
+      showToast('Odometer reading must be a valid positive number.', 'error');
+      document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    if (report.vehicleSummary.odometerStatus === 'Tampered') {
+      const tamperedNum = parseInt(report.vehicleSummary.tamperedReading || '', 10);
+      if (isNaN(tamperedNum) || tamperedNum < 0) {
+        showToast('Tampered odometer reading is required and must be a valid positive number.', 'error');
+        document.getElementById('section-vehicle-summary')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+
+    if (report.clientDetails.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(report.clientDetails.email.trim())) {
+        showToast('Please enter a valid client email address.', 'error');
+        document.getElementById('section-client-details')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+
+    if (report.clientDetails.whatsappNumber) {
+      const phoneDigits = report.clientDetails.whatsappNumber.replace(/\D/g, '');
+      if (phoneDigits.length < 7) {
+        showToast('Please enter a valid WhatsApp/Phone number (at least 7 digits).', 'error');
+        document.getElementById('section-client-details')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
     }
 
     const updatedReport: FullInspectionReport = {

@@ -120,11 +120,13 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        // Only persist completed items or non-temporary ones
-        const toSave = mediaFiles.map(m => ({ ...m, selected: false }));
+        // Only persist completed items or non-temporary ones (exclude ephemeral session blob: URLs)
+        const toSave = mediaFiles
+          .filter(m => !m.url.startsWith('blob:'))
+          .map(m => ({ ...m, selected: false }));
         localStorage.setItem('orbbion_media_files_v1', JSON.stringify(toSave));
-      } catch {
-        // ignore
+      } catch (e) {
+        console.warn('Failed to persist media gallery to localStorage:', e);
       }
     }
   }, [mediaFiles]);

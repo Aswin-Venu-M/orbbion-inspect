@@ -61,9 +61,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const newUrls = Array.from(files).map(f => {
-      const url = URL.createObjectURL(f);
-      mediaContext?.addDirectUpload(f, f.name);
-      return url;
+      return mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
     });
     
     if (onImagesChange) {
@@ -79,9 +77,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
     const valid = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (valid.length === 0) return;
     const newUrls = valid.map(f => {
-      const url = URL.createObjectURL(f);
-      mediaContext?.addDirectUpload(f, f.name);
-      return url;
+      return mediaContext ? mediaContext.addDirectUpload(f, f.name) : URL.createObjectURL(f);
     });
     if (onImagesChange) {
       onImagesChange([...displayImageUrls, ...newUrls]);
