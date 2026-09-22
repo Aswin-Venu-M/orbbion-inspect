@@ -173,10 +173,11 @@ select {
     position: relative !important;
   }
 
-  /* Exception for Page 1 (Cover page full bleed image) */
+  /* Exception for Cover & Back pages (full bleed image) */
   #preview-page-1,
   #print-page-1,
-  .a4-print-page-cover {
+  .a4-print-page-cover,
+  .a4-print-page-back {
     padding: 0 !important;
   }
 

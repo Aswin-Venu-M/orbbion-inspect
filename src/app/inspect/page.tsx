@@ -12,8 +12,9 @@ import {
   Image as ImageIcon, Cloud, Search, Check, FileCheck, Info,
   Trash2, ZoomIn, ZoomOut, X, AlertCircle, Share2, Copy, CheckCircle2,
   ExternalLink, Sparkles, ArrowLeft, LayoutDashboard, UserCheck, Users, Hash, ListOrdered,
-  ArrowRightLeft,
+  ArrowRightLeft, Loader2,
 } from 'lucide-react';
+import { downloadReportAsPdf } from '@/lib/pdf-export';
 import { UndoLeftIcon } from '@solar-icons/react/bold/undo-left';
 import { UndoRightIcon } from '@solar-icons/react/bold/undo-right';
 import { MediaConnectionProvider, useMediaConnection, MediaItem } from '@/lib/media-connection-context';
@@ -125,6 +126,7 @@ function InspectDashboardContent({
   // Preview Navigation & Zoom
   const [zoomLevel, setZoomLevel] = useState(100);
   const [previewPage, setPreviewPage] = useState(1);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
   // Dialogs & Modals
@@ -554,25 +556,45 @@ function InspectDashboardContent({
   };
 
 
-  // Print Action
-  const handlePrint = () => {
-    window.print();
-  };
+  // Download Report: Generates exact preview of the report via direct PDF export (Puppeteer / client-fallback)
+  const handleDownload = async () => {
+    if (isGeneratingPdf) return;
 
-  // Export JSON (sanitized to remove ephemeral session blob URLs)
-  const handleDownload = () => {
     try {
-      const cleaned = cleanReportForStorage(report);
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleaned, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `orbbion_inspection_${report.id || 'report'}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('Report JSON downloaded successfully', 'success');
-    } catch {
-      showToast('Failed to export report', 'error');
+      setIsGeneratingPdf(true);
+      showToast('Preparing high-fidelity PDF report...', 'info');
+
+      // Prefer the dedicated off-screen print container, fallback to the on-screen preview container
+      const container =
+        document.getElementById('report-print-container') ||
+        document.querySelector('.a4-print-page')?.parentElement ||
+        document.body;
+
+      if (!container) {
+        throw new Error('Report preview container not found');
+      }
+
+      const make = (report.vehicleSummary?.make || 'Vehicle').trim();
+      const model = (report.vehicleSummary?.model || 'Report').trim();
+      const year = report.vehicleSummary?.year ? `_${report.vehicleSummary.year}` : '';
+      const vin = report.inspectionDetails?.vinNumber ? `_${report.inspectionDetails.vinNumber}` : '';
+      const vehicleName = `${make}_${model}${year}${vin}`.replace(/[\s/\\?%*:|"<>]+/g, '_');
+      const filename = `CheckMyCar_Inspection_Report_${vehicleName}`;
+
+      await downloadReportAsPdf({
+        containerElement: container as HTMLElement,
+        filename,
+        onProgress: (statusMsg) => {
+          showToast(statusMsg, 'info');
+        },
+      });
+
+      showToast('PDF downloaded successfully!', 'success');
+    } catch (err: any) {
+      console.error('PDF export error:', err);
+      showToast(err?.message || 'Failed to download report PDF', 'error');
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -1287,21 +1309,20 @@ function InspectDashboardContent({
 
             <div className="w-px h-5 bg-slate-200 mx-0.5 sm:mx-1"></div>
 
-            {/* Print / Download */}
+            {/* Download Report Preview */}
             <div className="flex items-center gap-1 sm:gap-2">
-              {/* <button 
-                onClick={handlePrint}
-                title="Print Report (PDF)"
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] transition-colors border border-slate-100 shadow-2xs cursor-pointer"
-              >
-                <Printer size={15} strokeWidth={2.2} />
-              </button> */}
               <button 
                 onClick={handleDownload}
-                title="Download JSON Report Data"
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#74768B] hover:bg-[#E9EAF2] hover:text-[#1E1035] transition-colors border border-slate-100 shadow-2xs cursor-pointer"
+                disabled={isGeneratingPdf}
+                title={isGeneratingPdf ? "Generating PDF..." : "Download Report Preview (PDF)"}
+                aria-label="Download Report Preview"
+                className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F4F5F8] rounded-xl sm:rounded-[14px] flex items-center justify-center text-[#1E1035] hover:bg-[#E9EAF2] disabled:opacity-50 disabled:cursor-wait transition-colors border border-slate-100 shadow-2xs cursor-pointer"
               >
-                <Download size={15} />
+                {isGeneratingPdf ? (
+                  <Loader2 size={16} className="animate-spin text-[#9723FF]" />
+                ) : (
+                  <Download size={16} strokeWidth={2.2} />
+                )}
               </button>
             </div>
           </div>
@@ -1627,16 +1648,22 @@ function InspectDashboardContent({
                   </button>
                 </div>
 
-                {/* <div className="w-px h-4 bg-slate-200"></div> */}
+                <div className="w-px h-4 bg-slate-200"></div>
 
-                {/* Print PDF Button */}
-                {/* <button 
-                  onClick={handlePrint}
-                  aria-label="Print Report"
-                  className="w-7 h-7 rounded-lg bg-[#3e045a] text-white flex items-center justify-center active:scale-95 transition-all shadow-2xs cursor-pointer"
+                {/* Download Report Button */}
+                <button 
+                  onClick={handleDownload}
+                  disabled={isGeneratingPdf}
+                  aria-label="Download Report Preview"
+                  title={isGeneratingPdf ? "Generating PDF..." : "Download Report Preview (PDF)"}
+                  className="w-7 h-7 rounded-lg bg-[#3e045a] text-white flex items-center justify-center active:scale-95 hover:bg-[#2d0242] disabled:opacity-50 disabled:cursor-wait transition-all shadow-2xs cursor-pointer"
                 >
-                  <Printer size={13} strokeWidth={2.2} />
-                </button> */}
+                  {isGeneratingPdf ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Download size={13} strokeWidth={2.2} />
+                  )}
+                </button>
               </div>
             </>
           )}
@@ -2066,6 +2093,25 @@ function InspectDashboardContent({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Off-screen dedicated A4 container for direct PDF export */}
+      <div 
+        id="report-print-container"
+        className="fixed top-0 left-[-9999px] w-[210mm] max-w-[210mm] min-w-[210mm] m-0 p-0 bg-white opacity-0 pointer-events-none z-[-9999]"
+        aria-hidden="true"
+      >
+        <ReportPreview 
+          idPrefix="print-page-"
+          tyres={report.tyres} 
+          rims={report.rims} 
+          brakes={report.brakes}
+          vehicleData={report.vehicleSummary}
+          inspectionDetails={report.inspectionDetails}
+          clientDetails={report.clientDetails}
+          overviewStats={report.reportOverview}
+          report={report}
+        />
+      </div>
 
       {/* Media Connection Modals */}
       <MediaAssignModal />

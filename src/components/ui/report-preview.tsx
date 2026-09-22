@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
-import { Phone, Mail } from 'lucide-react';
+import { Phone, Mail, Globe } from 'lucide-react';
+import { Familjen_Grotesk } from 'next/font/google';
 import { ChassisVisualizer } from './chassis-visualizer';
 import { CarBodyVisualizer } from '@/components/body/car-body-visualizer';
 import { SUBFRAME_PARTS } from '@/components/chassis/chassis-subframe-section';
@@ -14,6 +15,8 @@ import {
   FullInspectionReport,
   CustomHeadlineItem,
 } from '@/lib/inspection-types';
+
+const familjen = Familjen_Grotesk({ subsets: ['latin'] });
 
 interface ReportPreviewProps {
   idPrefix?: string;
@@ -292,6 +295,9 @@ export function getReportPreviewPagesCount(
   );
   if (hasPhotos) count++;
 
+  // Final Page: Back Cover (Thank You Page)
+  count++;
+
   return count;
 }
 
@@ -416,6 +422,7 @@ export function ReportPreview({
     (report?.generalPhotosEngineComments && report.generalPhotosEngineComments.trim().length > 0)
   );
   const photosPageNum = hasPhotos ? pageCounter++ : undefined;
+  const backPageNum = pageCounter++;
 
   return (
     <div className="w-full p-2 sm:p-4 md:p-8 flex flex-col items-center gap-6 sm:gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
@@ -426,20 +433,41 @@ export function ReportPreview({
         className="a4-print-page a4-print-page-cover w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-0 print:overflow-hidden print:box-border print:break-inside-avoid"
       >
         {/* Background Image Area */}
-        <div className="absolute top-0 left-0 w-full h-[65%]">
+        <div className="absolute top-[4%] left-0 w-full h-[78%] pointer-events-none select-none overflow-hidden">
           <img 
             src="/assets/report-front.png" 
             alt="Cover Background" 
-            className="w-full h-full object-cover opacity-95"
+            className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-transparent to-white"></div>
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0) 12%, rgba(255,255,255,0) 84%, #ffffff 100%)',
+            }}
+          />
         </div>
 
+        {/* Top White Circular / Elliptical Gradient Dome */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[38%] pointer-events-none select-none z-[1]"
+          style={{
+            background: 'radial-gradient(ellipse 130% 90% at 50% 0%, #ffffff 0%, #ffffff 46%, rgba(255, 255, 255, 0.86) 72%, rgba(255, 255, 255, 0) 100%)',
+          }}
+        />
+
+        {/* Bottom White Circular / Elliptical Gradient Dome */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-[50%] pointer-events-none select-none z-[1]"
+          style={{
+            background: 'radial-gradient(ellipse 140% 85% at 50% 100%, #ffffff 0%, #ffffff 52%, rgba(255, 255, 255, 0.9) 74%, rgba(255, 255, 255, 0) 100%)',
+          }}
+        />
+
         {/* Content */}
-        <div className="relative z-10 flex flex-col h-full p-4 sm:p-8 md:p-10">
+        <div className="relative z-10 flex flex-col flex-1 w-full justify-between items-center p-4 sm:p-8 md:p-10">
           {/* Logo Area */}
-          <div className="w-full flex justify-center mt-4 sm:mt-6">
-            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-xl flex items-center justify-center bg-white/10 backdrop-blur-xs border border-white/40">
+          <div className="w-full flex justify-center mt-2 sm:mt-4">
+            <div className="w-[68px] h-[68px] sm:w-[76px] sm:h-[76px] rounded-[16px] overflow-hidden shadow-md flex items-center justify-center bg-[#009E49]">
               <img 
                 src="/assets/checkmycar-logo.png" 
                 alt="CheckMyCar Logo" 
@@ -451,35 +479,41 @@ export function ReportPreview({
           <div className="flex-1"></div>
 
           {/* Title Area */}
-          <div className="w-full flex flex-col items-center justify-center text-center mt-auto mb-8 sm:mb-16">
-            <h1 className="text-[34px] sm:text-[50px] md:text-[64px] font-bold leading-tight tracking-tight text-[#009E49] break-words">
+          <div className="w-full flex flex-col items-center justify-center text-center mt-auto mb-4 sm:mb-6">
+            <h1 
+              className={`text-[34px] sm:text-[48px] md:text-[56px] font-bold leading-[1.12] tracking-tight text-center break-words bg-clip-text text-transparent ${familjen.className}`}
+              style={{
+                backgroundImage: 'linear-gradient(92.32deg, #009E49 0%, #062817 55.83%, #009E49 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               Comprehensive<br/>
               Green Book
             </h1>
-            <p className="text-[#64748B] text-sm sm:text-lg font-medium mt-3">
-              Full Spectrum Certified Inspection Report
-            </p>
+            <div className="flex items-center justify-center gap-1.5 mt-2.5 sm:mt-3 text-[#64748B]">
+              <Globe size={15} className="text-[#009E49] shrink-0" strokeWidth={2.2} />
+              <span className={`text-xs sm:text-sm font-semibold tracking-wide ${familjen.className}`}>
+                www.checkmycar.ae
+              </span>
+            </div>
           </div>
 
           {/* Bottom Client Details Bar */}
-          <div className="w-full bg-[#1F2022] text-white rounded-2xl p-4 sm:p-6 shadow-2xl flex justify-between items-center mt-auto">
-            <div className="flex flex-col gap-1 min-w-0 pr-2">
-              <span className="text-slate-400 text-xs sm:text-sm font-medium">Customer Name</span>
-              <span className="text-sm sm:text-lg font-bold truncate">{clientDetails.name || 'Al Tayer Motors'}</span>
-            </div>
-            <div className="flex flex-col gap-1 text-center min-w-0 px-2">
-              <div className="flex items-center justify-center gap-1.5 text-slate-400">
+          <div className="w-full bg-[#18191B] text-white rounded-[22px] p-4 sm:p-5 shadow-2xl flex justify-between items-center mt-2">
+            <div className="flex flex-col gap-0.5 min-w-0 pr-2">
+              <div className="flex items-center gap-1.5 text-slate-400">
                 <Phone size={14} />
-                <span className="text-[11px] sm:text-sm font-medium">Contact Number</span>
+                <span className="text-[11px] sm:text-xs font-medium">Contact Us</span>
               </div>
               <span className="text-xs sm:text-base font-bold truncate">
                 {clientDetails.whatsappNumber || '+971 054 409 3009'}
               </span>
             </div>
-            <div className="flex flex-col gap-1 text-right min-w-0 pl-2">
+            <div className="flex flex-col gap-0.5 text-right min-w-0 pl-2">
               <div className="flex items-center justify-end gap-1.5 text-slate-400">
                 <Mail size={14} />
-                <span className="text-[11px] sm:text-sm font-medium">Mail Id</span>
+                <span className="text-[11px] sm:text-xs font-medium">Mail Id</span>
               </div>
               <span className="text-xs sm:text-base font-bold truncate">
                 {clientDetails.email || 'Checkmycar.ae@gmail.com'}
@@ -1099,6 +1133,79 @@ export function ReportPreview({
           ) : null}
         </PreviewPage>
       )}
+
+      {/* PAGE: Report Back Page (Thank You Cover) */}
+      <div
+        id={`${idPrefix}${backPageNum}`}
+        className="a4-print-page a4-print-page-back w-full max-w-[800px] min-h-[1131px] bg-white shadow-xl rounded-sm flex flex-col relative overflow-hidden shrink-0 print:shadow-none print:m-0 print:w-[210mm] print:h-[297mm] print:min-h-[297mm] print:max-h-[297mm] print:p-0 print:overflow-hidden print:box-border print:break-inside-avoid"
+      >
+        {/* Background Image Area with Edge Fading */}
+        <div className="absolute top-[20%] left-0 w-full h-[72%] pointer-events-none select-none overflow-hidden">
+          <img 
+            src="/assets/report-back.png" 
+            alt="Inspection Completion" 
+            className="w-full h-full object-cover object-center"
+          />
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.7) 12%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 80%, #ffffff 100%)',
+            }}
+          />
+        </div>
+
+        {/* Top White Circular / Elliptical Gradient Dome */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[46%] pointer-events-none select-none z-[1]"
+          style={{
+            background: 'radial-gradient(ellipse 150% 92% at 50% 0%, #ffffff 0%, #ffffff 52%, rgba(255, 255, 255, 0.88) 74%, rgba(255, 255, 255, 0) 100%)',
+          }}
+        />
+
+        {/* Bottom White Circular / Elliptical Gradient Dome */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-[48%] pointer-events-none select-none z-[1]"
+          style={{
+            background: 'radial-gradient(ellipse 140% 85% at 50% 100%, #ffffff 0%, #ffffff 50%, rgba(255, 255, 255, 0.9) 72%, rgba(255, 255, 255, 0) 100%)',
+          }}
+        />
+
+        {/* Content Container */}
+        <div className="relative z-10 flex flex-col flex-1 w-full justify-between items-center px-6 sm:px-12 py-12 sm:py-16">
+          {/* Top Header Block */}
+          <div className="flex flex-col items-center text-center mt-4 sm:mt-8">
+            <h1 
+              className={`text-[32px] sm:text-[44px] md:text-[50px] font-bold leading-[1.14] tracking-tight text-center max-w-[560px] bg-clip-text text-transparent ${familjen.className}`}
+              style={{
+                backgroundImage: 'linear-gradient(92.32deg, #17C964 0%, #052615 55.83%, #17C964 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Thank You for Choosing<br />
+              CheckMyCar
+            </h1>
+
+            <div className="flex items-center justify-center gap-1.5 mt-3 sm:mt-4 text-[#666666]">
+              <Globe size={15} className="text-[#17C964] shrink-0" strokeWidth={2.2} />
+              <span className={`text-[12px] sm:text-[13px] font-medium tracking-wide ${familjen.className}`}>
+                www.checkmycar.ae
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom CheckMyCar Logo Card */}
+          <div className="w-full flex justify-center mb-2 sm:mb-4">
+            <div className="w-[70px] h-[70px] sm:w-[75px] sm:h-[75px] rounded-[15px] overflow-hidden shadow-lg flex items-center justify-center bg-[#009E49]">
+              <img 
+                src="/assets/checkmycar-logo.png" 
+                alt="CheckMyCar Logo" 
+                className="w-full h-full object-contain" 
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
