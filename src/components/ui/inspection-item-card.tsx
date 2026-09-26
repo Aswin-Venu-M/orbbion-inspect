@@ -149,6 +149,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
               value={status}
               onChange={(newStatus) => handleStatusClick(newStatus as 'pass' | 'fail' | 'weak')}
               includeNa={false}
+              layoutId={`status-item-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
             />
           )}
         </div>

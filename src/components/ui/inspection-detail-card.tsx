@@ -111,6 +111,7 @@ export const InspectionDetailCard = ({
             value={data.status}
             onChange={(status) => onChange({ status })}
             includeNa={true}
+            layoutId={`status-detail-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
           />
         </div>
 

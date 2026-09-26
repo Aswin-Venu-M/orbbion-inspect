@@ -294,6 +294,7 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
               value={seatsStatus}
               onChange={(status) => onSeatsStatusChange?.(status)}
               includeNa={false}
+              layoutId="status-seats-upholstery"
             />
           </div>
           

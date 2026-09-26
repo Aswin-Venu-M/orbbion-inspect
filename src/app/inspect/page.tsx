@@ -98,32 +98,36 @@ function InspectDashboardContent({
   // Tab & Gallery State
   const [activeTab, setActiveTab] = useState<'edit' | 'view'>('edit');
   const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTabId>('sections');
-  const [activeLeftDrawer, setActiveLeftDrawer] = useState<'sections' | 'gallery' | null>(() => {
+  const [activeLeftDrawer, setActiveLeftDrawer] = useState<'sections' | 'gallery' | null>('sections');
+
+  // Close sections drawer initially on smaller screens after mount without SSR hydration mismatch
+  useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1280) {
-      return null;
+      setActiveLeftDrawer(null);
     }
-    return 'sections';
-  });
+  }, []);
+
   const isSectionsOpen = activeLeftDrawer === 'sections';
   const isGalleryOpen = activeLeftDrawer === 'gallery';
 
   // Section Order Interchangeable State
-  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(() => {
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(DEFAULT_SECTION_ORDER);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('orbbion_section_order_v4');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length === DEFAULT_SECTION_ORDER.length) {
-            return parsed;
+            setSectionOrder(parsed);
           }
         }
       } catch {
         // ignore
       }
     }
-    return DEFAULT_SECTION_ORDER;
-  });
+  }, []);
 
   // Preview Navigation & Zoom
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -260,20 +264,22 @@ function InspectDashboardContent({
   // Keep reportOverview stats synchronized if autoCalculate is active
   useEffect(() => {
     if (report.reportOverview.autoCalculate) {
+      const passStr = String(calculatedStats.pass);
+      const failStr = String(calculatedStats.fail);
       if (
-        report.reportOverview.pass !== String(calculatedStats.pass) ||
-        report.reportOverview.fail !== String(calculatedStats.fail)
+        report.reportOverview.pass !== passStr ||
+        report.reportOverview.fail !== failStr
       ) {
         updateReport({
           reportOverview: {
             ...report.reportOverview,
-            pass: String(calculatedStats.pass),
-            fail: String(calculatedStats.fail),
+            pass: passStr,
+            fail: failStr,
           },
         }, false);
       }
     }
-  }, [calculatedStats, report.reportOverview, updateReport]);
+  }, [calculatedStats.pass, calculatedStats.fail, report.reportOverview.autoCalculate, report.reportOverview.pass, report.reportOverview.fail, updateReport]);
 
   // Dynamic calculation of total preview pages (synchronized with ReportPreview renderer)
   const totalPreviewPages = useMemo(() => {
