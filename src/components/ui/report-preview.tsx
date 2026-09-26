@@ -78,7 +78,7 @@ function PreviewPositionCard({
   title: string;
   data?: InspectionDetailState;
 }) {
-  const status = data?.status || 'pass';
+  const status = data?.status;
   
   const getBadgeStyle = () => {
     switch (status) {
@@ -91,7 +91,7 @@ function PreviewPositionCard({
       case 'na':
         return 'bg-[#D3D3D3] text-[#4A4A4A]';
       default:
-        return 'bg-[#5BC335] text-white';
+        return 'bg-slate-200 text-slate-600';
     }
   };
 
@@ -101,7 +101,7 @@ function PreviewPositionCard({
       case 'fail': return 'FAIL';
       case 'weak': return 'WEAK';
       case 'na': return 'N/A';
-      default: return 'PASS';
+      default: return 'PENDING';
     }
   };
 
@@ -116,7 +116,7 @@ function PreviewPositionCard({
 
       <div className="flex items-center gap-1 mb-1.5">
         <span className="text-[10px] text-[#A0A4AB] font-semibold">Mfg Year:</span>
-        <span className="text-[#1E1035] text-[11px] font-bold">{data?.year || '2025'}</span>
+        <span className="text-[#1E1035] text-[11px] font-bold">{data?.year || '—'}</span>
       </div>
 
       {data?.image?.url ? (

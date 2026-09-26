@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { FullInspectionReport } from './inspection-types';
-import { initialReportData } from './default-data';
+import { initialReportData, createEmptyReport } from './default-data';
 import { upsertStoredReport, convertFullReportToListItem } from './reports-data';
 
 const STORAGE_KEY = 'orbbion_inspection_report_v2';
@@ -43,7 +43,15 @@ export function cleanReportForStorage(data: FullInspectionReport): FullInspectio
 }
 
 export function useInspectionHistory() {
-  const [report, setReport] = useState<FullInspectionReport>(initialReportData);
+  const [report, setReport] = useState<FullInspectionReport>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('new') === 'true') {
+        return createEmptyReport();
+      }
+    }
+    return initialReportData;
+  });
   const [past, setPast] = useState<FullInspectionReport[]>([]);
   const [future, setFuture] = useState<FullInspectionReport[]>([]);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
@@ -58,6 +66,17 @@ export function useInspectionHistory() {
   // Load from localStorage on mount with safe deep merge
   useEffect(() => {
     try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('new') === 'true') {
+          const fresh = createEmptyReport();
+          setReport(fresh);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanReportForStorage(fresh)));
+          setIsLoaded(true);
+          return;
+        }
+      }
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -116,25 +135,25 @@ export function useInspectionHistory() {
               ...(prev.chassisSubframePartStatuses || {}),
               ...(parsed.chassisSubframePartStatuses || {}),
             },
-            bodyCustomHeadlines: Array.isArray(parsed.bodyCustomHeadlines) && parsed.bodyCustomHeadlines.length > 0
+            bodyCustomHeadlines: Array.isArray(parsed.bodyCustomHeadlines)
               ? parsed.bodyCustomHeadlines
-              : initialReportData.bodyCustomHeadlines,
-            chassisSubframeCustomHeadlines: Array.isArray(parsed.chassisSubframeCustomHeadlines) && parsed.chassisSubframeCustomHeadlines.length > 0
+              : (prev.bodyCustomHeadlines || initialReportData.bodyCustomHeadlines),
+            chassisSubframeCustomHeadlines: Array.isArray(parsed.chassisSubframeCustomHeadlines)
               ? parsed.chassisSubframeCustomHeadlines
-              : initialReportData.chassisSubframeCustomHeadlines,
-            interiorCustomHeadlines: Array.isArray(parsed.interiorCustomHeadlines) && parsed.interiorCustomHeadlines.length > 0
+              : (prev.chassisSubframeCustomHeadlines || initialReportData.chassisSubframeCustomHeadlines),
+            interiorCustomHeadlines: Array.isArray(parsed.interiorCustomHeadlines)
               ? parsed.interiorCustomHeadlines
-              : initialReportData.interiorCustomHeadlines,
-            electricalCustomHeadlines: Array.isArray(parsed.electricalCustomHeadlines) && parsed.electricalCustomHeadlines.length > 0
+              : (prev.interiorCustomHeadlines || initialReportData.interiorCustomHeadlines),
+            electricalCustomHeadlines: Array.isArray(parsed.electricalCustomHeadlines)
               ? parsed.electricalCustomHeadlines
-              : initialReportData.electricalCustomHeadlines,
-            engineCustomHeadlines: Array.isArray(parsed.engineCustomHeadlines) && parsed.engineCustomHeadlines.length > 0
+              : (prev.electricalCustomHeadlines || initialReportData.electricalCustomHeadlines),
+            engineCustomHeadlines: Array.isArray(parsed.engineCustomHeadlines)
               ? parsed.engineCustomHeadlines
-              : initialReportData.engineCustomHeadlines,
-            transmissionCustomHeadlines: Array.isArray(parsed.transmissionCustomHeadlines) && parsed.transmissionCustomHeadlines.length > 0
+              : (prev.engineCustomHeadlines || initialReportData.engineCustomHeadlines),
+            transmissionCustomHeadlines: Array.isArray(parsed.transmissionCustomHeadlines)
               ? parsed.transmissionCustomHeadlines
-              : initialReportData.transmissionCustomHeadlines,
-            lastSavedAt: 'Loaded from local save',
+              : (prev.transmissionCustomHeadlines || initialReportData.transmissionCustomHeadlines),
+            lastSavedAt: parsed.lastSavedAt || 'Loaded from local save',
           }));
         }
       }
@@ -204,7 +223,7 @@ export function useInspectionHistory() {
   }, [future, report, triggerAutoSave]);
 
   const resetReport = useCallback((customData?: FullInspectionReport) => {
-    const data = customData || initialReportData;
+    const data = customData || createEmptyReport();
     setPast(p => [...p, report]);
     setFuture([]);
     setReport(data);

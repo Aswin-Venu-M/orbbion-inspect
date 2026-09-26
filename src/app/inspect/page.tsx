@@ -3,9 +3,10 @@
 
 import { Familjen_Grotesk } from 'next/font/google';
 const familjen = Familjen_Grotesk({ subsets: ['latin'] });
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from "motion/react";
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Calendar, Clock, ChevronDown, ChevronUp, User, MapPin, 
   Printer, Download, Eye, Pencil, FileText, Plus, HelpCircle, Home, 
@@ -61,6 +62,7 @@ import {
   inspectorOptions,
   countryCodeOptions,
   initialReportData,
+  createEmptyReport,
   initialReportsList,
 } from '@constants';
 
@@ -153,36 +155,31 @@ function InspectDashboardContent({
   const cardFileInputRef = useRef<HTMLInputElement>(null);
   const [cardUploadTarget, setCardUploadTarget] = useState<{ type: 'tyre' | 'rim' | 'brake'; id: string } | null>(null);
 
+  const searchParams = useSearchParams();
+  const requestedId = searchParams?.get('id');
+  const isNew = searchParams?.get('new') === 'true';
+  const tabParam = searchParams?.get('tab');
+
   // Handle ?new=true or ?id=... or ?tab=view from navigation
+  const prevParamsRef = useRef<string>('');
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const requestedId = params.get('id');
-    const isNew = params.get('new') === 'true';
-    const tabParam = params.get('tab');
+    const currentParams = searchParams?.toString() || '';
+    if (currentParams === prevParamsRef.current && !isNew) return;
+    prevParamsRef.current = currentParams;
 
     if (tabParam === 'view') {
       setActiveTab('view');
     }
 
     if (isNew) {
-      const newId = `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
-      const freshReport: FullInspectionReport = {
-        ...initialReportData,
-        id: newId,
-        title: `Report #${newId}`,
-        status: 'draft',
-        lastSavedAt: 'Created just now',
-        inspectionDetails: {
-          ...initialReportData.inspectionDetails,
-          date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        },
-      };
+      const freshReport = createEmptyReport();
       resetReport(freshReport);
+      handleSectionOrderChange(DEFAULT_SECTION_ORDER);
+      setActiveTab('edit');
       upsertStoredReport(convertFullReportToListItem(freshReport));
       window.history.replaceState({}, '', '/inspect');
-      showToast(`Started new inspection session (${newId})`, 'info');
+      showToast(`Started new inspection session (${freshReport.id})`, 'info');
       return;
     }
 
@@ -190,45 +187,46 @@ function InspectDashboardContent({
       const catalog = getStoredReports();
       const match = catalog.find(r => r.id === requestedId || r.reportNumber === requestedId);
       if (match) {
+        const freshBase = createEmptyReport(match.id);
         const loadedReport: FullInspectionReport = {
-          ...initialReportData,
+          ...freshBase,
           id: match.id,
           title: `Report #${match.reportNumber || match.id}`,
           status: match.status,
           lastSavedAt: 'Loaded from catalog',
           inspectionDetails: {
-            ...initialReportData.inspectionDetails,
-            date: match.date || initialReportData.inspectionDetails.date,
-            time: match.time || initialReportData.inspectionDetails.time,
-            inspectionType: match.inspectionType || initialReportData.inspectionDetails.inspectionType,
-            vinNumber: match.vehicle?.vin || initialReportData.inspectionDetails.vinNumber,
+            ...freshBase.inspectionDetails,
+            date: match.date || '',
+            time: match.time || '',
+            inspectionType: match.inspectionType || '',
+            vinNumber: match.vehicle?.vin || '',
           },
           vehicleSummary: {
-            ...initialReportData.vehicleSummary,
-            make: match.vehicle?.make || initialReportData.vehicleSummary.make,
-            model: match.vehicle?.model || initialReportData.vehicleSummary.model,
-            year: String(match.vehicle?.year || initialReportData.vehicleSummary.year),
-            vehicleType: match.vehicle?.type || initialReportData.vehicleSummary.vehicleType,
-            externalColour: match.vehicle?.color || initialReportData.vehicleSummary.externalColour,
-            transmission: match.vehicle?.transmission || initialReportData.vehicleSummary.transmission,
-            regionalSpecs: match.vehicle?.specs || initialReportData.vehicleSummary.regionalSpecs,
-            odometerStatus: match.vehicle?.odometerStatus || initialReportData.vehicleSummary.odometerStatus,
-            odometerReading: match.vehicle?.odometer ? match.vehicle.odometer.replace(/[^0-9]/g, '') : initialReportData.vehicleSummary.odometerReading,
+            ...freshBase.vehicleSummary,
+            make: match.vehicle?.make || '',
+            model: match.vehicle?.model || '',
+            year: String(match.vehicle?.year || ''),
+            vehicleType: match.vehicle?.type || '',
+            externalColour: match.vehicle?.color || '',
+            transmission: match.vehicle?.transmission || '',
+            regionalSpecs: match.vehicle?.specs || '',
+            odometerStatus: match.vehicle?.odometerStatus || 'Normal',
+            odometerReading: match.vehicle?.odometer ? match.vehicle.odometer.replace(/[^0-9]/g, '') : '',
           },
           clientDetails: {
-            ...initialReportData.clientDetails,
-            name: match.client?.name || initialReportData.clientDetails.name,
-            whatsappNumber: match.client?.phone || initialReportData.clientDetails.whatsappNumber,
-            email: match.client?.email || initialReportData.clientDetails.email,
-            location: match.client?.location || initialReportData.clientDetails.location,
+            ...freshBase.clientDetails,
+            name: match.client?.name || '',
+            whatsappNumber: match.client?.phone || '',
+            email: match.client?.email || '',
+            location: match.client?.location || '',
           },
           teamDetails: {
-            inspector: match.inspector?.name || initialReportData.teamDetails.inspector,
+            inspector: match.inspector?.name || '',
           },
           reportOverview: {
-            ...initialReportData.reportOverview,
-            pass: String(match.passPercentage),
-            fail: String(match.failPercentage),
+            pass: String(match.passPercentage ?? 0),
+            fail: String(match.failPercentage ?? 0),
+            autoCalculate: true,
           },
         };
         resetReport(loadedReport);
@@ -237,8 +235,7 @@ function InspectDashboardContent({
         showToast(`Report ${requestedId} was not found in catalog`, 'error');
       }
     }
-  }, [resetReport, showToast, report.id]);
-
+  }, [searchParams, isNew, requestedId, tabParam, resetReport, showToast, report.id, handleSectionOrderChange]);
 
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
@@ -248,7 +245,7 @@ function InspectDashboardContent({
       ...(report.brakes ? Object.values(report.brakes) : []).map(i => i?.status ?? null),
     ];
     const total = allItems.filter(s => s !== null && s !== 'na').length;
-    if (total === 0) return { pass: 55, fail: 45 };
+    if (total === 0) return { pass: 0, fail: 0 };
 
     const passCount = allItems.filter(s => s === 'pass').length;
     const passPercentage = Math.round((passCount / total) * 100);
@@ -277,63 +274,6 @@ function InspectDashboardContent({
       }
     }
   }, [calculatedStats, report.reportOverview, updateReport]);
-
-  // Hydrate report by query param id if opened from dashboard
-  const hydratedFromUrlRef = useRef(false);
-  useEffect(() => {
-    if (hydratedFromUrlRef.current) return;
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const reportId = urlParams.get('id');
-      if (reportId && initialReportsList) {
-        const matchedItem = initialReportsList.find(r => r.id === reportId);
-        if (matchedItem) {
-          hydratedFromUrlRef.current = true;
-          updateReport({
-            id: matchedItem.id,
-            title: `${matchedItem.vehicle.year} ${matchedItem.vehicle.make} ${matchedItem.vehicle.model}`,
-            status: matchedItem.status,
-            inspectionDetails: {
-              ...report.inspectionDetails,
-              date: matchedItem.date,
-              time: matchedItem.time,
-              inspectionType: matchedItem.inspectionType,
-              vinNumber: matchedItem.vehicle.vin,
-            },
-            vehicleSummary: {
-              ...report.vehicleSummary,
-              make: matchedItem.vehicle.make,
-              model: matchedItem.vehicle.model,
-              year: String(matchedItem.vehicle.year),
-              vehicleType: matchedItem.vehicle.type,
-              externalColour: matchedItem.vehicle.color,
-              transmission: matchedItem.vehicle.transmission,
-              regionalSpecs: matchedItem.vehicle.specs,
-              odometerReading: matchedItem.vehicle.odometer.replace(/[^\d,]/g, '').trim(),
-              odometerStatus: matchedItem.vehicle.odometerStatus,
-            },
-            clientDetails: {
-              ...report.clientDetails,
-              name: matchedItem.client.name,
-              location: matchedItem.client.location,
-              email: matchedItem.client.email,
-              whatsappNumber: matchedItem.client.phone,
-              vehicleDetails: `${matchedItem.vehicle.year} ${matchedItem.vehicle.make} ${matchedItem.vehicle.model}`,
-            },
-            teamDetails: {
-              ...report.teamDetails,
-              inspector: matchedItem.inspector.name,
-            },
-            reportOverview: {
-              ...report.reportOverview,
-              pass: String(matchedItem.passPercentage),
-              fail: String(matchedItem.failPercentage),
-            },
-          }, false);
-        }
-      }
-    }
-  }, [report.inspectionDetails, report.vehicleSummary, report.clientDetails, report.teamDetails, report.reportOverview, updateReport]);
 
   // Dynamic calculation of total preview pages (synchronized with ReportPreview renderer)
   const totalPreviewPages = useMemo(() => {
@@ -1925,24 +1865,12 @@ function InspectDashboardContent({
                 <button
                   type="button"
                   onClick={() => {
-                    const newId = `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
-                    const cleanReport: FullInspectionReport = {
-                      ...initialReportData,
-                      id: newId,
-                      title: `Report #${newId}`,
-                      status: 'draft',
-                      lastSavedAt: 'Reset just now',
-                      inspectionDetails: {
-                        ...initialReportData.inspectionDetails,
-                        date: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
-                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                      },
-                    };
+                    const cleanReport = createEmptyReport();
                     resetReport(cleanReport);
                     upsertStoredReport(convertFullReportToListItem(cleanReport));
                     handleSectionOrderChange(DEFAULT_SECTION_ORDER);
                     setIsResetConfirmOpen(false);
-                    showToast(`Inspection reset to new draft (${newId})`, 'success');
+                    showToast(`Inspection reset to new draft (${cleanReport.id})`, 'success');
                   }}
                   className="flex-1 py-3 rounded-2xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition-colors shadow-sm"
                 >
@@ -2114,7 +2042,7 @@ function InspectDashboardContent({
   );
 }
 
-export default function HomeDashboard() {
+function InspectDashboardApp() {
   const history = useInspectionHistory();
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -2135,5 +2063,19 @@ export default function HomeDashboard() {
         showToast={showToast}
       />
     </MediaConnectionProvider>
+  );
+}
+
+export default function HomeDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-screen w-screen flex items-center justify-center bg-[#F8F9FB]">
+          <Loader2 className="animate-spin text-[#9723FF]" size={36} />
+        </div>
+      }
+    >
+      <InspectDashboardApp />
+    </Suspense>
   );
 }

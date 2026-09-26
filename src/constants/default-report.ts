@@ -153,3 +153,147 @@ export const INITIAL_MEDIA_FILES = [
 
 // Alias for backward compatibility
 export const initialReportData = INITIAL_REPORT_DATA;
+
+/**
+ * Creates a brand new, empty inspection report with all fields cleared.
+ */
+export function createEmptyReport(customId?: string): FullInspectionReport {
+  const id = customId || `CMC-${Math.floor(1000 + Math.random() * 9000)}`;
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  const dateStr = `${day}-${month}-${year}`;
+
+  let hours = now.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+
+  return {
+    id,
+    title: `Report #${id}`,
+    status: 'draft',
+    lastSavedAt: 'Created just now',
+    inspectionDetails: {
+      date: dateStr,
+      time: timeStr,
+      inspectionType: '',
+      vinNumber: '',
+    },
+    vehicleSummary: {
+      make: '',
+      model: '',
+      year: '',
+      regionalSpecs: '',
+      transmission: '',
+      engineSize: '',
+      odometerStatus: 'Normal',
+      spareType: 'available',
+      numberOfKeys: 1,
+      vehicleType: '',
+      externalColour: '',
+      fuelType: '',
+      odometerReading: '',
+      odometerUnit: 'KM',
+      tamperedReading: '',
+    },
+    reportOverview: {
+      pass: '0',
+      fail: '0',
+      weak: '0',
+      autoCalculate: true,
+    },
+    clientDetails: {
+      name: '',
+      countryCode: '+971',
+      whatsappNumber: '',
+      email: '',
+      vehicleDetails: '',
+      location: '',
+    },
+    teamDetails: {
+      inspector: '',
+    },
+    tyres: {
+      RR: { status: null, year: '', comments: '', image: null },
+      RL: { status: null, year: '', comments: '', image: null },
+      FR: { status: null, year: '', comments: '', image: null },
+      FL: { status: null, year: '', comments: '', image: null },
+      ST: { status: null, year: '', comments: '', image: null },
+    },
+    rims: {
+      RR: { status: null, year: '', comments: '', image: null },
+      RL: { status: null, year: '', comments: '', image: null },
+      FR: { status: null, year: '', comments: '', image: null },
+      FL: { status: null, year: '', comments: '', image: null },
+      ST: { status: null, year: '', comments: '', image: null },
+    },
+    brakes: {
+      RR: { status: null, year: '', comments: '', image: null },
+      RL: { status: null, year: '', comments: '', image: null },
+      FR: { status: null, year: '', comments: '', image: null },
+      FL: { status: null, year: '', comments: '', image: null },
+      ST: { status: null, year: '', comments: '', image: null },
+    },
+    chassisSubframeComments: '',
+    chassisSubframeImages: [],
+    chassisSubframePartStatuses: {
+      1: 'unchecked', 2: 'unchecked', 3: 'unchecked', 4: 'unchecked', 5: 'unchecked',
+      6: 'unchecked', 7: 'unchecked', 8: 'unchecked', 9: 'unchecked', 10: 'unchecked',
+      11: 'unchecked', 12: 'unchecked', 13: 'unchecked', 14: 'unchecked', 15: 'unchecked',
+      16: 'unchecked', 17: 'unchecked', 18: 'unchecked', 19: 'unchecked', 20: 'unchecked',
+    },
+    chassisSubframeCustomHeadlines: [],
+    bodyComments: '',
+    bodyGeneralComments: '',
+    bodyGeneralImages: [],
+    bodyImages: [],
+    bodyPartStatuses: {
+      frontBumper: 'good',
+      hood: 'good',
+      roof: 'good',
+      trunk: 'good',
+      rearBumper: 'good',
+      leftFrontFender: 'good',
+      leftFrontDoor: 'good',
+      leftBackDoor: 'good',
+      leftRearFender: 'good',
+      rightFrontFender: 'good',
+      rightFrontDoor: 'good',
+      rightBackDoor: 'good',
+      rightRearFender: 'good',
+    },
+    bodyCustomHeadlines: [],
+    interiorComments: '',
+    interiorGeneralImages: [],
+    seatsComments: '',
+    seatsStatus: 'pass',
+    seatsImages: [],
+    interiorCustomHeadlines: [],
+    electricalComments: '',
+    electricalGeneralImages: [],
+    electricalItems: {},
+    electricalCustomHeadlines: [],
+    engineComments: '',
+    engineGeneralImages: [],
+    engineItems: {},
+    engineCustomHeadlines: [],
+    transmissionComments: '',
+    transmissionGeneralImages: [],
+    transmissionItems: {},
+    transmissionCustomHeadlines: [],
+    customHeadlines: [],
+    generalPhotosExteriorComments: '',
+    generalPhotosExteriorImages: [],
+    generalPhotosInteriorComments: '',
+    generalPhotosInteriorImages: [],
+    generalPhotosEngineComments: '',
+    generalPhotosEngineImages: [],
+  };
+}
+
+export const EMPTY_REPORT_DATA = createEmptyReport('CMC-0000');
+
