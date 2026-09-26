@@ -564,11 +564,11 @@ function InspectDashboardContent({
       setIsGeneratingPdf(true);
       showToast('Preparing high-fidelity PDF report...', 'info');
 
-      // Use the active preview container or the dedicated print container
+      // Use the dedicated unscaled canonical print container first to ensure scale 1 export
       const container =
-        document.getElementById('preview-page-container') ||
         document.getElementById('print-page-container') ||
         document.getElementById('report-print-container') ||
+        document.getElementById('preview-page-container') ||
         document.querySelector('.a4-print-page')?.parentElement ||
         document.body;
 
@@ -991,8 +991,12 @@ function InspectDashboardContent({
 
   return (
     <>
-      {/* Dedicated Print-Only Report Container: 100% pure A4 output matching Report Preview exactly */}
-      <div id="report-print-container" className="hidden print:block w-[210mm] max-w-[210mm] min-w-[210mm] mx-auto p-0 m-0 bg-white">
+      {/* Dedicated Canonical A4 Report Container: Used for print and direct unscaled PDF capture */}
+      <div 
+        id="report-print-container" 
+        className={`fixed top-0 left-[-9999px] w-[210mm] max-w-[210mm] min-w-[210mm] m-0 p-0 bg-white opacity-0 pointer-events-none z-[-9999] print:static print:left-auto print:opacity-100 print:pointer-events-auto print:z-auto print:block ${familjen.className}`}
+        aria-hidden="true"
+      >
         <ReportPreview 
           idPrefix="print-page-"
           tyres={report.tyres} 
@@ -2096,24 +2100,7 @@ function InspectDashboardContent({
         )}
       </AnimatePresence>
 
-      {/* Off-screen dedicated A4 container for direct PDF export */}
-      <div 
-        id="report-print-container"
-        className="fixed top-0 left-[-9999px] w-[210mm] max-w-[210mm] min-w-[210mm] m-0 p-0 bg-white opacity-0 pointer-events-none z-[-9999]"
-        aria-hidden="true"
-      >
-        <ReportPreview 
-          idPrefix="print-page-"
-          tyres={report.tyres} 
-          rims={report.rims} 
-          brakes={report.brakes}
-          vehicleData={report.vehicleSummary}
-          inspectionDetails={report.inspectionDetails}
-          clientDetails={report.clientDetails}
-          overviewStats={report.reportOverview}
-          report={report}
-        />
-      </div>
+
 
       {/* Media Connection Modals */}
       <MediaAssignModal />

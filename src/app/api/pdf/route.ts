@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       background: #ffffff !important;
       color: #1E1035 !important;
       width: 210mm !important;
-      font-family: var(--font-geist-sans), "Familjen Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Familjen Grotesk', var(--font-familjen, var(--font-geist-sans, -apple-system)), BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
       overflow: visible !important;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -91,16 +91,17 @@ export async function POST(req: NextRequest) {
     svg text {
       text-rendering: geometricPrecision;
     }
-    /* Neutralize outer flex gaps and padding for exact page slicing without distorting inner items */
-    body > div,
+    /* Outer container rules: block layout spanning full 210mm without flex centering shrinking */
+    #report-print-container,
+    #print-page-container,
+    #preview-page-container,
     div:has(> .a4-print-page) {
       gap: 0 !important;
       padding: 0 !important;
       margin: 0 !important;
       width: 210mm !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
+      max-width: 210mm !important;
+      display: block !important;
     }
     .a4-print-page {
       width: 210mm !important;
@@ -109,6 +110,9 @@ export async function POST(req: NextRequest) {
       height: 297mm !important;
       min-height: 297mm !important;
       max-height: 297mm !important;
+      padding: 2rem !important; /* 32px (p-8) matching UI preview */
+      background-color: #F4F5F8 !important;
+      color: #1E1035 !important;
       page-break-after: always !important;
       break-after: page !important;
       page-break-inside: avoid !important;
@@ -117,22 +121,24 @@ export async function POST(req: NextRequest) {
       border: none !important;
       border-radius: 0 !important;
       margin: 0 !important;
-      padding: 24px 32px !important;
       overflow: hidden !important;
       position: relative !important;
       box-sizing: border-box !important;
-      background: #ffffff !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      transform: none !important;
+      zoom: 1 !important;
     }
     .a4-print-page-cover,
-    .a4-print-page-back,
-    #print-page-1,
-    #preview-page-1 {
+    .a4-print-page-back {
       padding: 0 !important;
+      background-color: #ffffff !important;
     }
     .a4-print-page:last-child,
     .a4-print-page:last-of-type {
-      page-break-after: avoid !important;
-      break-after: avoid !important;
+      page-break-after: auto !important;
+      break-after: auto !important;
     }
   </style>
 </head>
