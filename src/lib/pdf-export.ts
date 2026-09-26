@@ -91,7 +91,12 @@ async function inlineBlobImages(container: HTMLElement): Promise<HTMLElement> {
       }
     } else if (img.src && !img.src.startsWith('data:')) {
       // Ensure relative paths (/assets/...) are fully qualified with origin
-      img.setAttribute('src', img.src);
+      try {
+        const absoluteUrl = new URL(img.src, window.location.origin).href;
+        img.setAttribute('src', absoluteUrl);
+      } catch {
+        img.setAttribute('src', img.src);
+      }
     }
   }
 
@@ -99,17 +104,27 @@ async function inlineBlobImages(container: HTMLElement): Promise<HTMLElement> {
 }
 
 /**
- * Collects all active CSS stylesheets and inline style tags from the current document.
+ * Collects all active CSS stylesheets and inline style tags from the current document,
+ * fully inlining parsed CSS rules to prevent 403 Forbidden or CORS errors during headless PDF rendering.
  */
 function collectDocumentStyles(): string {
-  const elements = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
-  return elements.map(el => {
-    if (el.tagName === 'LINK') {
-      const link = el as HTMLLinkElement;
-      return `<link rel="stylesheet" href="${link.href}" />`;
+  let inlinedStyles = '';
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      const rules = Array.from(sheet.cssRules || []);
+      inlinedStyles += rules.map(r => r.cssText).join('\n') + '\n';
+    } catch {
+      if (sheet.href) {
+        inlinedStyles += `@import url("${sheet.href}");\n`;
+      }
     }
-    return el.outerHTML;
-  }).join('\n');
+  }
+
+  const styleTags = Array.from(document.querySelectorAll('style'));
+  const extraStyles = styleTags.map(s => s.innerHTML).join('\n');
+
+  return `<style>\n${inlinedStyles}\n${extraStyles}\n</style>`;
 }
 
 /**

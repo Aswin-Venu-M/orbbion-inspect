@@ -564,8 +564,10 @@ function InspectDashboardContent({
       setIsGeneratingPdf(true);
       showToast('Preparing high-fidelity PDF report...', 'info');
 
-      // Prefer the dedicated off-screen print container, fallback to the on-screen preview container
+      // Use the active preview container or the dedicated print container
       const container =
+        document.getElementById('preview-page-container') ||
+        document.getElementById('print-page-container') ||
         document.getElementById('report-print-container') ||
         document.querySelector('.a4-print-page')?.parentElement ||
         document.body;
@@ -990,7 +992,7 @@ function InspectDashboardContent({
   return (
     <>
       {/* Dedicated Print-Only Report Container: 100% pure A4 output matching Report Preview exactly */}
-      <div className="hidden print:block w-[210mm] max-w-[210mm] min-w-[210mm] mx-auto p-0 m-0 bg-white">
+      <div id="report-print-container" className="hidden print:block w-[210mm] max-w-[210mm] min-w-[210mm] mx-auto p-0 m-0 bg-white">
         <ReportPreview 
           idPrefix="print-page-"
           tyres={report.tyres} 

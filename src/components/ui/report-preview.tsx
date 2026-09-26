@@ -425,7 +425,7 @@ export function ReportPreview({
   const backPageNum = pageCounter++;
 
   return (
-    <div className="w-full p-2 sm:p-4 md:p-8 flex flex-col items-center gap-6 sm:gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
+    <div id={`${idPrefix}container`} className="w-full p-2 sm:p-4 md:p-8 flex flex-col items-center gap-6 sm:gap-8 pb-24 relative print:p-0 print:gap-0 print:pb-0">
       
       {/* PAGE 1: Cover Page */}
       <div

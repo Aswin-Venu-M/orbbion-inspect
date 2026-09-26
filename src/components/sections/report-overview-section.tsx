@@ -94,10 +94,10 @@ export const ReportOverviewSection: React.FC<ReportOverviewSectionProps> = ({
           </div>
         </div>
 
-        <div className="w-full sm:w-1/3 text-xs text-slate-500 leading-relaxed bg-[#F8FAFC] p-4 rounded-2xl border border-slate-100">
+        {/* <div className="w-full sm:w-1/3 text-xs text-slate-500 leading-relaxed bg-[#F8FAFC] p-4 rounded-2xl border border-slate-100">
           <span className="font-bold text-[#1E1035] block mb-1">Inspection Formula</span>
           Scores are calculated across chassis, tyres, rims, brakes, and electrical subsystems. Green represents safe parameters; orange indicates repairs or defects required.
-        </div>
+        </div> */}
       </ReusableSection>
     </div>
   );

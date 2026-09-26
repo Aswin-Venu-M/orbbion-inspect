@@ -91,13 +91,16 @@ export async function POST(req: NextRequest) {
     svg text {
       text-rendering: geometricPrecision;
     }
-    /* Neutralize outer flex gaps and padding for exact page slicing */
-    div[class*="items-center"],
+    /* Neutralize outer flex gaps and padding for exact page slicing without distorting inner items */
+    body > div,
     div:has(> .a4-print-page) {
       gap: 0 !important;
       padding: 0 !important;
       margin: 0 !important;
       width: 210mm !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
     }
     .a4-print-page {
       width: 210mm !important;
@@ -118,6 +121,7 @@ export async function POST(req: NextRequest) {
       overflow: hidden !important;
       position: relative !important;
       box-sizing: border-box !important;
+      background: #ffffff !important;
     }
     .a4-print-page-cover,
     .a4-print-page-back,
@@ -145,7 +149,6 @@ export async function POST(req: NextRequest) {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-background-networking',
         '--disable-default-apps',
         '--disable-extensions',
         '--disable-sync',
