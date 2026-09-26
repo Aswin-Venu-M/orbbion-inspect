@@ -64,7 +64,7 @@ export const INITIAL_REPORT_DATA: FullInspectionReport = {
     RL: { status: 'pass', year: '2025', comments: 'Brake pads in good condition (6mm)', image: null },
     FR: { status: 'pass', year: '2025', comments: 'Front pads 7mm, rotor smooth', image: null },
     FL: { status: 'pass', year: '2025', comments: 'Front pads 7mm, rotor smooth', image: null },
-    ST: { status: 'pass', year: '2025', comments: 'Not applicable for spare', image: null },
+    ST: { status: 'na', year: '2025', comments: 'Not applicable for spare', image: null },
   },
   chassisSubframeComments: 'Chassis frame rails and cross-members intact. Underbody anti-corrosion coating in good condition with no structural deformation.',
   chassisSubframeImages: [],

@@ -13,6 +13,7 @@ import { CustomHeadlineItem } from '@/lib/inspection-types';
 import { validateImageFiles, DEFAULT_MAX_IMAGES } from '@/lib/image-upload-utils';
 import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 import { generateSafeId } from '@/lib/media-targets';
+import { VerificationStatusTabs } from '@/components/ui/verification-status-tabs';
 
 interface InteriorExteriorSectionProps {
   seatsComments?: string;
@@ -289,35 +290,11 @@ export const InteriorExteriorSection: React.FC<InteriorExteriorSectionProps> = (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-5">
             <h3 className="text-[16px] font-bold text-[#1E1035]">Seats Upholstery</h3>
-            <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0">
-              <button 
-                type="button"
-                onClick={() => onSeatsStatusChange?.('pass')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  seatsStatus === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                PASS
-              </button>
-              <button 
-                type="button"
-                onClick={() => onSeatsStatusChange?.('fail')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  seatsStatus === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                FAIL
-              </button>
-              <button 
-                type="button"
-                onClick={() => onSeatsStatusChange?.('weak')}
-                className={`px-5 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  seatsStatus === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                WEAK
-              </button>
-            </div>
+            <VerificationStatusTabs
+              value={seatsStatus}
+              onChange={(status) => onSeatsStatusChange?.(status)}
+              includeNa={false}
+            />
           </div>
           
           <div className="flex flex-col gap-2">

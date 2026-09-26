@@ -4,6 +4,7 @@ import { Calendar, Trash2, ImageOff, Sparkles } from 'lucide-react';
 import { GalleryIcon } from './gallery-icon';
 import { InputField } from './input-field';
 import { YearPickerInput } from './year-picker-input';
+import { VerificationStatusTabs } from './verification-status-tabs';
 import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 export type InspectionDetailState = {
@@ -106,41 +107,11 @@ export const InspectionDetailCard = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-5">
           <h3 className="font-bold text-[#1E1035] text-[15px] sm:text-[16px]">{title}</h3>
           
-          <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => onChange({ status: 'pass' })}
-              className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap cursor-pointer ${
-                data.status === 'pass' 
-                  ? 'bg-[#71D64B] text-white shadow-sm' 
-                  : 'text-[#74768B] hover:text-[#1E1035]'
-              }`}
-            >
-              PASS
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange({ status: 'fail' })}
-              className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap cursor-pointer ${
-                data.status === 'fail' 
-                  ? 'bg-[#FE8E4B] text-white shadow-sm' 
-                  : 'text-[#74768B] hover:text-[#1E1035]'
-              }`}
-            >
-              FAIL
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange({ status: 'weak' })}
-              className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap cursor-pointer ${
-                data.status === 'weak' 
-                  ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' 
-                  : 'text-[#74768B] hover:text-[#1E1035]'
-              }`}
-            >
-              WEAK
-            </button>
-          </div>
+          <VerificationStatusTabs
+            value={data.status}
+            onChange={(status) => onChange({ status })}
+            includeNa={true}
+          />
         </div>
 
         {/* Inputs Grid */}

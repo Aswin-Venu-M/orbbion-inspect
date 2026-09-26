@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { ImageUploadBox } from './image-upload-box';
 import { Trash2 } from 'lucide-react';
+import { VerificationStatusTabs } from './verification-status-tabs';
 import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 interface InspectionItemCardProps {
@@ -144,35 +145,11 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-5">
           <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1E1035]">{title}</h3>
           {showToggle && (
-            <div className="flex items-center flex-nowrap bg-[#F4F5F8] p-[3px] rounded-full border border-[#E2E4EB] shrink-0 self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => handleStatusClick('pass')}
-                className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  status === 'pass' ? 'bg-[#71D64B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                PASS
-              </button>
-              <button
-                type="button"
-                onClick={() => handleStatusClick('fail')}
-                className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  status === 'fail' ? 'bg-[#FE8E4B] text-white shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                FAIL
-              </button>
-              <button
-                type="button"
-                onClick={() => handleStatusClick('weak')}
-                className={`px-3.5 sm:px-6 py-1 rounded-full text-[11px] tracking-wide font-bold transition-all whitespace-nowrap ${
-                  status === 'weak' ? 'bg-[#FFED00] text-[#7A7000] shadow-sm' : 'text-[#74768B] hover:text-[#1E1035]'
-                }`}
-              >
-                WEAK
-              </button>
-            </div>
+            <VerificationStatusTabs
+              value={status}
+              onChange={(newStatus) => handleStatusClick(newStatus as 'pass' | 'fail' | 'weak')}
+              includeNa={false}
+            />
           )}
         </div>
         
