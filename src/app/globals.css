@@ -75,6 +75,18 @@ select {
   appearance: none;
 }
 
+/* Remove default arrows/spinners in number fields */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .bg-dot-pattern {
   position: relative;
   background-image: radial-gradient(#E2E4EB 1px, transparent 1px);

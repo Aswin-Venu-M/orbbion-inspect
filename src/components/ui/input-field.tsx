@@ -100,7 +100,7 @@ export const InputField = ({
           onBlur={handleBlur}
           placeholder={placeholder}
           required={required}
-          className={`w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] text-sm text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] text-sm text-[#190933] placeholder-slate-400 rounded-[14px] px-4 focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
             icon ? "pl-11" : ""
           } ${rightIcon || rightText ? "pr-12" : ""}`}
           {...props}
