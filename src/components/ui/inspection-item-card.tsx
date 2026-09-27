@@ -7,10 +7,13 @@ import { VerificationStatusTabs } from './verification-status-tabs';
 import { useMediaConnectionOptional } from '@/lib/media-connection-context';
 
 interface InspectionItemCardProps {
+  id?: string;
   title: string;
   hasMultipleImages?: boolean;
   showToggle?: boolean;
+  status?: 'pass' | 'fail' | 'weak';
   initialStatus?: 'pass' | 'fail' | 'weak';
+  comments?: string;
   initialComments?: string;
   imageUrls?: string[];
   onStatusChange?: (status: 'pass' | 'fail' | 'weak') => void;
@@ -20,10 +23,13 @@ interface InspectionItemCardProps {
 }
 
 export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
+  id,
   title,
   hasMultipleImages = true,
   showToggle = true,
+  status: controlledStatus,
   initialStatus = 'pass',
+  comments: controlledComments,
   initialComments = '',
   imageUrls: externalImageUrls,
   onStatusChange,
@@ -31,30 +37,25 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
   onImagesChange,
   onChooseFromGallery,
 }) => {
-  const [status, setStatus] = useState<'pass' | 'fail' | 'weak'>(initialStatus);
-  const [comments, setComments] = useState<string>(initialComments);
+  const activeStatus = controlledStatus ?? initialStatus;
+  const [localComments, setLocalComments] = useState<string>(controlledComments ?? initialComments);
   const [localImageUrls, setLocalImageUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaContext = useMediaConnectionOptional();
 
   React.useEffect(() => {
-    setStatus(initialStatus);
-  }, [initialStatus]);
-
-  React.useEffect(() => {
-    setComments(initialComments);
-  }, [initialComments]);
+    setLocalComments(controlledComments ?? initialComments);
+  }, [controlledComments, initialComments]);
 
   const displayImageUrls = externalImageUrls ?? localImageUrls;
 
   const handleStatusClick = (newStatus: 'pass' | 'fail' | 'weak') => {
-    setStatus(newStatus);
     onStatusChange?.(newStatus);
   };
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setComments(val);
+    setLocalComments(val);
     onCommentsChange?.(val);
   };
 
@@ -146,10 +147,10 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
           <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1E1035]">{title}</h3>
           {showToggle && (
             <VerificationStatusTabs
-              value={status}
+              value={activeStatus}
               onChange={(newStatus) => handleStatusClick(newStatus as 'pass' | 'fail' | 'weak')}
               includeNa={false}
-              layoutId={`status-item-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+              layoutId={`status-item-${id || title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
             />
           )}
         </div>
@@ -158,7 +159,7 @@ export const InspectionItemCard: React.FC<InspectionItemCardProps> = ({
           <label className="text-[14px] font-bold text-[#1E1035]">Comments</label>
           <input 
             type="text" 
-            value={comments}
+            value={localComments}
             onChange={handleCommentChange}
             placeholder={`Enter remarks for ${title.toLowerCase()}`} 
             className="w-full h-[46px] bg-[#F4F5F8] border border-[#E2E4EB] rounded-[14px] px-4 text-[13px] font-medium text-[#1E1035] placeholder-[#74768B] focus:outline-none focus:ring-2 focus:ring-[#1E1035]/20 transition-all" 

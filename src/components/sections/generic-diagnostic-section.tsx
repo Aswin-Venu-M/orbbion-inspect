@@ -50,8 +50,11 @@ export function GenericDiagnosticSection({
           return (
             <InspectionItemCard
               key={`${item}-${index}`}
+              id={`${id}-${item}`}
               title={item}
+              status={itemData.status}
               initialStatus={itemData.status}
+              comments={itemData.comments}
               initialComments={itemData.comments}
               imageUrls={itemData.images}
               onStatusChange={(status) => onItemChange?.(item, { status })}

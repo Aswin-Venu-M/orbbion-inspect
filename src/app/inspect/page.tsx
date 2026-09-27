@@ -166,10 +166,13 @@ function InspectDashboardContent({
 
   // Handle ?new=true or ?id=... or ?tab=view from navigation
   const prevParamsRef = useRef<string>('');
+  const initializedNewRef = useRef<boolean>(false);
+  const lastLoadedIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const currentParams = searchParams?.toString() || '';
-    if (currentParams === prevParamsRef.current && !isNew) return;
+    if (currentParams === prevParamsRef.current) return;
     prevParamsRef.current = currentParams;
 
     if (tabParam === 'view') {
@@ -177,6 +180,8 @@ function InspectDashboardContent({
     }
 
     if (isNew) {
+      if (initializedNewRef.current) return;
+      initializedNewRef.current = true;
       const freshReport = createEmptyReport();
       resetReport(freshReport);
       handleSectionOrderChange(DEFAULT_SECTION_ORDER);
@@ -187,7 +192,8 @@ function InspectDashboardContent({
       return;
     }
 
-    if (requestedId && requestedId !== report.id) {
+    if (requestedId && requestedId !== lastLoadedIdRef.current) {
+      lastLoadedIdRef.current = requestedId;
       const catalog = getStoredReports();
       const match = catalog.find(r => r.id === requestedId || r.reportNumber === requestedId);
       if (match) {
@@ -239,7 +245,7 @@ function InspectDashboardContent({
         showToast(`Report ${requestedId} was not found in catalog`, 'error');
       }
     }
-  }, [searchParams, isNew, requestedId, tabParam, resetReport, showToast, report.id, handleSectionOrderChange]);
+  }, [searchParams, isNew, requestedId, tabParam, resetReport, showToast, handleSectionOrderChange]);
 
   // Dynamic calculation of Pass/Fail Overview
   const calculatedStats = useMemo(() => {
@@ -261,25 +267,17 @@ function InspectDashboardContent({
     };
   }, [report.tyres, report.rims, report.brakes]);
 
-  // Keep reportOverview stats synchronized if autoCalculate is active
-  useEffect(() => {
+  // Derived overview stats - no effect/setState cascade needed
+  const overviewStats = useMemo(() => {
     if (report.reportOverview.autoCalculate) {
-      const passStr = String(calculatedStats.pass);
-      const failStr = String(calculatedStats.fail);
-      if (
-        report.reportOverview.pass !== passStr ||
-        report.reportOverview.fail !== failStr
-      ) {
-        updateReport({
-          reportOverview: {
-            ...report.reportOverview,
-            pass: passStr,
-            fail: failStr,
-          },
-        }, false);
-      }
+      return {
+        ...report.reportOverview,
+        pass: String(calculatedStats.pass),
+        fail: String(calculatedStats.fail),
+      };
     }
-  }, [calculatedStats.pass, calculatedStats.fail, report.reportOverview.autoCalculate, report.reportOverview.pass, report.reportOverview.fail, updateReport]);
+    return report.reportOverview;
+  }, [report.reportOverview, calculatedStats]);
 
   // Dynamic calculation of total preview pages (synchronized with ReportPreview renderer)
   const totalPreviewPages = useMemo(() => {
@@ -339,54 +337,57 @@ function InspectDashboardContent({
   };
 
   // Component Status Updaters
-  const updateTyreData = (id: string, data: Partial<InspectionDetailState>) => {
-    updateReport({
+  const updateTyreData = useCallback((id: string, data: Partial<InspectionDetailState>) => {
+    updateReport(prev => ({
+      ...prev,
       tyres: {
-        ...report.tyres,
-        [id]: { ...report.tyres[id], ...data },
+        ...prev.tyres,
+        [id]: { ...(prev.tyres?.[id] || {}), ...data },
       },
-    });
-  };
+    }));
+  }, [updateReport]);
 
-  const setTyreStatus = (id: string, status: InspectionState) => {
+  const setTyreStatus = useCallback((id: string, status: InspectionState) => {
     updateTyreData(id, { status });
-  };
+  }, [updateTyreData]);
 
   const handleTyreImageClick = (id: string) => {
     setCardUploadTarget({ type: 'tyre', id });
     cardFileInputRef.current?.click();
   };
 
-  const updateRimData = (id: string, data: Partial<InspectionDetailState>) => {
-    updateReport({
+  const updateRimData = useCallback((id: string, data: Partial<InspectionDetailState>) => {
+    updateReport(prev => ({
+      ...prev,
       rims: {
-        ...report.rims,
-        [id]: { ...report.rims[id], ...data },
+        ...prev.rims,
+        [id]: { ...(prev.rims?.[id] || {}), ...data },
       },
-    });
-  };
+    }));
+  }, [updateReport]);
 
-  const setRimStatus = (id: string, status: InspectionState) => {
+  const setRimStatus = useCallback((id: string, status: InspectionState) => {
     updateRimData(id, { status });
-  };
+  }, [updateRimData]);
 
   const handleRimImageClick = (id: string) => {
     setCardUploadTarget({ type: 'rim', id });
     cardFileInputRef.current?.click();
   };
 
-  const updateBrakeData = (id: string, data: Partial<InspectionDetailState>) => {
-    updateReport({
+  const updateBrakeData = useCallback((id: string, data: Partial<InspectionDetailState>) => {
+    updateReport(prev => ({
+      ...prev,
       brakes: {
-        ...report.brakes,
-        [id]: { ...report.brakes[id], ...data },
+        ...prev.brakes,
+        [id]: { ...(prev.brakes?.[id] || {}), ...data },
       },
-    });
-  };
+    }));
+  }, [updateReport]);
 
-  const setBrakeStatus = (id: string, status: InspectionState) => {
+  const setBrakeStatus = useCallback((id: string, status: InspectionState) => {
     updateBrakeData(id, { status });
-  };
+  }, [updateBrakeData]);
 
   const handleBrakeImageClick = (id: string) => {
     setCardUploadTarget({ type: 'brake', id });
@@ -706,11 +707,12 @@ function InspectDashboardContent({
       case 'section-report-overview':
         return (
           <ReportOverviewSection 
-            data={report.reportOverview} 
+            data={overviewStats} 
             calculatedStats={calculatedStats} 
-            onChange={(patch) => updateReport({
-              reportOverview: { ...report.reportOverview, ...patch }
-            })} 
+            onChange={(patch) => updateReport(prev => ({
+              ...prev,
+              reportOverview: { ...prev.reportOverview, ...patch }
+            }))} 
           />
         );
 
@@ -951,7 +953,7 @@ function InspectDashboardContent({
           vehicleData={report.vehicleSummary}
           inspectionDetails={report.inspectionDetails}
           clientDetails={report.clientDetails}
-          overviewStats={report.reportOverview}
+          overviewStats={overviewStats}
           report={report}
         />
       </div>
@@ -1307,18 +1309,18 @@ function InspectDashboardContent({
           activeTab === 'view' ? 'overflow-hidden pb-0' : 'overflow-visible xl:overflow-hidden pb-32 md:pb-6 xl:pb-0'
         } custom-scrollbar relative`}>
           
-          {activeTab === 'edit' ? (
-            <>
-              {/* Desktop Sections Drawer (Collapsible) */}
-              <div 
-                className={`hidden xl:block shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
-                  isSectionsOpen 
-                    ? 'max-w-[320px] opacity-100' 
-                    : 'max-w-0 opacity-0 pointer-events-none'
-                }`}
-              >
-                {renderSectionsDrawerContent(false)}
-              </div>
+          {/* 1. Edit Mode Canvas Container */}
+          <div className={`flex-1 flex flex-col xl:flex-row gap-4 min-w-0 w-full ${activeTab === 'edit' ? '' : 'hidden'}`}>
+            {/* Desktop Sections Drawer (Collapsible) */}
+            <div 
+              className={`hidden xl:block shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
+                isSectionsOpen 
+                  ? 'max-w-[320px] opacity-100' 
+                  : 'max-w-0 opacity-0 pointer-events-none'
+              }`}
+            >
+              {renderSectionsDrawerContent(false)}
+            </div>
 
               {/* Desktop Media Drawer (Collapsible) */}
               <div 
@@ -1460,9 +1462,10 @@ function InspectDashboardContent({
                   />
                 </SidebarCard>
               </aside>
-            </>
-          ) : (
-            <>
+          </div>
+
+          {/* 2. Preview Mode Canvas Container */}
+          <div className={`flex-1 flex flex-col xl:flex-row gap-4 min-w-0 w-full relative ${activeTab === 'view' ? '' : 'hidden'}`}>
               {/* Preview Mode */}
               <div 
                 ref={previewScrollRef}
@@ -1484,7 +1487,7 @@ function InspectDashboardContent({
                     vehicleData={report.vehicleSummary}
                     inspectionDetails={report.inspectionDetails}
                     clientDetails={report.clientDetails}
-                    overviewStats={report.reportOverview}
+                    overviewStats={overviewStats}
                     report={report}
                   />
                 </div>
@@ -1617,8 +1620,7 @@ function InspectDashboardContent({
                   )}
                 </button>
               </div>
-            </>
-          )}
+          </div>
         </div>
       </div>
 

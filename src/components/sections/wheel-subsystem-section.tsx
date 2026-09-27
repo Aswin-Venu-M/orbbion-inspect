@@ -41,6 +41,7 @@ export const WheelSubsystemSection: React.FC<WheelSubsystemSectionProps> = ({
         {WHEEL_POSITIONS.map(({ id: posId, label }) => (
           <InspectionDetailCard 
             key={posId}
+            id={`${id}-${posId}`}
             title={label} 
             data={items[posId] || { status: null, year: '', comments: '', image: null }} 
             onChange={(d) => onDataChange(posId, d)} 

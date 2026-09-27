@@ -21,9 +21,11 @@ export const DynamicHeadlineGroup: React.FC<DynamicHeadlineGroupProps> = ({
   onChange,
   maxImages,
 }) => {
-  const activeHeadlines: CustomHeadlineItem[] = headlines.length > 0 ? headlines : [
+  const fallbackHeadlines = React.useMemo<CustomHeadlineItem[]>(() => [
     { id: defaultHeadlineId, title: defaultHeadlineTitle, comments: '', imageUrl: undefined, images: [] }
-  ];
+  ], [defaultHeadlineId, defaultHeadlineTitle]);
+
+  const activeHeadlines: CustomHeadlineItem[] = headlines.length > 0 ? headlines : fallbackHeadlines;
 
   const handleAdd = () => {
     if (!onChange) return;

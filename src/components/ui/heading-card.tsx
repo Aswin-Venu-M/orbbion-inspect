@@ -51,18 +51,29 @@ export const HeadingCard: React.FC<HeadingCardProps> = ({
   const mediaContext = useMediaConnectionOptional();
   
   useEffect(() => {
-    setHeading(initialTitle);
+    setHeading(prev => (prev === initialTitle ? prev : initialTitle));
   }, [initialTitle]);
 
   useEffect(() => {
-    setComments(initialComments);
+    setComments(prev => (prev === initialComments ? prev : initialComments));
   }, [initialComments]);
 
   useEffect(() => {
     if (initialImages !== undefined) {
-      setImages(initialImages);
+      setImages(prev => {
+        if (prev.length === initialImages.length && prev.every((u, i) => u === initialImages[i])) {
+          return prev;
+        }
+        return initialImages;
+      });
     } else if (initialImageUrl !== undefined) {
-      setImages(initialImageUrl ? [initialImageUrl] : []);
+      const next = initialImageUrl ? [initialImageUrl] : [];
+      setImages(prev => {
+        if (prev.length === next.length && prev[0] === next[0]) {
+          return prev;
+        }
+        return next;
+      });
     }
   }, [initialImages, initialImageUrl]);
 

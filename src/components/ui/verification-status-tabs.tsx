@@ -36,7 +36,7 @@ export const VerificationStatusTabs: React.FC<VerificationStatusTabsProps> = ({
 }) => {
   const rawId = useId();
   const cleanId = rawId.replace(/[^a-zA-Z0-9]/g, '');
-  const activeLayoutId = layoutId || `status-indicator-${cleanId}`;
+  const activeLayoutId = layoutId ? `${layoutId}-${cleanId}` : `status-indicator-${cleanId}`;
 
   const items = includeNa 
     ? STATUS_ITEMS 

@@ -43,15 +43,7 @@ export function cleanReportForStorage(data: FullInspectionReport): FullInspectio
 }
 
 export function useInspectionHistory() {
-  const [report, setReport] = useState<FullInspectionReport>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('new') === 'true') {
-        return createEmptyReport();
-      }
-    }
-    return initialReportData;
-  });
+  const [report, setReport] = useState<FullInspectionReport>(initialReportData);
   const [past, setPast] = useState<FullInspectionReport[]>([]);
   const [future, setFuture] = useState<FullInspectionReport[]>([]);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');

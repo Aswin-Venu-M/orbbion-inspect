@@ -15,6 +15,7 @@ export type InspectionDetailState = {
 };
 
 interface InspectionDetailCardProps {
+  id?: string;
   title: string;
   data: InspectionDetailState;
   onChange: (data: Partial<InspectionDetailState>) => void;
@@ -23,6 +24,7 @@ interface InspectionDetailCardProps {
 }
 
 export const InspectionDetailCard = ({ 
+  id,
   title, 
   data,
   onChange,
@@ -36,7 +38,7 @@ export const InspectionDetailCard = ({
 
   // Sync local comments with props if it changes externally
   useEffect(() => {
-    setLocalComments(data.comments);
+    setLocalComments(prev => (prev === data.comments ? prev : data.comments));
   }, [data.comments]);
 
   // Reset img error if image changes
@@ -111,7 +113,7 @@ export const InspectionDetailCard = ({
             value={data.status}
             onChange={(status) => onChange({ status })}
             includeNa={true}
-            layoutId={`status-detail-${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+            layoutId={`status-detail-${id || title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
           />
         </div>
 

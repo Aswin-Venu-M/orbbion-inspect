@@ -178,9 +178,12 @@ export function DatePickerInput({
     return date ? formatDate(date, effectiveFormat) : ""
   })
 
+  const prevControlledRef = React.useRef(controlledValue)
+
   // Sync when controlledValue changes externally
   React.useEffect(() => {
-    if (controlledValue !== undefined && controlledValue !== inputValue) {
+    if (controlledValue !== undefined && controlledValue !== prevControlledRef.current) {
+      prevControlledRef.current = controlledValue
       setInputValue(controlledValue)
       const parsed = parseDate(controlledValue)
       setDate(parsed)
@@ -188,7 +191,7 @@ export function DatePickerInput({
         setMonth(parsed)
       }
     }
-  }, [controlledValue, inputValue])
+  }, [controlledValue])
 
   // Validation state: is the current typed input invalid?
   const isInvalid = React.useMemo(() => {
@@ -203,6 +206,7 @@ export function DatePickerInput({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value
+    prevControlledRef.current = rawVal
     setInputValue(rawVal)
     onValueChange?.(rawVal)
 

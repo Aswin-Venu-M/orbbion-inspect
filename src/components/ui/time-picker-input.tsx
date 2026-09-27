@@ -130,15 +130,17 @@ export function TimePickerInput({
   // Refs for auto-scrolling
   const selectedHourRef = React.useRef<HTMLButtonElement>(null)
   const selectedMinRef = React.useRef<HTMLButtonElement>(null)
+  const prevControlledRef = React.useRef(controlledValue)
 
   // Sync external controlled value changes
   React.useEffect(() => {
-    if (controlledValue !== undefined && controlledValue !== inputValue) {
+    if (controlledValue !== undefined && controlledValue !== prevControlledRef.current) {
+      prevControlledRef.current = controlledValue
       setInputValue(controlledValue)
       const parsed = parseTimeString(controlledValue)
       setTimeState(parsed)
     }
-  }, [controlledValue, inputValue])
+  }, [controlledValue])
 
   // Scroll into view on popover open
   React.useEffect(() => {
@@ -172,12 +174,14 @@ export function TimePickerInput({
   const updateTime = (newTime: TimeValue) => {
     setTimeState(newTime)
     const formatted = formatTimeString(newTime, format)
+    prevControlledRef.current = formatted
     setInputValue(formatted)
     onValueChange?.(formatted)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value
+    prevControlledRef.current = rawVal
     setInputValue(rawVal)
     onValueChange?.(rawVal)
 
