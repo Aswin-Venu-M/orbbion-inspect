@@ -83,6 +83,7 @@ export interface TimePickerInputProps {
   required?: boolean
   disabled?: boolean
   readOnly?: boolean
+  clearable?: boolean
   value?: string
   defaultValue?: string
   onChange?: (value: string) => void
@@ -102,6 +103,7 @@ export function TimePickerInput({
   required = false,
   disabled = false,
   readOnly = false,
+  clearable = false,
   value: controlledValue,
   defaultValue,
   onChange: onValueChange,
@@ -274,8 +276,8 @@ export function TimePickerInput({
         />
 
         <InputGroupAddon align="inline-end" className="flex items-center gap-1">
-          {/* Quick Clear Button */}
-          {inputValue && !disabled && !readOnly && (
+          {/* Quick Clear Button (only if clearable is true) */}
+          {clearable && inputValue && !disabled && !readOnly && (
             <button
               type="button"
               onClick={handleClear}

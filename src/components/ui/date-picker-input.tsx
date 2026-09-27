@@ -118,6 +118,7 @@ export interface DatePickerInputProps {
   required?: boolean
   disabled?: boolean
   readOnly?: boolean
+  clearable?: boolean
   value?: string
   defaultValue?: string
   onChange?: (value: string) => void
@@ -137,6 +138,7 @@ export function DatePickerInput({
   required = false,
   disabled = false,
   readOnly = false,
+  clearable = false,
   value: controlledValue,
   defaultValue,
   onChange: onValueChange,
@@ -297,8 +299,8 @@ export function DatePickerInput({
         />
 
         <InputGroupAddon align="inline-end" className="flex items-center gap-1">
-          {/* Quick Clear Button when text is present */}
-          {inputValue && !disabled && !readOnly && (
+          {/* Quick Clear Button when text is present (only if clearable is true) */}
+          {clearable && inputValue && !disabled && !readOnly && (
             <button
               type="button"
               onClick={handleClear}
