@@ -93,6 +93,7 @@ function InspectDashboardContent({
     removeMedia,
     deleteSelectedMedia,
     openGalleryPicker,
+    clearAllMedia,
   } = useMediaConnection();
 
   // Tab & Gallery State
@@ -183,7 +184,8 @@ function InspectDashboardContent({
       if (initializedNewRef.current) return;
       initializedNewRef.current = true;
       const freshReport = createEmptyReport();
-      resetReport(freshReport);
+      resetReport(freshReport, true);
+      clearAllMedia();
       handleSectionOrderChange(DEFAULT_SECTION_ORDER);
       setActiveTab('edit');
       upsertStoredReport(convertFullReportToListItem(freshReport));
@@ -1874,7 +1876,8 @@ function InspectDashboardContent({
                   type="button"
                   onClick={() => {
                     const cleanReport = createEmptyReport();
-                    resetReport(cleanReport);
+                    resetReport(cleanReport, true);
+                    clearAllMedia();
                     upsertStoredReport(convertFullReportToListItem(cleanReport));
                     handleSectionOrderChange(DEFAULT_SECTION_ORDER);
                     setIsResetConfirmOpen(false);

@@ -367,8 +367,10 @@ export function convertFullReportToListItem(report: FullInspectionReport): Repor
   const teamDetails = report.teamDetails || ({} as Partial<FullInspectionReport['teamDetails']>);
   const reportOverview = report.reportOverview || ({} as Partial<FullInspectionReport['reportOverview']>);
 
-  const passPct = Number(reportOverview.pass) || 85;
-  const failPct = Number(reportOverview.fail) || (100 - passPct);
+  const rawPass = Number(reportOverview.pass);
+  const passPct = !isNaN(rawPass) ? rawPass : 0;
+  const rawFail = Number(reportOverview.fail);
+  const failPct = !isNaN(rawFail) ? rawFail : (100 - passPct);
 
   const fallbackImg = 'https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=600&auto=format&fit=crop';
   const imgUrl = (report.generalPhotosExteriorImages && report.generalPhotosExteriorImages[0]?.url) ||

@@ -55,6 +55,7 @@ interface MediaConnectionContextType {
   openAssignModal: () => void;
   closeAssignModal: () => void;
   availableTargets: MediaTargetInfo[];
+  clearAllMedia: () => void;
   showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
 }
 
@@ -351,6 +352,17 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
     setIsAssignModalOpen(false);
   }, []);
 
+  const clearAllMedia = useCallback(() => {
+    // Revoke any active blob URLs to free memory
+    mediaFiles.forEach(m => {
+      if (m.url.startsWith('blob:')) {
+        try { URL.revokeObjectURL(m.url); } catch { /* ignore */ }
+      }
+    });
+    // Reset to empty — fresh inspection has no pre-existing photos
+    setMediaFiles([]);
+  }, [mediaFiles]);
+
   return (
     <MediaConnectionContext.Provider
       value={{
@@ -378,6 +390,7 @@ export const MediaConnectionProvider: React.FC<MediaConnectionProviderProps> = (
         openAssignModal,
         closeAssignModal,
         availableTargets,
+        clearAllMedia,
         showToast,
       }}
     >

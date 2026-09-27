@@ -61,9 +61,7 @@ export function useInspectionHistory() {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         if (params.get('new') === 'true') {
-          const fresh = createEmptyReport();
-          setReport(fresh);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanReportForStorage(fresh)));
+          // Defer to page.tsx which handles the full new-report lifecycle
           setIsLoaded(true);
           return;
         }
@@ -214,9 +212,13 @@ export function useInspectionHistory() {
     triggerAutoSave(next);
   }, [future, report, triggerAutoSave]);
 
-  const resetReport = useCallback((customData?: FullInspectionReport) => {
+  const resetReport = useCallback((customData?: FullInspectionReport, clearHistory = false) => {
     const data = customData || createEmptyReport();
-    setPast(p => [...p, report]);
+    if (clearHistory) {
+      setPast([]);
+    } else {
+      setPast(p => [...p, report]);
+    }
     setFuture([]);
     setReport(data);
     triggerAutoSave(data);

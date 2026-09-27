@@ -236,7 +236,7 @@ export function createEmptyReport(customId?: string): FullInspectionReport {
       RL: { status: null, year: '', comments: '', image: null },
       FR: { status: null, year: '', comments: '', image: null },
       FL: { status: null, year: '', comments: '', image: null },
-      ST: { status: null, year: '', comments: '', image: null },
+      ST: { status: 'na', year: '', comments: 'Not applicable for spare tyre', image: null },
     },
     chassisSubframeComments: '',
     chassisSubframeImages: [],

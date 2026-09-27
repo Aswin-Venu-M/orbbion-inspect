@@ -604,7 +604,7 @@ export function ReportPreview({
               { label: 'Model Year', value: vehicleData.year },
               { label: 'Regional Specs', value: vehicleData.regionalSpecs },
               { label: 'Transmission', value: vehicleData.transmission },
-              { label: 'Odometer', value: vehicleData.odometerStatus, isAlert: true },
+              { label: 'Odometer', value: vehicleData.odometerStatus, isAlert: vehicleData.odometerStatus === 'Tampered' },
               { label: 'Spare Tyre', value: vehicleData.spareType },
               { label: 'Keys', value: vehicleData.numberOfKeys },
               { label: 'Vehicle Type', value: vehicleData.vehicleType },
@@ -631,7 +631,9 @@ export function ReportPreview({
             <div 
               className="w-[85px] h-[85px] rounded-full shadow-lg border-2 border-white/10 shrink-0" 
               style={{
-                background: `conic-gradient(#5BC335 0% ${passVal}%, #FE8E4B ${passVal}% 100%)`
+                background: (passVal === 0 && failVal === 0)
+                  ? '#E2E8F0'
+                  : `conic-gradient(#5BC335 0% ${passVal}%, #FE8E4B ${passVal}% 100%)`
               }}
             />
 
@@ -779,7 +781,7 @@ export function ReportPreview({
               <div className="absolute inset-0 z-20 pointer-events-none">
                 {SUBFRAME_PARTS.map((part) => {
                   const status = report.chassisSubframePartStatuses?.[part.id] || 'checked';
-                  const bgColor = status === 'repaired' ? '#4A72FF' : status === 'damaged' ? '#F54752' : '#000000';
+                  const bgColor = status === 'repaired' ? '#4A72FF' : status === 'damaged' ? '#F54752' : status === 'unchecked' ? '#A0A4AB' : '#000000';
                   return (
                     <div
                       key={`preview-bubble-${part.id}`}
